@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  PROJECT_MANAGER
+  SITE_ENGINEER
+  VIEWER
+}
+
+enum ProjectMemberRole {
+  PROJECT_MANAGER
+  SITE_ENGINEER
+  VIEWER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+}
+
+enum TaskStatus {
+  TO_DO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum WeatherCondition {
+  SUNNY
+  RAINY
+  CLOUDY
+  OTHER
+}
+
+enum ReportStatus {
+  DRAFT
+  SENT
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+}
+
+enum AuditEntityType {
+  USER
+  PROJECT
+  PROJECT_MEMBER
+  DAILY_REPORT
+  TASK
+  FILE
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String    @db.VarChar(200)
+  email         String    @unique @db.VarChar(255)
+  passwordHash  String    @map("password_hash") @db.VarChar(255)
+  phone         String?   @db.VarChar(20)
+  role          UserRole  @default(VIEWER)
+  avatarUrl     String?   @map("avatar_url") @db.VarChar(500)
+  isActive      Boolean   @default(true) @map("is_active")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  createdProjects     Project[]           @relation("ProjectCreator")
+  projectMembers      ProjectMember[]
+  createdReports      DailyReport[]       @relation("ReportCreator")
+  assignedTasks       Task[]              @relation("TaskAssignee")
+  createdTasks        Task[]              @relation("TaskCreator")
+  uploadedFiles       ProjectFile[]       @relation("FileUploader")
+  auditLogs           AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+  comments            TaskComment[]       @relation("CommentAuthor")
+
+  @@index([role])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Project {
+  id          String         @id @default(uuid())
+  code        String         @unique @db.VarChar(50)
+  name        String         @db.VarChar(200)
+  description String?        @db.Text
+  location    String         @db.VarChar(500)
+  clientName  String?        @map("client_name") @db.VarChar(200)
+  startDate   DateTime       @map("start_date") @db.Date
+  endDate     DateTime?      @map("end_date") @db.Date
+  status      ProjectStatus  @default(ACTIVE)
+  progress    Decimal        @default(0.00) @db.Decimal(5, 2)
+  createdBy   String         @map("created_by")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  creator      User            @relation("ProjectCreator", fields: [createdBy], references: [id])
+  members      ProjectMember[]
+  dailyReports DailyReport[]
+  tasks        Task[]
+  files        ProjectFile[]
+
+  @@index([status])
+  @@index([createdBy])
+  @@index([startDate])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String            @id @default(uuid())
+  projectId String            @map("project_id")
+  userId    String            @map("user_id")
+  role      ProjectMemberRole @default(SITE_ENGINEER)
+  joinedAt  DateTime          @default(now()) @map("joined_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model DailyReport {
+  id              String        @id @default(uuid())
+  projectId       String        @map("project_id")
+  createdBy       String        @map("created_by")
+  reportDate      DateTime      @map("report_date") @db.Date
+  weather         WeatherCondition
+  temperatureMin  Int?          @map("temperature_min")
+  temperatureMax  Int?          @map("temperature_max")
+  workerCount     Int           @default(0) @map("worker_count")
+  workDescription String        @map("work_description") @db.Text
+  issues          String?       @db.Text
+  progress        Decimal       @default(0.00) @db.Decimal(5, 2)
+  notes           String?       @db.Text
+  status          ReportStatus  @default(SENT) @map("status")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator User           @relation("ReportCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  images  ReportImage[]
+  tasks   Task[]
+
+  @@index([projectId])
+  @@index([createdBy])
+  @@index([reportDate])
+  @@map("daily_reports")
+}
+
+model ReportImage {
+  id           String   @id @default(uuid())
+  reportId     String   @map("report_id")
+  fileName     String   @map("file_name") @db.VarChar(255)
+  originalName String   @map("original_name") @db.VarChar(255)
+  fileSize     Int      @map("file_size")
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  filePath     String   @map("file_path") @db.VarChar(500)
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  report DailyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([displayOrder])
+  @@map("report_images")
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  projectId   String       @map("project_id")
+  title       String       @db.VarChar(200)
+  description String?      @db.Text
+  assignedTo  String?      @map("assigned_to")
+  createdBy   String       @map("created_by")
+  reportId    String?      @map("report_id")
+  status      TaskStatus   @default(TO_DO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?    @map("due_date") @db.Date
+  completedAt DateTime?    @map("completed_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  project  Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?        @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator  User         @relation("TaskCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  report   DailyReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  comments TaskComment[]
+
+  @@index([projectId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([createdBy])
+  @@index([reportId])
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  authorId  String   @map("author_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([taskId])
+  @@index([authorId])
+  @@map("task_comments")
+}
+
+model ProjectFile {
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  uploadedBy   String   @map("uploaded_by")
+  fileName     String   @map("file_name") @db.VarChar(255)
+  originalName String   @map("original_name") @db.VarChar(255)
+  fileSize     Int      @map("file_size")
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  filePath     String   @map("file_path") @db.VarChar(500)
+  fileType     String   @map("file_type") @db.VarChar(50)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploader User    @relation("FileUploader", fields: [uploadedBy], references: [id], onDelete: Restrict)
+
+  @@index([projectId])
+  @@index([uploadedBy])
+  @@index([fileType])
+  @@index([createdAt])
+  @@map("project_files")
+}
+
+model AuditLog {
+  id          String           @id @default(uuid())
+  userId      String?          @map("user_id")
+  action      AuditAction
+  entityType  AuditEntityType  @map("entity_type")
+  entityId    String?          @map("entity_id")
+  description String           @db.Text
+  ipAddress   String?          @map("ip_address") @db.VarChar(45)
+  userAgent   String?          @map("user_agent") @db.VarChar(500)
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}

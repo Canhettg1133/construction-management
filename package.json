@@ -1,0 +1,56 @@
+{
+  "name": "construction-mgmt",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @construction/shared build && pnpm --parallel dev",
+    "dev:api": "pnpm --filter @construction/api dev",
+    "dev:web": "pnpm --filter @construction/web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml,html,css}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml,html,css}\" --ignore-path .gitignore",
+    "test": "pnpm -r --if-present test",
+    "verify:quality": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "verify:security": "node scripts/verify/security-check.mjs",
+    "verify:audit": "node scripts/verify/audit-check.mjs",
+    "verify:migrations": "node scripts/verify/migration-check.mjs",
+    "verify:prepilot": "pnpm verify:quality && pnpm verify:security && pnpm verify:audit && pnpm verify:migrations && node scripts/verify/ac-report.mjs",
+    "db:migrate": "pnpm --filter @construction/api db:migrate",
+    "db:seed": "pnpm --filter @construction/api db:seed",
+    "db:studio": "pnpm --filter @construction/api db:studio",
+    "smoke-test": "bash scripts/smoke-test.sh",
+    "smoke-test:win": "powershell -ExecutionPolicy Bypass -File scripts/smoke-test.ps1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/supertest": "^7.2.0",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "jsdom": "^29.0.1",
+    "prettier": "^3.5.3",
+    "supertest": "^7.2.2",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.58.0",
+    "vitest": "^4.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "bcrypt",
+      "esbuild",
+      "prisma"
+    ]
+  }
+}

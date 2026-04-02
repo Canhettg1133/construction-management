@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+*.log
+coverage/
+.venv/
+uploads/
+.DS_Store
+*.tgz
+*.zip
+_inspect_cursor_free_2_3_6/

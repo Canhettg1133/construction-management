@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: construction_mgmt
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api:
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: mysql://appuser:apppassword@mysql:3306/construction_mgmt
+      JWT_SECRET: docker-dev-jwt-secret-change-in-production-min32chars
+      JWT_REFRESH_SECRET: docker-dev-jwt-refresh-secret-change-in-prod-min32chars
+      JWT_EXPIRES_IN: "7d"
+      JWT_REFRESH_EXPIRES_IN: "30d"
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE: "10485760"
+      APP_URL: http://localhost:5173
+      FRONTEND_URL: http://localhost:5173
+      LOG_LEVEL: debug
+    volumes:
+      - api_uploads:/app/uploads
+      - ./packages/api/src:/app/src:ro
+      - ./packages/shared/src:/app/shared:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  mysql_data:
+  api_uploads:

@@ -1,0 +1,16 @@
+export const ROUTES = {
+  DASHBOARD: "/dashboard",
+  PROJECTS: "/projects",
+  PROJECT_DETAIL: (id: string) => `/projects/${id}`,
+  PROJECT_MEMBERS: (id: string) => `/projects/${id}/members`,
+  PROJECT_REPORTS: (id: string) => `/projects/${id}/reports`,
+  PROJECT_TASKS: (id: string) => `/projects/${id}/tasks`,
+  PROJECT_FILES: (id: string) => `/projects/${id}/files`,
+  USERS: "/users",
+  AUDIT_LOGS: "/audit-logs",
+  SETTINGS_PROFILE: "/settings/profile",
+  SETTINGS_CHANGE_PASSWORD: "/settings/change-password",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: (token: string) => `/reset-password/${token}`,
+  LOGIN: "/login",
+} as const;
