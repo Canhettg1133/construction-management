@@ -43,6 +43,18 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Security static check
+        run: node scripts/verify/security-check.mjs
+
+      - name: Audit logging check
+        run: node scripts/verify/audit-check.mjs
+
+      - name: Migration structure check
+        run: node scripts/verify/migration-check.mjs
+
+      - name: Acceptance criteria coverage
+        run: node scripts/verify/ac-report.mjs
+
   # ─────────────────────────────────────────────────────────────
   # Job 2: Build — compile TypeScript for all packages
   # ─────────────────────────────────────────────────────────────

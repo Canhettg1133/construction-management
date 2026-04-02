@@ -5,20 +5,49 @@ import cookieParser from "cookie-parser";
 import { pinoHttp } from "pino-http";
 import { env } from "./config/env";
 import { logger } from "./config/logger";
-import { errorHandler } from "./shared/middleware";
+import { errorHandler, apiRateLimit } from "./shared/middleware";
 import routes from "./routes";
 import { NotFoundError } from "./shared/errors";
 
 const app: Express = express();
 
-app.use(helmet());
+// Trust proxy for rate limiting (behind reverse proxy/Docker)
+app.set("trust proxy", 1);
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
+
 app.use(cors({
   origin: env.FRONTEND_URL,
   credentials: true,
+  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
+  exposedHeaders: ["X-Request-ID"],
+  maxAge: 86400,
 }));
+
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// Global rate limit (applies to all routes)
+app.use(apiRateLimit);
+
 app.use(pinoHttp({ logger }));
 
 app.use("/api/v1", routes);

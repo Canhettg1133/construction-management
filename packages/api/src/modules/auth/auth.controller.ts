@@ -44,10 +44,13 @@ export const authController = {
     }
 
     const decoded = authService.verifyRefreshToken(token);
+
+    // Generate a new access token with minimal claims (ID + role)
+    // The refresh endpoint intentionally does NOT re-fetch user from DB for performance
     const newAccessToken = authService.generateAccessToken(
       decoded.id,
-      (req as unknown as { user?: { email: string; role: string } }).user?.email || "",
-      (req as unknown as { user?: { email: string; role: string } }).user?.role || ""
+      "", // role will be re-fetched from /me endpoint
+      ""
     );
 
     res.cookie("access_token", newAccessToken, {

@@ -8,6 +8,7 @@ export const ROUTES = {
   PROJECT_FILES: (id: string) => `/projects/${id}/files`,
   USERS: "/users",
   AUDIT_LOGS: "/audit-logs",
+  SETTINGS: "/settings",
   SETTINGS_PROFILE: "/settings/profile",
   SETTINGS_CHANGE_PASSWORD: "/settings/change-password",
   FORGOT_PASSWORD: "/forgot-password",

@@ -21,6 +21,7 @@ import { TaskDetailPage } from "../features/tasks/pages/TaskDetailPage";
 import { UserManagementPage } from "../features/users/pages/UserManagementPage";
 import { AuditLogPage } from "../features/audit/pages/AuditLogPage";
 import { ProfilePage } from "../features/settings/pages/ProfilePage";
+import { SettingsIndexPage } from "../features/settings/pages/SettingsIndexPage";
 
 export const router = createBrowserRouter([
   {
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
           </RoleGuard>
         ),
       },
+      { path: "settings", element: <Navigate to="settings/profile" replace /> },
       { path: "settings/profile", element: <ProfilePage /> },
       { path: "settings/change-password", element: <ChangePasswordPage /> },
     ],
