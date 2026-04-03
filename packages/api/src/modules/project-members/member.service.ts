@@ -1,5 +1,5 @@
 import { memberRepository } from "./member.repository";
-import { NotFoundError, ConflictError } from "../../shared/errors";
+import { NotFoundError, ConflictError, ForbiddenError } from "../../shared/errors";
 import { userRepository } from "../users/user.repository";
 import { projectRepository } from "../projects/project.repository";
 import { auditService } from "../audit/audit.service";
@@ -36,6 +36,9 @@ export const memberService = {
   async updateRole(memberId: string, role: string, requesterId: string) {
     const member = await memberRepository.findById(memberId);
     if (!member) throw new NotFoundError("Không tìm thấy thành viên");
+    if (member.userId === requesterId && member.role !== role) {
+      throw new ForbiddenError("Không thể tự thay đổi vai trò của chính mình");
+    }
 
     const user = await userRepository.findById(member.userId);
     const project = await projectRepository.findById(member.projectId);

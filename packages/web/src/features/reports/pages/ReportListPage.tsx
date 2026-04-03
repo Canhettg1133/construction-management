@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Calendar, Filter, X, CloudRain, Sun, Cloud, HelpCircle } from "lucide-react";
 import { listReports } from "../api/reportApi";
 import { listProjectMembers } from "../../projects/api/memberApi";
+import { PermissionGate } from "../../../shared/components/PermissionGate";
 import { EmptyState } from "../../../shared/components/feedback/EmptyState";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
 import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { useAuthStore } from "../../../store/authStore";
+import { usePermission } from "../../../shared/hooks/usePermission";
 
 const WEATHER_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   SUNNY: Sun,
@@ -24,9 +25,13 @@ const WEATHER_LABELS: Record<string, string> = {
 };
 
 export function ReportListPage() {
-  const { user } = useAuthStore();
   const { id: projectId } = useParams();
-  const canCreateReport = user?.role !== "VIEWER";
+  const currentProjectId = projectId ?? "";
+  const { has: canCreateReport } = usePermission({
+    projectId: currentProjectId,
+    toolId: "DAILY_REPORT",
+    minLevel: "STANDARD",
+  });
 
   const [showFilters, setShowFilters] = useState(false);
   const [fromDate, setFromDate] = useState("");
@@ -35,22 +40,22 @@ export function ReportListPage() {
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["reports", projectId, page, fromDate, toDate, creatorId],
+    queryKey: ["reports", currentProjectId, page, fromDate, toDate, creatorId],
     queryFn: () =>
-      listReports(String(projectId), {
+      listReports(currentProjectId, {
         page,
         pageSize: 10,
         from: fromDate || undefined,
         to: toDate || undefined,
         created_by: creatorId || undefined,
       }),
-    enabled: !!projectId,
+    enabled: Boolean(currentProjectId),
   });
 
   const { data: members } = useQuery({
-    queryKey: ["project-members", projectId],
-    queryFn: () => listProjectMembers(String(projectId)),
-    enabled: !!projectId,
+    queryKey: ["project-members", currentProjectId],
+    queryFn: () => listProjectMembers(currentProjectId),
+    enabled: Boolean(currentProjectId),
   });
 
   const hasFilters = fromDate || toDate || creatorId;
@@ -90,14 +95,14 @@ export function ReportListPage() {
               </span>
             )}
           </button>
-          {canCreateReport && projectId && (
+          <PermissionGate projectId={currentProjectId} toolId="DAILY_REPORT" minLevel="STANDARD">
             <Link
-              to={`/projects/${projectId}/reports/new`}
+              to={`/projects/${currentProjectId}/reports/new`}
               className="w-full rounded-xl bg-brand-600 px-4 py-2.5 text-center text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 sm:w-auto"
             >
               Tạo báo cáo
             </Link>
-          )}
+          </PermissionGate>
         </div>
       </div>
 
@@ -178,7 +183,7 @@ export function ReportListPage() {
           action={
             canCreateReport && !hasFilters ? (
               <Link
-                to={`/projects/${projectId}/reports/new`}
+                to={`/projects/${currentProjectId}/reports/new`}
                 className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white"
               >
                 Tạo báo cáo
@@ -203,7 +208,7 @@ export function ReportListPage() {
               return (
                 <Link
                   key={report.id}
-                  to={`/projects/${projectId}/reports/${report.id}`}
+                  to={`/projects/${currentProjectId}/reports/${report.id}`}
                   className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow"
                 >
                   <div className="flex items-start justify-between gap-3">

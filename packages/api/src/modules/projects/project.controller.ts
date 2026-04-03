@@ -7,7 +7,7 @@ export const projectController = {
     const { page, pageSize } = parsePagination(req.query);
     const { projects, total } = await projectService.list(
       page, pageSize, 
-      req.user!.id, req.user!.role,
+      req.user!.id, req.user!.systemRole,
       req.query.status as string, req.query.q as string
     );
     return sendSuccess(res, projects, buildPaginationMeta(total, page, pageSize));

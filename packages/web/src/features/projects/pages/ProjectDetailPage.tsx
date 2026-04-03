@@ -1,36 +1,60 @@
-import { Link, useParams, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import {
+  FolderKanban,
+  FileText,
+  CheckSquare,
+  Users,
+  Files,
+  ShieldAlert,
+  ClipboardCheck,
+  Warehouse,
+  Wallet,
+  Settings,
+} from "lucide-react";
+import { hasMinPermission, type PermissionLevel, type SystemRole, type ToolId } from "@construction/shared";
 import { useAuthStore } from "../../../store/authStore";
+import { useProjectPermissions } from "../../../shared/hooks/useProjectPermissions";
 import { getProject } from "../api/projectApi";
 import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { FolderKanban, FileText, CheckSquare, Users, Files } from "lucide-react";
 
 interface Tab {
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles?: string[];
+  systemRoles?: SystemRole[];
+  toolId?: ToolId;
+  minLevel?: PermissionLevel;
 }
 
 const tabs: Tab[] = [
-  { label: "Tổng quan", path: "", icon: FolderKanban },
-  { label: "Báo cáo ngày", path: "/reports", icon: FileText },
-  { label: "Task", path: "/tasks", icon: CheckSquare },
-  { label: "Thành viên", path: "/members", icon: Users },
-  { label: "Files", path: "/files", icon: Files },
+  { label: "Tong quan", path: "", icon: FolderKanban, toolId: "PROJECT", minLevel: "READ" },
+  { label: "Bao cao ngay", path: "/reports", icon: FileText, toolId: "DAILY_REPORT", minLevel: "READ" },
+  { label: "Task", path: "/tasks", icon: CheckSquare, toolId: "TASK", minLevel: "READ" },
+  { label: "Thanh vien", path: "/members", icon: Users, toolId: "PROJECT", minLevel: "READ" },
+  { label: "Files", path: "/files", icon: Files, toolId: "FILE", minLevel: "READ" },
+  { label: "Tai lieu", path: "/documents", icon: Files, toolId: "DOCUMENT", minLevel: "READ" },
+  { label: "An toan", path: "/safety", icon: ShieldAlert, toolId: "SAFETY", minLevel: "READ" },
+  { label: "Chat luong", path: "/quality", icon: ClipboardCheck, toolId: "QUALITY", minLevel: "READ" },
+  { label: "Kho vat tu", path: "/warehouse", icon: Warehouse, toolId: "WAREHOUSE", minLevel: "READ" },
+  { label: "Ngan sach", path: "/budget", icon: Wallet, toolId: "BUDGET", minLevel: "READ" },
+  { label: "Cai dat", path: "/settings", icon: Settings, toolId: "PROJECT", minLevel: "ADMIN" },
 ];
 
 export function ProjectDetailPage() {
   const { id } = useParams();
   const location = useLocation();
   const { user } = useAuthStore();
-  const normalizedRole = user?.role?.toUpperCase?.();
+  const normalizedSystemRole = user?.systemRole?.toUpperCase?.();
+  const projectId = id ?? "";
+
+  const { data: projectPermissions } = useProjectPermissions(projectId);
 
   const { data: project, isLoading, isError } = useQuery({
-    queryKey: ["project", id],
-    queryFn: () => getProject(String(id)),
-    enabled: !!id,
+    queryKey: ["project", projectId],
+    queryFn: () => getProject(projectId),
+    enabled: Boolean(projectId),
   });
 
   if (isLoading) {
@@ -43,10 +67,27 @@ export function ProjectDetailPage() {
   }
 
   if (isError) {
-    return <ErrorState message="Không tải được thông tin dự án. Vui lòng thử lại." />;
+    return <ErrorState message="Khong tai duoc thong tin du an. Vui long thu lai." />;
   }
 
-  const visibleTabs = tabs.filter((tab) => !tab.roles || (normalizedRole && tab.roles.includes(normalizedRole)));
+  const hasToolAccess = (tab: Tab) => {
+    if (!tab.toolId) {
+      return true;
+    }
+
+    if (!projectPermissions) {
+      return true;
+    }
+
+    const userLevel = projectPermissions.toolPermissions[tab.toolId] ?? "NONE";
+    return hasMinPermission(userLevel, tab.minLevel ?? "READ");
+  };
+
+  const visibleTabs = tabs.filter(
+    (tab) =>
+      (!tab.systemRoles || (normalizedSystemRole && tab.systemRoles.includes(normalizedSystemRole as SystemRole))) &&
+      hasToolAccess(tab)
+  );
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -55,7 +96,7 @@ export function ProjectDetailPage() {
           to="/projects"
           className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
         >
-          ← Dự án
+          {"<-"} Du an
         </Link>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-bold text-slate-900">{project?.name}</h1>
@@ -67,11 +108,11 @@ export function ProjectDetailPage() {
         <div className="flex min-w-max gap-1">
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;
-            const fullPath = `/projects/${id}${tab.path}`;
+            const fullPath = `/projects/${projectId}${tab.path}`;
             const isActive =
               tab.path === ""
-                ? location.pathname === `/projects/${id}`
-                : location.pathname.startsWith(`/projects/${id}${tab.path}`);
+                ? location.pathname === `/projects/${projectId}`
+                : location.pathname.startsWith(`/projects/${projectId}${tab.path}`);
 
             return (
               <Link

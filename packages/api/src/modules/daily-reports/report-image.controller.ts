@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { env } from "../../config/env";
 import { reportImageRepository } from "./report-image.repository";
-import { NotFoundError, ForbiddenError } from "../../shared/errors";
+import { NotFoundError } from "../../shared/errors";
 import { sendSuccess, sendNoContent } from "../../shared/utils";
 import { reportRepository } from "./report.repository";
 
@@ -73,8 +73,6 @@ export const reportImageController = {
 
   async delete(req: Request, res: Response) {
     const { reportId, imageId } = req.params as { reportId: string; imageId: string };
-    const userId = req.user!.id;
-    const userRole = req.user!.role;
 
     const image = await reportImageRepository.findById(imageId);
     if (!image) throw new NotFoundError("Không tìm thấy ảnh");
@@ -83,14 +81,7 @@ export const reportImageController = {
     const report = await reportRepository.findById(reportId);
     if (!report) throw new NotFoundError("Không tìm thấy báo cáo");
 
-    if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER") {
-      if (report.createdBy !== userId) {
-        throw new ForbiddenError("Bạn không có quyền xóa ảnh báo cáo này");
-      }
-    }
-
     await reportImageRepository.delete(imageId);
     return sendNoContent(res);
   },
 };
-

@@ -17,6 +17,11 @@ export const dashboardService = {
       memberCount,
       rawTasksByStatus,
       recentActivity,
+      pendingApprovals,
+      overdueTasks,
+      riskyProjects,
+      activeMembers,
+      weeklyProgress,
     ] = await Promise.all([
       dashboardRepository.countProjects(),
       dashboardRepository.countActiveProjects(),
@@ -26,6 +31,11 @@ export const dashboardService = {
       dashboardRepository.countActiveMembers(),
       dashboardRepository.countTasksByStatus(),
       dashboardRepository.findRecentActivity(10),
+      dashboardRepository.countPendingApprovals(),
+      dashboardRepository.findOverdueTasks(10),
+      dashboardRepository.findRiskyProjects(5),
+      dashboardRepository.findActiveMembers(5),
+      dashboardRepository.findWeeklyProgress(),
     ]);
 
     const tasksByStatus = TASK_STATUSES.reduce<Record<TaskStatus, number>>((acc, status) => {
@@ -49,6 +59,12 @@ export const dashboardService = {
       tasksByStatus,
       recentActivity,
       updatedAt: new Date().toISOString(),
+      // --- Module 4: Dashboard Nâng cao ---
+      pendingApprovals,
+      overdueTasks,
+      riskyProjects,
+      activeMembers,
+      weeklyProgress,
     };
   },
 };

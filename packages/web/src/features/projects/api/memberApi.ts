@@ -1,5 +1,5 @@
 import api from "../../../config/api";
-import type { ProjectMember, ProjectMemberRole } from "@construction/shared";
+import type { ProjectMember, ProjectRole } from "@construction/shared";
 
 interface ApiListResponse<T> {
   success: true;
@@ -17,12 +17,12 @@ export async function listProjectMembers(projectId: string) {
   return res.data.data;
 }
 
-export async function addProjectMember(projectId: string, userId: string, role: ProjectMemberRole) {
+export async function addProjectMember(projectId: string, userId: string, role: ProjectRole) {
   const res = await api.post<ApiSingleResponse<ProjectMember>>(`/projects/${projectId}/members`, { userId, role });
   return res.data.data;
 }
 
-export async function updateMemberRole(memberId: string, projectId: string, role: ProjectMemberRole) {
+export async function updateMemberRole(memberId: string, projectId: string, role: ProjectRole) {
   const res = await api.patch<ApiSingleResponse<ProjectMember>>(`/projects/${projectId}/members/${memberId}`, { role });
   return res.data.data;
 }

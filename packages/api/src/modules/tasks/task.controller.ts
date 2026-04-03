@@ -25,12 +25,12 @@ export const taskController = {
   },
 
   async update(req: Request, res: Response) {
-    const task = await taskService.update(String(req.params.taskId), req.body, req.user!.id, req.user!.role);
+    const task = await taskService.update(String(req.params.taskId), req.body, req.user!.id);
     return sendSuccess(res, task);
   },
 
   async updateStatus(req: Request, res: Response) {
-    const task = await taskService.updateStatus(String(req.params.taskId), req.body.status, req.user!.id, req.user!.role);
+    const task = await taskService.updateStatus(String(req.params.taskId), req.body.status, req.user!.id);
     return sendSuccess(res, task);
   },
 
@@ -42,8 +42,7 @@ export const taskController = {
   async submitForApproval(req: Request, res: Response) {
     const task = await taskService.submitForApproval(
       String(req.params.taskId),
-      req.user!.id,
-      req.user!.role
+      req.user!.id
     );
     return sendSuccess(res, task);
   },

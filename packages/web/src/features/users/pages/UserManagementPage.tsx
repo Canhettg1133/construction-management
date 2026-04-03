@@ -11,10 +11,10 @@ import { ErrorState } from "../../../shared/components/feedback/ErrorState";
 import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
 import { useUiStore } from "../../../store/uiStore";
 import { useAuthStore } from "../../../store/authStore";
-import { ROLE_LABELS } from "@construction/shared";
-import type { User, UserRole } from "@construction/shared";
+import { SYSTEM_ROLE_LABELS, ROLE_LABELS } from "@construction/shared";
+import type { User, SystemRole } from "@construction/shared";
 
-const USER_ROLES: UserRole[] = ["ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER", "VIEWER"];
+const USER_ROLES: SystemRole[] = ["ADMIN", "STAFF"];
 
 const createUserSchema = z.object({
   name: z.string().min(1, "Tên không được để trống").max(200),
@@ -24,13 +24,13 @@ const createUserSchema = z.object({
     .regex(/[A-Z]/, "Phải có ít nhất 1 chữ hoa")
     .regex(/[a-z]/, "Phải có ít nhất 1 chữ thường")
     .regex(/[0-9]/, "Phải có ít nhất 1 số"),
-  role: z.enum(["ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER", "VIEWER"]),
+  systemRole: z.enum(["ADMIN", "STAFF"]),
   phone: z.string().max(20).optional(),
 });
 
 const updateUserSchema = z.object({
   name: z.string().min(1).max(200).optional(),
-  role: z.enum(["ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER", "VIEWER"]).optional(),
+  systemRole: z.enum(["ADMIN", "STAFF"]).optional(),
   phone: z.string().max(20).optional(),
 });
 
@@ -54,8 +54,8 @@ function UserFormModal({ user, onClose, onSuccess }: UserFormProps) {
   } = useForm<CreateUserForm | UpdateUserForm>({
     resolver: zodResolver(isEdit ? updateUserSchema : createUserSchema),
     defaultValues: user
-      ? { name: user.name, role: user.role, phone: user.phone ?? "" }
-      : { role: "VIEWER" },
+      ? { name: user.name, systemRole: user.systemRole, phone: user.phone ?? "" }
+      : { systemRole: "STAFF" },
   });
 
   const createMutation = useMutation({
@@ -135,12 +135,12 @@ function UserFormModal({ user, onClose, onSuccess }: UserFormProps) {
 
           <div>
             <label className="form-label">Vai trò</label>
-            <select {...register("role")} className="form-input">
+            <select {...register("systemRole")} className="form-input">
               {USER_ROLES.map((r) => (
-                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                <option key={r} value={r}>{SYSTEM_ROLE_LABELS[r]}</option>
               ))}
             </select>
-            {errors.role && <p className="form-error">{errors.role.message as string}</p>}
+            {(errors as { systemRole?: { message?: unknown } }).systemRole && <p className="form-error">{(errors as { systemRole?: { message?: unknown } }).systemRole?.message as string}</p>}
           </div>
 
           <div>
@@ -166,13 +166,13 @@ export function UserManagementPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<UserRole | "">("");
+  const [roleFilter, setRoleFilter] = useState<SystemRole | "">("");
   const [page, setPage] = useState(1);
 
   const queryClient = useQueryClient();
   const showToast = useUiStore((s) => s.showToast);
   const { user: currentUser } = useAuthStore();
-  const canManage = currentUser?.role === "ADMIN";
+  const canManage = currentUser?.systemRole === "ADMIN";
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["users", page, roleFilter, search],
@@ -180,7 +180,7 @@ export function UserManagementPage() {
       listUsers({
         page,
         pageSize: 20,
-        role: roleFilter || undefined,
+        systemRole: roleFilter || undefined,
         q: search || undefined,
       }),
   });
@@ -258,7 +258,7 @@ export function UserManagementPage() {
         </div>
         <select
           value={roleFilter}
-          onChange={(e) => { setRoleFilter(e.target.value as UserRole | ""); setPage(1); }}
+          onChange={(e) => { setRoleFilter(e.target.value as SystemRole | ""); setPage(1); }}
           className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         >
           <option value="">Tất cả vai trò</option>
@@ -315,7 +315,7 @@ export function UserManagementPage() {
                     </td>
                     <td className="py-3">
                       <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                        {ROLE_LABELS[user.role]}
+                        {SYSTEM_ROLE_LABELS[user.systemRole]}
                       </span>
                     </td>
                     <td className="py-3">

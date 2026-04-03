@@ -1,16 +1,16 @@
 import type { Request, Response } from "express";
 import { fileService } from "./file.service";
 import { sendSuccess, sendNoContent, parsePagination, buildPaginationMeta } from "../../shared/utils";
-import fs from "fs";
-import path from "path";
-import { env } from "../../config/env";
 import { NotFoundError } from "../../shared/errors";
+import { resolveStoredFilePath } from "./file.utils";
 
 export const fileController = {
   async list(req: Request, res: Response) {
     const { page, pageSize } = parsePagination(req.query);
     const { files, total } = await fileService.list(
-      String(req.params.projectId), page, pageSize,
+      String(req.params.projectId),
+      page,
+      pageSize,
       req.query.file_type as string
     );
     return sendSuccess(res, files, buildPaginationMeta(total, page, pageSize));
@@ -18,23 +18,52 @@ export const fileController = {
 
   async upload(req: Request, res: Response) {
     if (!req.file) {
-      return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Chưa chọn file" } });
+      return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Chưa chọn tệp" } });
     }
-    const file = await fileService.upload(String(req.params.projectId), req.user!.id, req.file);
+
+    const folderId =
+      typeof req.body.folder_id === "string" && req.body.folder_id.trim()
+        ? req.body.folder_id.trim()
+        : typeof req.body.folderId === "string" && req.body.folderId.trim()
+        ? req.body.folderId.trim()
+        : undefined;
+
+    const tags = typeof req.body.tags === "string" ? req.body.tags : undefined;
+
+    const file = await fileService.upload(String(req.params.projectId), req.user!.id, req.file, {
+      folderId,
+      tags,
+    });
     return sendSuccess(res, file);
+  },
+
+  async view(req: Request, res: Response) {
+    const file = await fileService.getById(String(req.params.fileId));
+    const fullPath = resolveStoredFilePath(file.filePath, file.fileName);
+
+    if (!fullPath) {
+      throw new NotFoundError("File khong ton tai tren disk");
+    }
+
+    res.setHeader("Content-Type", file.mimeType);
+    const encodedName = encodeURIComponent(file.originalName).replace(/['()]/g, escape).replace(/\*/g, "%2A");
+    res.setHeader("Content-Disposition", `inline; filename="${file.originalName}"; filename*=UTF-8''${encodedName}`);
+    res.setHeader("Cache-Control", "private, max-age=300");
+    return res.sendFile(fullPath);
   },
 
   async download(req: Request, res: Response) {
     const file = await fileService.getById(String(req.params.fileId));
-    const fullPath = path.join(env.UPLOAD_DIR, file.filePath);
+    const fullPath = resolveStoredFilePath(file.filePath, file.fileName);
 
-    if (!fs.existsSync(fullPath)) {
-      throw new NotFoundError("File không tồn tại trên disk");
+    if (!fullPath) {
+      throw new NotFoundError("File khong ton tai tren disk");
     }
 
-    res.setHeader("Content-Disposition", `attachment; filename="${file.originalName}"`);
+    const encodedName = encodeURIComponent(file.originalName).replace(/['()]/g, escape).replace(/\*/g, "%2A");
+    res.setHeader("Content-Disposition", `attachment; filename="${file.originalName}"; filename*=UTF-8''${encodedName}`);
     res.setHeader("Content-Type", file.mimeType);
-    return res.sendFile(fullPath, { root: "." });
+    return res.sendFile(fullPath);
   },
 
   async delete(req: Request, res: Response) {

@@ -10,6 +10,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default("30d"),
   UPLOAD_DIR: z.string().default("./uploads"),
   MAX_FILE_SIZE: z.coerce.number().default(10485760),
+  DOCUMENT_TRASH_RETENTION_DAYS: z.coerce.number().int().min(1).default(30),
   SMTP_HOST: z.string().default("smtp.gmail.com"),
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_USER: z.string().default(""),

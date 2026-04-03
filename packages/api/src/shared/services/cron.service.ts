@@ -1,8 +1,11 @@
 import { prisma } from "../../config/database";
+import { env } from "../../config/env";
 import { notificationTriggers } from "../../modules/notifications/notification.triggers";
+import { documentRepository } from "../../modules/documents/document.repository";
 import { logger } from "../../config/logger";
 
 const CRON_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 let cronInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -111,11 +114,45 @@ async function checkDeadlines() {
   }
 }
 
+async function purgeExpiredDocumentTrash() {
+  try {
+    const cutoff = new Date(Date.now() - env.DOCUMENT_TRASH_RETENTION_DAYS * DAY_MS);
+    const purgedCount = await documentRepository.purgeTrashedFilesBefore(cutoff);
+    if (purgedCount > 0) {
+      logger.info(
+        {
+          purgedCount,
+          retentionDays: env.DOCUMENT_TRASH_RETENTION_DAYS,
+          cutoff: cutoff.toISOString(),
+        },
+        "Document trash purge completed"
+      );
+      return;
+    }
+
+    logger.debug(
+      {
+        purgedCount,
+        retentionDays: env.DOCUMENT_TRASH_RETENTION_DAYS,
+        cutoff: cutoff.toISOString(),
+      },
+      "Document trash purge completed"
+    );
+  } catch (err) {
+    logger.error({ err }, "Document trash purge failed");
+  }
+}
+
+async function runCronJobs() {
+  await checkDeadlines();
+  await purgeExpiredDocumentTrash();
+}
+
 export function startCron() {
   if (cronInterval) return;
   // Run immediately on start
-  checkDeadlines();
-  cronInterval = setInterval(checkDeadlines, CRON_INTERVAL_MS);
+  runCronJobs();
+  cronInterval = setInterval(runCronJobs, CRON_INTERVAL_MS);
   logger.info({ intervalMs: CRON_INTERVAL_MS }, "Deadline cron started");
 }
 

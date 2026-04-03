@@ -136,8 +136,8 @@ function CreateProjectModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
 export function ProjectListPage() {
   const { user } = useAuthStore();
-  const normalizedRole = user?.role?.toUpperCase?.();
-  const canCreateProject = normalizedRole === "ADMIN";
+  const normalizedSystemRole = user?.systemRole?.toUpperCase?.();
+  const canCreateProject = normalizedSystemRole === "ADMIN";
   const [showCreate, setShowCreate] = useState(false);
 
   const { data, isLoading, isError } = useQuery({

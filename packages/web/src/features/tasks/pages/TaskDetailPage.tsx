@@ -18,6 +18,9 @@ import { approveTask, rejectTask } from "../../approvals/api/approvalApi";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
 import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
 import { Button } from "../../../shared/components/Button";
+import { PermissionGate } from "../../../shared/components/PermissionGate";
+import { SpecialPrivilegeGate } from "../../../shared/components/SpecialPrivilegeGate";
+import { usePermission } from "../../../shared/hooks/usePermission";
 import { useUiStore } from "../../../store/uiStore";
 import { useAuthStore } from "../../../store/authStore";
 import type { Task, TaskStatus, TaskPriority } from "@construction/shared";
@@ -197,10 +200,26 @@ function EditTaskModal({
 
 export function TaskDetailPage() {
   const { id: projectId, taskId } = useParams();
+  const currentProjectId = projectId ?? "";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const showToast = useUiStore((s) => s.showToast);
   const { user: currentUser } = useAuthStore();
+  const { has: canUseTaskStandard } = usePermission({
+    projectId: currentProjectId,
+    toolId: "TASK",
+    minLevel: "STANDARD",
+  });
+  const { has: canUseTaskAdmin } = usePermission({
+    projectId: currentProjectId,
+    toolId: "TASK",
+    minLevel: "ADMIN",
+  });
+  const { has: canProjectAdmin } = usePermission({
+    projectId: currentProjectId,
+    toolId: "PROJECT",
+    minLevel: "ADMIN",
+  });
 
   const [showEdit, setShowEdit] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -210,34 +229,34 @@ export function TaskDetailPage() {
   const commentRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: task, isLoading: taskLoading, isError } = useQuery({
-    queryKey: ["task", projectId, taskId],
-    queryFn: () => getTask(String(projectId), String(taskId)),
-    enabled: !!projectId && !!taskId,
+    queryKey: ["task", currentProjectId, taskId],
+    queryFn: () => getTask(currentProjectId, String(taskId)),
+    enabled: Boolean(currentProjectId) && Boolean(taskId),
   });
 
   const { data: members } = useQuery({
-    queryKey: ["project-members", projectId],
-    queryFn: () => listProjectMembers(String(projectId)),
-    enabled: !!projectId,
+    queryKey: ["project-members", currentProjectId],
+    queryFn: () => listProjectMembers(currentProjectId),
+    enabled: Boolean(currentProjectId),
   });
 
   const { data: comments = [], refetch: refetchComments } = useQuery({
-    queryKey: ["task-comments", projectId, taskId],
-    queryFn: () => listTaskComments(String(projectId), String(taskId)),
-    enabled: !!projectId && !!taskId,
+    queryKey: ["task-comments", currentProjectId, taskId],
+    queryFn: () => listTaskComments(currentProjectId, String(taskId)),
+    enabled: Boolean(currentProjectId) && Boolean(taskId),
     refetchInterval: 30000,
   });
 
   const canEdit =
-    currentUser?.role === "ADMIN" ||
-    currentUser?.role === "PROJECT_MANAGER" ||
-    currentUser?.role === "SITE_ENGINEER";
+    canUseTaskStandard &&
+    (task?.createdBy === currentUser?.id || task?.assignedTo === currentUser?.id);
+  const canSubmitForApproval = canUseTaskStandard && task?.assignedTo === currentUser?.id;
 
   const statusMutation = useMutation({
-    mutationFn: (status: TaskStatus) => updateTaskStatus(String(projectId), String(taskId), status),
+    mutationFn: (status: TaskStatus) => updateTaskStatus(currentProjectId, String(taskId), status),
     onMutate: async (status) => {
-      const detailKey = ["task", projectId, taskId] as const;
-      const listKey = ["tasks", projectId] as const;
+      const detailKey = ["task", currentProjectId, taskId] as const;
+      const listKey = ["tasks", currentProjectId] as const;
       await Promise.all([
         queryClient.cancelQueries({ queryKey: detailKey }),
         queryClient.cancelQueries({ queryKey: listKey }),
@@ -273,11 +292,11 @@ export function TaskDetailPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => deleteTask(String(projectId), String(taskId)),
+    mutationFn: () => deleteTask(currentProjectId, String(taskId)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", currentProjectId] });
       showToast({ type: "success", title: "Đã xóa task" });
-      navigate(`/projects/${projectId}/tasks`);
+      navigate(`/projects/${currentProjectId}/tasks`);
     },
     onError: (e: unknown) => {
       showToast({ type: "error", title: "Lỗi", description: e instanceof Error ? e.message : "Không thể xóa" });
@@ -286,7 +305,7 @@ export function TaskDetailPage() {
 
   const addCommentMutation = useMutation({
     mutationFn: (content: string) =>
-      createTaskComment(String(projectId), String(taskId), content),
+      createTaskComment(currentProjectId, String(taskId), content),
     onSuccess: () => {
       setCommentText("");
       refetchComments();
@@ -299,7 +318,7 @@ export function TaskDetailPage() {
 
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) =>
-      deleteTaskComment(String(projectId), String(taskId), commentId),
+      deleteTaskComment(currentProjectId, String(taskId), commentId),
     onSuccess: () => {
       refetchComments();
       showToast({ type: "success", title: "Đã xóa bình luận" });
@@ -310,10 +329,10 @@ export function TaskDetailPage() {
   });
 
   const submitMutation = useMutation({
-    mutationFn: () => submitTaskForApproval(String(projectId), String(taskId)),
+    mutationFn: () => submitTaskForApproval(currentProjectId, String(taskId)),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["task", projectId, taskId], updated);
-      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      queryClient.setQueryData(["task", currentProjectId, taskId], updated);
+      queryClient.invalidateQueries({ queryKey: ["tasks", currentProjectId] });
       showToast({ type: "success", title: "Đã gửi duyệt task" });
     },
     onError: (e: unknown) => {
@@ -324,8 +343,8 @@ export function TaskDetailPage() {
   const approveMutation = useMutation({
     mutationFn: () => approveTask(String(taskId)),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["task", projectId, taskId], updated);
-      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      queryClient.setQueryData(["task", currentProjectId, taskId], updated);
+      queryClient.invalidateQueries({ queryKey: ["tasks", currentProjectId] });
       showToast({ type: "success", title: "Đã duyệt task" });
     },
     onError: (e: unknown) => {
@@ -336,8 +355,8 @@ export function TaskDetailPage() {
   const rejectMutation = useMutation({
     mutationFn: (reason: string) => rejectTask(String(taskId), reason),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["task", projectId, taskId], updated);
-      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      queryClient.setQueryData(["task", currentProjectId, taskId], updated);
+      queryClient.invalidateQueries({ queryKey: ["tasks", currentProjectId] });
       setShowRejectModal(false);
       setRejectReason("");
       showToast({ type: "success", title: "Đã từ chối task" });
@@ -347,7 +366,7 @@ export function TaskDetailPage() {
     },
   });
 
-  const isPmOrAdmin = currentUser?.role === "ADMIN" || currentUser?.role === "PROJECT_MANAGER";
+  const isPmOrAdmin = canProjectAdmin;
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -384,8 +403,8 @@ export function TaskDetailPage() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => navigate(`/projects/${projectId}/tasks`)}
+          <button
+          onClick={() => navigate(`/projects/${currentProjectId}/tasks`)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 shadow-sm hover:bg-slate-50"
         >
           ← Tasks
@@ -396,12 +415,12 @@ export function TaskDetailPage() {
             <p className="text-xs text-slate-500">Giao cho: {task.assignee.name}</p>
           )}
         </div>
-        {canEdit && (
+        <PermissionGate projectId={currentProjectId} toolId="TASK" minLevel="STANDARD">
           <div className="flex items-center gap-1">
             {task.requiresApproval && task.approvalStatus === "PENDING" && (
               <button
                 onClick={() => submitMutation.mutate()}
-                disabled={submitMutation.isPending}
+                disabled={!canSubmitForApproval || submitMutation.isPending}
                 className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 shadow-sm hover:bg-brand-100"
               >
                 <Send className="h-3.5 w-3.5" />
@@ -415,37 +434,41 @@ export function TaskDetailPage() {
               <Edit2 className="h-3.5 w-3.5" />
               Sửa
             </button>
-            <button
-              onClick={() => {
-                if (confirm("Xóa task này?")) deleteMutation.mutate();
-              }}
-              disabled={deleteMutation.isPending}
-              className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            {canUseTaskAdmin && (
+              <button
+                onClick={() => {
+                  if (confirm("Xóa task này?")) deleteMutation.mutate();
+                }}
+                disabled={deleteMutation.isPending}
+                className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
-        )}
+        </PermissionGate>
         {/* PM/Admin approval actions */}
         {isPmOrAdmin && task.requiresApproval && task.approvalStatus === "PENDING" && (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => approveMutation.mutate()}
-              disabled={approveMutation.isPending}
-              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
-            >
-              <CheckCircle className="h-3.5 w-3.5" />
-              Duyệt
-            </button>
-            <button
-              onClick={() => setShowRejectModal(true)}
-              disabled={rejectMutation.isPending}
-              className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
-            >
-              <XCircle className="h-3.5 w-3.5" />
-              Từ chối
-            </button>
-          </div>
+          <SpecialPrivilegeGate projectId={currentProjectId} privilege="QUALITY_SIGNER">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => approveMutation.mutate()}
+                disabled={approveMutation.isPending}
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+              >
+                <CheckCircle className="h-3.5 w-3.5" />
+                Duyệt
+              </button>
+              <button
+                onClick={() => setShowRejectModal(true)}
+                disabled={rejectMutation.isPending}
+                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                Từ chối
+              </button>
+            </div>
+          </SpecialPrivilegeGate>
         )}
       </div>
 
@@ -566,7 +589,7 @@ export function TaskDetailPage() {
                           month: "short",
                         })}
                       </span>
-                      {comment.authorId === currentUser?.id && (
+                      {canUseTaskAdmin && (
                         <button
                           onClick={() => {
                             if (confirm("Xóa bình luận này?")) {
@@ -592,36 +615,40 @@ export function TaskDetailPage() {
           <p className="text-sm text-slate-400">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
         )}
 
-        <form onSubmit={handleCommentSubmit} className="flex gap-2">
-          <textarea
-            ref={commentRef}
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleCommentSubmit(e);
-              }
-            }}
-            placeholder="Viết bình luận... (Enter để gửi, Shift+Enter xuống dòng)"
-            rows={2}
-            className="form-input flex-1 resize-none text-sm"
-          />
-          <button
-            type="submit"
-            disabled={!commentText.trim() || isSubmittingComment}
-            className="flex h-auto items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-40"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </form>
+        {canUseTaskStandard ? (
+          <form onSubmit={handleCommentSubmit} className="flex gap-2">
+            <textarea
+              ref={commentRef}
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleCommentSubmit(e);
+                }
+              }}
+              placeholder="Viết bình luận... (Enter để gửi, Shift+Enter xuống dòng)"
+              rows={2}
+              className="form-input flex-1 resize-none text-sm"
+            />
+            <button
+              type="submit"
+              disabled={!commentText.trim() || isSubmittingComment}
+              className="flex h-auto items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-40"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </form>
+        ) : (
+          <p className="text-xs text-slate-500">Bạn chỉ có quyền xem bình luận.</p>
+        )}
       </div>
 
       {showEdit && members && (
         <EditTaskModal
           task={task}
           members={members}
-          projectId={String(projectId)}
+          projectId={currentProjectId}
           onClose={() => setShowEdit(false)}
           onSuccess={() => setShowEdit(false)}
         />

@@ -8,7 +8,7 @@ export const approvalController = {
     const { page, pageSize } = parsePagination(req.query);
     const { reports, tasks, totalReports, totalTasks } = await approvalService.listPending(
       req.user!.id,
-      req.user!.role,
+      req.user!.systemRole,
       page,
       pageSize
     );
@@ -23,8 +23,7 @@ export const approvalController = {
   async approveReport(req: Request, res: Response) {
     const updated = await approvalService.approveReport(
       String(req.params.reportId),
-      req.user!.id,
-      req.user!.role
+      req.user!.id
     );
     return sendSuccess(res, updated);
   },
@@ -33,7 +32,6 @@ export const approvalController = {
     const updated = await approvalService.rejectReport(
       String(req.params.reportId),
       req.user!.id,
-      req.user!.role,
       req.body.reason
     );
     return sendSuccess(res, updated);
@@ -42,8 +40,7 @@ export const approvalController = {
   async approveTask(req: Request, res: Response) {
     const updated = await approvalService.approveTask(
       String(req.params.taskId),
-      req.user!.id,
-      req.user!.role
+      req.user!.id
     );
     return sendSuccess(res, updated);
   },
@@ -52,7 +49,6 @@ export const approvalController = {
     const updated = await approvalService.rejectTask(
       String(req.params.taskId),
       req.user!.id,
-      req.user!.role,
       req.body.reason
     );
     return sendSuccess(res, updated);

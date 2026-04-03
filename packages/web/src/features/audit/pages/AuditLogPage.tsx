@@ -40,6 +40,8 @@ const ENTITY_LABELS: Record<AuditEntityType, string> = {
   USER: "Người dùng",
   PROJECT: "Dự án",
   PROJECT_MEMBER: "Thành viên",
+  PROJECT_TOOL_PERMISSION: "Quyền công cụ",
+  SPECIAL_PRIVILEGE_ASSIGNMENT: "Đặc quyền",
   DAILY_REPORT: "Báo cáo ngày",
   TASK: "Task",
   FILE: "File",

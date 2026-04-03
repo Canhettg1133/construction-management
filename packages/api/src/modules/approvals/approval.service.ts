@@ -3,9 +3,10 @@ import { BadRequestError, NotFoundError, ForbiddenError } from "../../shared/err
 import { auditService } from "../audit/audit.service";
 import { notificationTriggers } from "../notifications/notification.triggers";
 import { AuditEntityType } from "@prisma/client";
+import { permissionService } from "../../shared/services/permission.service";
 
 export const approvalService = {
-  async listPending(userId: string, userRole: string, page: number, pageSize: number) {
+  async listPending(userId: string, userSystemRole: string, page: number, pageSize: number) {
     const skip = (page - 1) * pageSize;
 
     // PM/Admin: xem tất cả pending
@@ -13,7 +14,7 @@ export const approvalService = {
     let reportWhere = {};
     let taskWhere = {};
 
-    if (userRole !== "ADMIN") {
+    if (userSystemRole !== "ADMIN") {
       const memberProjects = await prisma.projectMember.findMany({
         where: { userId },
         select: { projectId: true },
@@ -45,7 +46,7 @@ export const approvalService = {
     return { reports, tasks, totalReports, totalTasks };
   },
 
-  async approveReport(reportId: string, userId: string, userRole: string) {
+  async approveReport(reportId: string, userId: string) {
     const report = await prisma.dailyReport.findUnique({
       where: { id: reportId },
       include: { project: { include: { members: true } } },
@@ -53,10 +54,10 @@ export const approvalService = {
     if (!report) throw new NotFoundError("Không tìm thấy báo cáo");
     if (report.approvalStatus !== "PENDING") throw new BadRequestError("Báo cáo không ở trạng thái chờ duyệt");
 
-    const isApprover = userRole === "ADMIN" || report.project.members.some(
-      (m) => m.userId === userId && m.role === "PROJECT_MANAGER"
-    );
+    const isApprover = await permissionService.hasPermission(userId, report.projectId, "PROJECT", "ADMIN");
     if (!isApprover) throw new ForbiddenError("Bạn không có quyền duyệt báo cáo này");
+    const hasQualitySigner = await permissionService.hasSpecialPrivilege(userId, report.projectId, "QUALITY_SIGNER");
+    if (!hasQualitySigner) throw new ForbiddenError("Cần quyền đặc biệt: QUALITY_SIGNER");
 
     const updated = await prisma.dailyReport.update({
       where: { id: reportId },
@@ -96,7 +97,7 @@ export const approvalService = {
     return updated;
   },
 
-  async rejectReport(reportId: string, userId: string, userRole: string, reason: string) {
+  async rejectReport(reportId: string, userId: string, reason: string) {
     const report = await prisma.dailyReport.findUnique({
       where: { id: reportId },
       include: { project: { include: { members: true } } },
@@ -104,10 +105,10 @@ export const approvalService = {
     if (!report) throw new NotFoundError("Không tìm thấy báo cáo");
     if (report.approvalStatus !== "PENDING") throw new BadRequestError("Báo cáo không ở trạng thái chờ duyệt");
 
-    const isApprover = userRole === "ADMIN" || report.project.members.some(
-      (m) => m.userId === userId && m.role === "PROJECT_MANAGER"
-    );
+    const isApprover = await permissionService.hasPermission(userId, report.projectId, "PROJECT", "ADMIN");
     if (!isApprover) throw new ForbiddenError("Bạn không có quyền duyệt báo cáo này");
+    const hasQualitySigner = await permissionService.hasSpecialPrivilege(userId, report.projectId, "QUALITY_SIGNER");
+    if (!hasQualitySigner) throw new ForbiddenError("Cần quyền đặc biệt: QUALITY_SIGNER");
 
     const updated = await prisma.dailyReport.update({
       where: { id: reportId },
@@ -138,7 +139,7 @@ export const approvalService = {
     return updated;
   },
 
-  async approveTask(taskId: string, userId: string, userRole: string) {
+  async approveTask(taskId: string, userId: string) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: { project: { include: { members: true } } },
@@ -146,10 +147,10 @@ export const approvalService = {
     if (!task) throw new NotFoundError("Không tìm thấy task");
     if (task.approvalStatus !== "PENDING") throw new BadRequestError("Task không ở trạng thái chờ duyệt");
 
-    const isApprover = userRole === "ADMIN" || task.project.members.some(
-      (m) => m.userId === userId && m.role === "PROJECT_MANAGER"
-    );
+    const isApprover = await permissionService.hasPermission(userId, task.projectId, "PROJECT", "ADMIN");
     if (!isApprover) throw new ForbiddenError("Bạn không có quyền duyệt task này");
+    const hasQualitySigner = await permissionService.hasSpecialPrivilege(userId, task.projectId, "QUALITY_SIGNER");
+    if (!hasQualitySigner) throw new ForbiddenError("Cần quyền đặc biệt: QUALITY_SIGNER");
 
     const updated = await prisma.task.update({
       where: { id: taskId },
@@ -178,7 +179,7 @@ export const approvalService = {
     return updated;
   },
 
-  async rejectTask(taskId: string, userId: string, userRole: string, reason: string) {
+  async rejectTask(taskId: string, userId: string, reason: string) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: { project: { include: { members: true } } },
@@ -186,10 +187,10 @@ export const approvalService = {
     if (!task) throw new NotFoundError("Không tìm thấy task");
     if (task.approvalStatus !== "PENDING") throw new BadRequestError("Task không ở trạng thái chờ duyệt");
 
-    const isApprover = userRole === "ADMIN" || task.project.members.some(
-      (m) => m.userId === userId && m.role === "PROJECT_MANAGER"
-    );
+    const isApprover = await permissionService.hasPermission(userId, task.projectId, "PROJECT", "ADMIN");
     if (!isApprover) throw new ForbiddenError("Bạn không có quyền duyệt task này");
+    const hasQualitySigner = await permissionService.hasSpecialPrivilege(userId, task.projectId, "QUALITY_SIGNER");
+    if (!hasQualitySigner) throw new ForbiddenError("Cần quyền đặc biệt: QUALITY_SIGNER");
 
     const updated = await prisma.task.update({
       where: { id: taskId },

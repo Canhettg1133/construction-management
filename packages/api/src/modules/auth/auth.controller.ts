@@ -51,8 +51,8 @@ export const authController = {
     // The refresh endpoint intentionally does NOT re-fetch user from DB for performance
     const newAccessToken = authService.generateAccessToken(
       decoded.id,
-      "", // role will be re-fetched from /me endpoint
-      ""
+      "", // email will be re-fetched from /me endpoint
+      ""  // systemRole will be re-fetched from /me endpoint
     );
 
     res.cookie("access_token", newAccessToken, {
@@ -91,7 +91,8 @@ export const authController = {
       id: user.id,
       name: user.name ?? "",
       email: user.email,
-      role: user.role,
+      systemRole: user.systemRole,
+      specialty: user.specialty ?? null,
       phone: user.phone ?? null,
       avatarUrl: user.avatarUrl ?? null,
       isActive: user.isActive,

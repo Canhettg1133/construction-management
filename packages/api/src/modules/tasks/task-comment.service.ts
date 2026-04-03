@@ -44,13 +44,9 @@ export const taskCommentService = {
     return updated;
   },
 
-  async delete(commentId: string, userId: string, userRole: string) {
+  async delete(commentId: string, userId: string) {
     const comment = await taskCommentRepository.findById(commentId);
     if (!comment) throw new NotFoundError("Không tìm thấy bình luận");
-
-    if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER" && comment.authorId !== userId) {
-      throw new ForbiddenError("Bạn không có quyền xóa bình luận này");
-    }
 
     await taskCommentRepository.delete(commentId);
 

@@ -22,6 +22,9 @@ import { approveReport, rejectReport } from "../../approvals/api/approvalApi";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
 import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
 import { Button } from "../../../shared/components/Button";
+import { PermissionGate } from "../../../shared/components/PermissionGate";
+import { SpecialPrivilegeGate } from "../../../shared/components/SpecialPrivilegeGate";
+import { usePermission } from "../../../shared/hooks/usePermission";
 import { useUiStore } from "../../../store/uiStore";
 import { useAuthStore } from "../../../store/authStore";
 import { LIMITS, WEATHER_LABELS } from "@construction/shared";
@@ -47,11 +50,26 @@ const WEATHER_OPTIONS = [
 
 export function ReportDetailPage() {
   const { id: projectId, reportId } = useParams();
+  const currentProjectId = projectId ?? "";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const showToast = useUiStore((s) => s.showToast);
   const { user } = useAuthStore();
-  const normalizedRole = user?.role?.toUpperCase?.();
+  const { has: canUseReportStandard } = usePermission({
+    projectId: currentProjectId,
+    toolId: "DAILY_REPORT",
+    minLevel: "STANDARD",
+  });
+  const { has: canUseReportAdmin } = usePermission({
+    projectId: currentProjectId,
+    toolId: "DAILY_REPORT",
+    minLevel: "ADMIN",
+  });
+  const { has: canProjectAdmin } = usePermission({
+    projectId: currentProjectId,
+    toolId: "PROJECT",
+    minLevel: "ADMIN",
+  });
 
   const [isEditing, setIsEditing] = useState(false);
   const [pendingImages, setPendingImages] = useState<File[]>([]);
@@ -60,9 +78,9 @@ export function ReportDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
 
   const { data: report, isLoading, isError } = useQuery({
-    queryKey: ["report", projectId, reportId],
-    queryFn: () => getReport(String(projectId), String(reportId)),
-    enabled: !!projectId && !!reportId,
+    queryKey: ["report", currentProjectId, reportId],
+    queryFn: () => getReport(currentProjectId, String(reportId)),
+    enabled: Boolean(currentProjectId) && Boolean(reportId),
   });
 
   const {
@@ -96,10 +114,10 @@ export function ReportDetailPage() {
 
   const updateMutation = useMutation({
     mutationFn: (data: UpdateReportForm) =>
-      updateReport(String(projectId), String(reportId), data),
+      updateReport(currentProjectId, String(reportId), data),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["report", projectId, reportId], updated);
-      queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
+      queryClient.setQueryData(["report", currentProjectId, reportId], updated);
+      queryClient.invalidateQueries({ queryKey: ["reports", currentProjectId] });
       showToast({ type: "success", title: "Đã lưu thay đổi" });
       setIsEditing(false);
     },
@@ -111,11 +129,11 @@ export function ReportDetailPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => deleteReport(String(projectId), String(reportId)),
+    mutationFn: () => deleteReport(currentProjectId, String(reportId)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["reports", currentProjectId] });
       showToast({ type: "success", title: "Đã xóa báo cáo" });
-      navigate(`/projects/${projectId}/reports`);
+      navigate(`/projects/${currentProjectId}/reports`);
     },
     onError: (e: unknown) => {
       showToast({ type: "error", title: "Lỗi", description: e instanceof Error ? e.message : "Không thể xóa" });
@@ -124,9 +142,9 @@ export function ReportDetailPage() {
 
   const statusMutation = useMutation({
     mutationFn: (status: "DRAFT" | "SENT") =>
-      updateReportStatus(String(projectId), String(reportId), status),
+      updateReportStatus(currentProjectId, String(reportId), status),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["report", projectId, reportId], updated);
+      queryClient.setQueryData(["report", currentProjectId, reportId], updated);
       showToast({ type: "success", title: "Đã cập nhật trạng thái" });
     },
     onError: (e: unknown) => {
@@ -135,9 +153,9 @@ export function ReportDetailPage() {
   });
 
   const uploadImageMutation = useMutation({
-    mutationFn: (files: File[]) => uploadReportImages(String(projectId), String(reportId), files),
+    mutationFn: (files: File[]) => uploadReportImages(currentProjectId, String(reportId), files),
     onSuccess: (newImages) => {
-      queryClient.invalidateQueries({ queryKey: ["report", projectId, reportId] });
+      queryClient.invalidateQueries({ queryKey: ["report", currentProjectId, reportId] });
       setPendingImages([]);
       showToast({ type: "success", title: `Đã tải lên ${newImages.length} ảnh` });
     },
@@ -147,9 +165,9 @@ export function ReportDetailPage() {
   });
 
   const deleteImageMutation = useMutation({
-    mutationFn: (imageId: string) => deleteReportImage(String(projectId), String(reportId), imageId),
+    mutationFn: (imageId: string) => deleteReportImage(currentProjectId, String(reportId), imageId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["report", projectId, reportId] });
+      queryClient.invalidateQueries({ queryKey: ["report", currentProjectId, reportId] });
       showToast({ type: "success", title: "Đã xóa ảnh" });
     },
     onError: (e: unknown) => {
@@ -158,10 +176,10 @@ export function ReportDetailPage() {
   });
 
   const submitMutation = useMutation({
-    mutationFn: () => submitReportForApproval(String(projectId), String(reportId)),
+    mutationFn: () => submitReportForApproval(currentProjectId, String(reportId)),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["report", projectId, reportId], updated);
-      queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
+      queryClient.setQueryData(["report", currentProjectId, reportId], updated);
+      queryClient.invalidateQueries({ queryKey: ["reports", currentProjectId] });
       showToast({ type: "success", title: "Đã gửi duyệt báo cáo" });
     },
     onError: (e: unknown) => {
@@ -172,8 +190,8 @@ export function ReportDetailPage() {
   const approveMutation = useMutation({
     mutationFn: () => approveReport(String(reportId)),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["report", projectId, reportId], updated);
-      queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
+      queryClient.setQueryData(["report", currentProjectId, reportId], updated);
+      queryClient.invalidateQueries({ queryKey: ["reports", currentProjectId] });
       showToast({ type: "success", title: "Đã duyệt báo cáo" });
     },
     onError: (e: unknown) => {
@@ -184,8 +202,8 @@ export function ReportDetailPage() {
   const rejectMutation = useMutation({
     mutationFn: (reason: string) => rejectReport(String(reportId), reason),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["report", projectId, reportId], updated);
-      queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
+      queryClient.setQueryData(["report", currentProjectId, reportId], updated);
+      queryClient.invalidateQueries({ queryKey: ["reports", currentProjectId] });
       setShowRejectModal(false);
       setRejectReason("");
       showToast({ type: "success", title: "Đã từ chối báo cáo" });
@@ -195,7 +213,7 @@ export function ReportDetailPage() {
     },
   });
 
-  const isPmOrAdmin = normalizedRole === "ADMIN" || normalizedRole === "PROJECT_MANAGER";
+  const isPmOrAdmin = canProjectAdmin;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -203,7 +221,7 @@ export function ReportDetailPage() {
     setPendingImages(next);
   };
 
-  const canEdit = normalizedRole === "ADMIN" || normalizedRole === "PROJECT_MANAGER" || normalizedRole === "SITE_ENGINEER";
+  const canEdit = canUseReportStandard && report?.createdBy === user?.id;
 
   if (isLoading) {
     return <div className="space-y-3"><SkeletonCard lines={2} /><SkeletonCard lines={2} /></div>;
@@ -222,7 +240,7 @@ export function ReportDetailPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(`/projects/${projectId}/reports`)}
+            onClick={() => navigate(`/projects/${currentProjectId}/reports`)}
             className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 shadow-sm hover:bg-slate-50"
           >
             ← Báo cáo
@@ -256,15 +274,17 @@ export function ReportDetailPage() {
             </div>
           )}
           {/* SE/PM actions */}
-          {canEdit && !isEditing && report.approvalStatus === "PENDING" && (
-            <button
-              onClick={() => submitMutation.mutate()}
-              disabled={submitMutation.isPending}
-              className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 shadow-sm hover:bg-brand-100"
-            >
-              Gửi duyệt
-            </button>
-          )}
+          <PermissionGate projectId={currentProjectId} toolId="DAILY_REPORT" minLevel="STANDARD">
+            {!isEditing && canEdit && report.approvalStatus === "PENDING" && (
+              <button
+                onClick={() => submitMutation.mutate()}
+                disabled={submitMutation.isPending}
+                className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 shadow-sm hover:bg-brand-100"
+              >
+                Gửi duyệt
+              </button>
+            )}
+          </PermissionGate>
           {canEdit && isEditing && (
             <Button variant="secondary" size="sm" onClick={cancelEdit}>Hủy</Button>
           )}
@@ -277,7 +297,7 @@ export function ReportDetailPage() {
               Sửa
             </button>
           )}
-          {canEdit && (
+          {canUseReportAdmin && (
             <button
               onClick={() => { if (confirm("Xóa báo cáo này?")) deleteMutation.mutate(); }}
               disabled={deleteMutation.isPending}
@@ -288,23 +308,25 @@ export function ReportDetailPage() {
           )}
           {/* PM/Admin approval actions */}
           {isPmOrAdmin && report.approvalStatus === "PENDING" && (
-            <>
-              <button
-                onClick={() => approveMutation.mutate()}
-                disabled={approveMutation.isPending}
-                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
-              >
-                <CheckCircle className="h-3.5 w-3.5" />
-                Duyệt
-              </button>
-              <button
-                onClick={() => setShowRejectModal(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                Từ chối
-              </button>
-            </>
+            <SpecialPrivilegeGate projectId={currentProjectId} privilege="QUALITY_SIGNER">
+              <>
+                <button
+                  onClick={() => approveMutation.mutate()}
+                  disabled={approveMutation.isPending}
+                  className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Duyệt
+                </button>
+                <button
+                  onClick={() => setShowRejectModal(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  Từ chối
+                </button>
+              </>
+            </SpecialPrivilegeGate>
           )}
         </div>
       </div>
@@ -491,14 +513,14 @@ export function ReportDetailPage() {
               <div key={img.id} className="relative group rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
                 <div className="aspect-square">
                   <img
-                    src={getReportImageViewUrl(String(projectId), String(reportId), img.id)}
+                    src={getReportImageViewUrl(currentProjectId, String(reportId), img.id)}
                     alt={img.originalName}
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />
                 </div>
                 <p className="truncate px-2 py-1 text-xs text-slate-600">{img.originalName}</p>
-                {canEdit && (
+                {canUseReportAdmin && (
                   <button
                     onClick={() => {
                       if (confirm("Xóa ảnh này?")) deleteImageMutation.mutate(img.id);
@@ -554,4 +576,3 @@ export function ReportDetailPage() {
     </div>
   );
 }
-

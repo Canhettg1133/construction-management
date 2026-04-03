@@ -4,7 +4,7 @@ export const memberRepository = {
   findByProject(projectId: string) {
     return prisma.projectMember.findMany({
       where: { projectId },
-      include: { user: { select: { id: true, name: true, email: true, role: true } } },
+      include: { user: { select: { id: true, name: true, email: true, systemRole: true } } },
       orderBy: { joinedAt: "asc" },
     });
   },

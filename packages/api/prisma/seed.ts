@@ -17,7 +17,7 @@ async function main() {
       name: "Admin",
       email: "admin@construction.local",
       passwordHash,
-      role: "ADMIN",
+      systemRole: "ADMIN",
     },
   });
 

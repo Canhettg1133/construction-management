@@ -29,3 +29,6 @@ export { Popover } from "./Popover";
 export { SkeletonCard } from "./feedback/SkeletonCard";
 export { ErrorState } from "./feedback/ErrorState";
 export { EmptyState } from "./feedback/EmptyState";
+export { PermissionGate } from "./PermissionGate";
+export { SpecialPrivilegeGate } from "./SpecialPrivilegeGate";
+export { AccessDeniedPage } from "./AccessDeniedPage";

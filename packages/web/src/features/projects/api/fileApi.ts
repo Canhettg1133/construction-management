@@ -26,7 +26,26 @@ export async function listProjectFiles(projectId: string, params?: FileListParam
 export async function uploadProjectFile(projectId: string, file: File) {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await api.post<ApiSingleResponse<ProjectFile>>(`/projects/${projectId}/files`, formData, {
+  const res = await api.post<ApiSingleResponse<ProjectFile>>(`/projects/${projectId}/files/upload`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.data;
+}
+
+export async function uploadProjectFileToFolder(
+  projectId: string,
+  file: File,
+  options?: { folderId?: string; tags?: string }
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (options?.folderId) {
+    formData.append("folder_id", options.folderId);
+  }
+  if (options?.tags) {
+    formData.append("tags", options.tags);
+  }
+  const res = await api.post<ApiSingleResponse<ProjectFile>>(`/projects/${projectId}/files/upload`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data.data;
@@ -38,4 +57,8 @@ export async function deleteProjectFile(projectId: string, fileId: string) {
 
 export function getFileDownloadUrl(projectId: string, fileId: string) {
   return `/api/v1/projects/${projectId}/files/${fileId}/download`;
+}
+
+export function getFileViewUrl(projectId: string, fileId: string) {
+  return `/api/v1/projects/${projectId}/files/${fileId}/view`;
 }

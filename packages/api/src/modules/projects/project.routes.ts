@@ -10,6 +10,6 @@ router.use(authenticate);
 router.get("/", asyncHandler(projectController.list));
 router.get("/:id", asyncHandler(projectController.getById));
 router.post("/", authorize("ADMIN"), validate(createProjectSchema), asyncHandler(projectController.create));
-router.patch("/:id", authorize("ADMIN", "PROJECT_MANAGER"), validate(updateProjectSchema), asyncHandler(projectController.update));
+router.patch("/:id", authorize("ADMIN"), validate(updateProjectSchema), asyncHandler(projectController.update));
 
 export default router;

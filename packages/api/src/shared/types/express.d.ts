@@ -1,4 +1,4 @@
-import type { UserRole } from "@construction/shared";
+import type { ProjectRole, SystemRole, UserProjectPermissions } from "@construction/shared";
 
 declare global {
   namespace Express {
@@ -6,8 +6,17 @@ declare global {
       user?: {
         id: string;
         email: string;
-        role: UserRole;
+        systemRole: SystemRole;
       };
+      projectMembership?: {
+        projectId: string;
+        userId: string;
+        systemRole: SystemRole;
+        projectRole: ProjectRole | null;
+        isMember: boolean;
+        isSystemAdmin: boolean;
+      };
+      userPermissions?: UserProjectPermissions;
     }
   }
 }

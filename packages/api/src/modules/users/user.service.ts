@@ -5,10 +5,10 @@ import { auditService } from "../audit/audit.service";
 import { AuditEntityType } from "@prisma/client";
 
 export const userService = {
-  async list(page: number, pageSize: number, role?: string, q?: string) {
+  async list(page: number, pageSize: number, systemRole?: string, q?: string) {
     const [users, total] = await Promise.all([
-      userRepository.findAll(page, pageSize, role, q),
-      userRepository.countAll(role, q),
+      userRepository.findAll(page, pageSize, systemRole, q),
+      userRepository.countAll(systemRole, q),
     ]);
     return { users, total };
   },
@@ -19,7 +19,7 @@ export const userService = {
     return user;
   },
 
-  async create(data: { name: string; email: string; password: string; role: string; phone?: string; createdBy?: string }) {
+  async create(data: { name: string; email: string; password: string; systemRole: string; phone?: string; createdBy?: string }) {
     const existing = await userRepository.findByEmail(data.email.toLowerCase());
     if (existing) throw new ConflictError("Email đã tồn tại");
 
@@ -28,7 +28,7 @@ export const userService = {
       name: data.name,
       email: data.email.toLowerCase(),
       passwordHash,
-      role: data.role,
+      systemRole: data.systemRole,
       phone: data.phone,
     });
 
@@ -45,7 +45,7 @@ export const userService = {
     return created;
   },
 
-  async update(id: string, data: { name?: string; role?: string; phone?: string }, updatedBy?: string) {
+  async update(id: string, data: { name?: string; systemRole?: string; phone?: string }, updatedBy?: string) {
     const user = await userRepository.findById(id);
     if (!user) throw new NotFoundError("Không tìm thấy user");
 

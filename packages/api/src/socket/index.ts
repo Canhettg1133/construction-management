@@ -3,12 +3,12 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
-import type { UserRole } from "@construction/shared";
+import type { SystemRole } from "@construction/shared";
 
 interface JwtPayload {
   id: string;
   email: string;
-  role: UserRole;
+  systemRole: SystemRole;
 }
 
 let io: SocketIOServer | null = null;

@@ -1,25 +1,46 @@
 import { create } from "zustand";
-import type { User, UserRole } from "@construction/shared";
+import type { User, SystemRole, UserProjectPermissions } from "@construction/shared";
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   initialized: boolean;
+  projectPermissions: Record<string, UserProjectPermissions>;
   setUser: (user: User | null) => void;
   clearAuth: () => void;
   setInitialized: (value: boolean) => void;
-  hasRole: (roles: UserRole[]) => boolean;
+  hasSystemRole: (roles: SystemRole[]) => boolean;
+  setProjectPermissions: (projectId: string, permissions: UserProjectPermissions) => void;
+  clearProjectPermissions: (projectId?: string) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   initialized: false,
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
-  clearAuth: () => set({ user: null, isAuthenticated: false }),
+  projectPermissions: {},
+  setUser: (user) => set({ user, isAuthenticated: !!user, projectPermissions: {} }),
+  clearAuth: () => set({ user: null, isAuthenticated: false, projectPermissions: {} }),
   setInitialized: (value) => set({ initialized: value }),
-  hasRole: (roles) => {
+  hasSystemRole: (roles) => {
     const { user } = get();
-    return user ? roles.includes(user.role) : false;
+    return user ? roles.includes(user.systemRole) : false;
   },
+  setProjectPermissions: (projectId, permissions) =>
+    set((state) => ({
+      projectPermissions: {
+        ...state.projectPermissions,
+        [projectId]: permissions,
+      },
+    })),
+  clearProjectPermissions: (projectId) =>
+    set((state) => {
+      if (!projectId) {
+        return { projectPermissions: {} };
+      }
+
+      const next = { ...state.projectPermissions };
+      delete next[projectId];
+      return { projectPermissions: next };
+    }),
 }));

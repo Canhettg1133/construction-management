@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, X, Filter, CheckSquare, AlertCircle, Clock, Ban } from "lucide-react";
 import { listTasks } from "../api/taskApi";
 import { listProjectMembers } from "../../projects/api/memberApi";
+import { PermissionGate } from "../../../shared/components/PermissionGate";
 import { EmptyState } from "../../../shared/components/feedback/EmptyState";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
 import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { useAuthStore } from "../../../store/authStore";
+import { usePermission } from "../../../shared/hooks/usePermission";
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from "@construction/shared";
 import type { Task, TaskStatus, TaskPriority } from "@construction/shared";
 
@@ -84,9 +85,13 @@ function TaskCard({ task, projectId }: { task: Task; projectId: string }) {
 }
 
 export function TaskListPage() {
-  const { user } = useAuthStore();
   const { id: projectId } = useParams();
-  const canCreateTask = user?.role !== "VIEWER";
+  const currentProjectId = projectId ?? "";
+  const { has: canCreateTask } = usePermission({
+    projectId: currentProjectId,
+    toolId: "TASK",
+    minLevel: "STANDARD",
+  });
 
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "">("");
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "">("");
@@ -96,22 +101,22 @@ export function TaskListPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: membersData } = useQuery({
-    queryKey: ["project-members", projectId],
-    queryFn: () => listProjectMembers(String(projectId)),
-    enabled: !!projectId,
+    queryKey: ["project-members", currentProjectId],
+    queryFn: () => listProjectMembers(currentProjectId),
+    enabled: Boolean(currentProjectId),
   });
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["tasks", projectId, statusFilter, priorityFilter, assigneeFilter, deadlineFrom, deadlineTo],
+    queryKey: ["tasks", currentProjectId, statusFilter, priorityFilter, assigneeFilter, deadlineFrom, deadlineTo],
     queryFn: () =>
-      listTasks(String(projectId), {
+      listTasks(currentProjectId, {
         status: statusFilter || undefined,
         priority: priorityFilter || undefined,
         assigned_to: assigneeFilter || undefined,
         from: deadlineFrom || undefined,
         to: deadlineTo || undefined,
       }),
-    enabled: !!projectId,
+    enabled: Boolean(currentProjectId),
   });
 
   const tasks = data?.tasks ?? [];
@@ -150,14 +155,14 @@ export function TaskListPage() {
               </span>
             )}
           </button>
-          {canCreateTask && projectId && (
+          <PermissionGate projectId={currentProjectId} toolId="TASK" minLevel="STANDARD">
             <Link
-              to={`/projects/${projectId}/tasks/new`}
+              to={`/projects/${currentProjectId}/tasks/new`}
               className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700"
             >
               Tạo task
             </Link>
-          )}
+          </PermissionGate>
         </div>
       </div>
 
@@ -285,7 +290,7 @@ export function TaskListPage() {
                 <p className="text-xs text-slate-500">{tasks.length} task phù hợp với bộ lọc</p>
               )}
               {tasks.map((task) => (
-                <TaskCard key={task.id} task={task} projectId={String(projectId)} />
+                <TaskCard key={task.id} task={task} projectId={currentProjectId} />
               ))}
             </>
           )}

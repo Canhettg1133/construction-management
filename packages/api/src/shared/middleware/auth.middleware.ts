@@ -2,12 +2,12 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env";
 import { UnauthorizedError, ForbiddenError } from "../errors";
-import type { UserRole } from "@construction/shared";
+import type { SystemRole } from "@construction/shared";
 
 interface JwtPayload {
   id: string;
   email: string;
-  role: UserRole;
+  systemRole: SystemRole;
 }
 
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
@@ -26,12 +26,12 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
   }
 }
 
-export function authorize(...allowedRoles: UserRole[]) {
+export function authorize(...allowedRoles: SystemRole[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       throw new UnauthorizedError();
     }
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!allowedRoles.includes(req.user.systemRole)) {
       throw new ForbiddenError();
     }
     next();

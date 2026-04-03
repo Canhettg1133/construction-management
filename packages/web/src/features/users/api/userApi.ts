@@ -1,5 +1,5 @@
 import api from "../../../config/api";
-import type { User, UserRole } from "@construction/shared";
+import type { User, SystemRole } from "@construction/shared";
 
 interface ApiListResponse<T> {
   success: true;
@@ -15,7 +15,7 @@ interface ApiSingleResponse<T> {
 interface UserListParams {
   page?: number;
   pageSize?: number;
-  role?: UserRole;
+  systemRole?: SystemRole;
   q?: string;
 }
 
@@ -33,7 +33,7 @@ export async function createUser(payload: {
   name: string;
   email: string;
   password: string;
-  role: UserRole;
+  systemRole: SystemRole;
   phone?: string;
 }) {
   const res = await api.post<ApiSingleResponse<User>>("/users", payload);
@@ -42,7 +42,7 @@ export async function createUser(payload: {
 
 export async function updateUser(id: string, payload: {
   name?: string;
-  role?: UserRole;
+  systemRole?: SystemRole;
   phone?: string;
 }) {
   const res = await api.patch<ApiSingleResponse<User>>(`/users/${id}`, payload);

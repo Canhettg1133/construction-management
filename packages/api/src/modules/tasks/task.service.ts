@@ -49,14 +49,12 @@ export const taskService = {
     return task;
   },
 
-  async update(id: string, data: Record<string, unknown>, userId: string, userRole: string) {
+  async update(id: string, data: Record<string, unknown>, userId: string) {
     const task = await taskRepository.findById(id);
     if (!task) throw new NotFoundError("Không tìm thấy task");
 
-    if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER") {
-      if (task.createdBy !== userId && task.assignedTo !== userId) {
-        throw new ForbiddenError("Bạn không có quyền sửa task này");
-      }
+    if (task.createdBy !== userId && task.assignedTo !== userId) {
+      throw new ForbiddenError("Bạn không có quyền sửa task này");
     }
 
     const updated = await taskRepository.update(id, data);
@@ -72,14 +70,12 @@ export const taskService = {
     return updated;
   },
 
-  async updateStatus(id: string, status: string, userId: string, userRole: string) {
+  async updateStatus(id: string, status: string, userId: string) {
     const task = await taskRepository.findById(id);
     if (!task) throw new NotFoundError("Không tìm thấy task");
 
-    if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER") {
-      if (task.assignedTo !== userId) {
-        throw new ForbiddenError("Bạn không có quyền cập nhật trạng thái task này");
-      }
+    if (task.assignedTo !== userId) {
+      throw new ForbiddenError("Bạn không có quyền cập nhật trạng thái task này");
     }
 
     const updateData: Record<string, unknown> = { status };
@@ -117,16 +113,11 @@ export const taskService = {
     });
   },
 
-  async submitForApproval(id: string, userId: string, userRole: string) {
+  async submitForApproval(id: string, userId: string) {
     const task = await taskRepository.findById(id);
     if (!task) throw new NotFoundError("Không tìm thấy task");
 
-    const canSubmit =
-      userRole === "ADMIN" ||
-      userRole === "PROJECT_MANAGER" ||
-      userRole === "SITE_ENGINEER";
-
-    if (!canSubmit) throw new ForbiddenError("Bạn không có quyền gửi duyệt task này");
+    if (task.assignedTo !== userId) throw new ForbiddenError("Chỉ người được giao mới được nộp duyệt");
     if (!task.requiresApproval) throw new ForbiddenError("Task này không yêu cầu duyệt");
     if (task.approvalStatus !== "PENDING") throw new ForbiddenError("Task đã được xử lý");
 

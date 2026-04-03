@@ -6,8 +6,12 @@ import { getDashboardStats } from "../api/dashboardApi";
 import { TASK_STATUS_LABELS, AUDIT_ACTION_LABELS } from "@construction/shared";
 import type { TaskStatus } from "@construction/shared";
 import {
-  FolderKanban, CheckSquare, FileText, Users, AlertTriangle, TrendingUp
+  FolderKanban, CheckSquare, FileText, Users, AlertTriangle, Bell, CheckCircle, TrendingUp
 } from "lucide-react";
+import { OverdueTasksWidget } from "../components/OverdueTasksWidget";
+import { RiskyProjectsWidget } from "../components/RiskyProjectsWidget";
+import { ActiveMembersWidget } from "../components/ActiveMembersWidget";
+import { WeeklyProgressChart } from "../components/WeeklyProgressChart";
 
 export function DashboardPage() {
   const { user } = useAuthStore();
@@ -51,8 +55,40 @@ export function DashboardPage() {
           <h1>Dashboard</h1>
           <p className="page-subtitle">Tổng quan tiến độ và hoạt động công trường theo dữ liệu realtime.</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm">
-          Vai trò hiện tại: <span className="font-semibold text-slate-800">{user?.role ?? "—"}</span>
+        <div className="flex items-center gap-3">
+          {user?.systemRole === "ADMIN" ? (
+            data.pendingApprovals.taskCount + data.pendingApprovals.reportCount > 0 ? (
+              <div className="relative rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-3.5 w-3.5 animate-pulse text-red-500" />
+                  <span className="font-medium text-red-700">
+                    {data.pendingApprovals.taskCount + data.pendingApprovals.reportCount} cần duyệt
+                  </span>
+                </div>
+                <div className="mt-1 flex gap-2 text-red-500">
+                  {data.pendingApprovals.taskCount > 0 && (
+                    <span>{data.pendingApprovals.taskCount} task</span>
+                  )}
+                  {data.pendingApprovals.taskCount > 0 && data.pendingApprovals.reportCount > 0 && (
+                    <span>·</span>
+                  )}
+                  {data.pendingApprovals.reportCount > 0 && (
+                    <span>{data.pendingApprovals.reportCount} báo cáo</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs shadow-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="font-medium text-emerald-700">Đã duyệt hết</span>
+                </div>
+              </div>
+            )
+          ) : null}
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm">
+            Vai trò hệ thống: <span className="font-semibold text-slate-800">{user?.systemRole ?? "—"}</span>
+          </div>
         </div>
       </div>
 
@@ -128,6 +164,17 @@ export function DashboardPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Module 4: Widgets mới */}
+      {data.weeklyProgress.length > 0 && (
+        <WeeklyProgressChart data={data.weeklyProgress} />
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <OverdueTasksWidget tasks={data.overdueTasks} />
+        <RiskyProjectsWidget projects={data.riskyProjects} />
+        <ActiveMembersWidget members={data.activeMembers} />
       </div>
 
       <div className="app-card">

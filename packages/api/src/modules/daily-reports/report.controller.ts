@@ -28,7 +28,7 @@ export const reportController = {
   },
 
   async update(req: Request, res: Response) {
-    const report = await reportService.update(String(req.params.reportId), req.body, req.user!.id, req.user!.role);
+    const report = await reportService.update(String(req.params.reportId), req.body, req.user!.id);
     return sendSuccess(res, report);
   },
 
@@ -36,8 +36,7 @@ export const reportController = {
     const report = await reportService.updateStatus(
       String(req.params.reportId),
       req.body.status,
-      req.user!.id,
-      req.user!.role
+      req.user!.id
     );
     return sendSuccess(res, report);
   },
@@ -50,8 +49,7 @@ export const reportController = {
   async submitForApproval(req: Request, res: Response) {
     const report = await reportService.submitForApproval(
       String(req.params.reportId),
-      req.user!.id,
-      req.user!.role
+      req.user!.id
     );
     return sendSuccess(res, report);
   },

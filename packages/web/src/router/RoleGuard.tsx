@@ -1,26 +1,11 @@
-import { Navigate, useLocation } from "react-router-dom";
-import type { UserRole } from "@construction/shared";
-import { useAuthStore } from "../store/authStore";
-import { ROUTES } from "../shared/constants/routes";
+import type { SystemRole } from "@construction/shared";
+import { PermissionGuard } from "./PermissionGuard";
 
 interface RoleGuardProps {
-  roles: UserRole[];
+  roles: SystemRole[];
   children: React.ReactNode;
 }
 
 export function RoleGuard({ roles, children }: RoleGuardProps) {
-  const user = useAuthStore((s) => s.user);
-  const location = useLocation();
-
-  if (!user) {
-    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
-  }
-
-  const normalizedRole = user.role?.toUpperCase?.() as UserRole;
-
-  if (!roles.includes(normalizedRole)) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
-  }
-
-  return <>{children}</>;
+  return <PermissionGuard systemRoles={roles}>{children}</PermissionGuard>;
 }

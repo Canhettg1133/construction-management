@@ -31,8 +31,7 @@ export const taskCommentController = {
   async delete(req: Request, res: Response) {
     await taskCommentService.delete(
       String(req.params.commentId),
-      req.user!.id,
-      req.user!.role
+      req.user!.id
     );
     return sendNoContent(res);
   },

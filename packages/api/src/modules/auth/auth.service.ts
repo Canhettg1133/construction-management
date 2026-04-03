@@ -26,7 +26,7 @@ export const authService = {
 
     await authRepository.updateLastLogin(user.id);
 
-    const accessToken = this.generateAccessToken(user.id, user.email, user.role);
+    const accessToken = this.generateAccessToken(user.id, user.email, user.systemRole);
     const refreshToken = this.generateRefreshToken(user.id);
 
     return {
@@ -34,7 +34,7 @@ export const authService = {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        systemRole: user.systemRole,
         phone: user.phone,
         avatarUrl: user.avatarUrl,
       },
@@ -89,8 +89,8 @@ export const authService = {
     await authRepository.updatePassword(userId, passwordHash);
   },
 
-  generateAccessToken(userId: string, email: string, role: string) {
-    return jwt.sign({ id: userId, email, role }, env.JWT_SECRET, {
+  generateAccessToken(userId: string, email: string, systemRole: string) {
+    return jwt.sign({ id: userId, email, systemRole }, env.JWT_SECRET, {
       expiresIn: env.JWT_EXPIRES_IN as string,
     } as jwt.SignOptions);
   },

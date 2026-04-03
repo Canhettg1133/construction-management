@@ -10,7 +10,7 @@ export const createUserSchema = z.object({
       .regex(/[A-Z]/, "Phải có ít nhất 1 chữ hoa")
       .regex(/[a-z]/, "Phải có ít nhất 1 chữ thường")
       .regex(/[0-9]/, "Phải có ít nhất 1 số"),
-    role: z.enum(["ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER", "VIEWER"]),
+    systemRole: z.enum(["ADMIN", "STAFF"]),
     phone: z.string().max(20).optional(),
   }),
 });
@@ -18,7 +18,7 @@ export const createUserSchema = z.object({
 export const updateUserSchema = z.object({
   body: z.object({
     name: z.string().min(1).max(200).optional(),
-    role: z.enum(["ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER", "VIEWER"]).optional(),
+    systemRole: z.enum(["ADMIN", "STAFF"]).optional(),
     phone: z.string().max(20).optional(),
   }),
 });

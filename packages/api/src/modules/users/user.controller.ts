@@ -5,7 +5,7 @@ import { sendSuccess, sendNoContent, parsePagination, buildPaginationMeta } from
 export const userController = {
   async list(req: Request, res: Response) {
     const { page, pageSize } = parsePagination(req.query);
-    const { users, total } = await userService.list(page, pageSize, req.query.role as string, req.query.q as string);
+      const { users, total } = await userService.list(page, pageSize, req.query.systemRole as string, req.query.q as string);
     return sendSuccess(res, users, buildPaginationMeta(total, page, pageSize));
   },
 

@@ -85,17 +85,15 @@ export const reportService = {
     return report;
   },
 
-  async update(id: string, data: Record<string, unknown>, userId: string, userRole: string) {
+  async update(id: string, data: Record<string, unknown>, userId: string) {
     const report = await reportRepository.findById(id);
     if (!report) throw new NotFoundError("Không tìm thấy báo cáo");
 
-    if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER") {
-      if (report.createdBy !== userId) {
-        throw new ForbiddenError("Ban khong co quyen sua bao cao nay");
-      }
-      if (!isWithinDays(report.reportDate, LIMITS.REPORT_EDIT_DAYS)) {
-        throw new ForbiddenError("Khong the sua bao cao da qua 7 ngay");
-      }
+    if (report.createdBy !== userId) {
+      throw new ForbiddenError("Ban khong co quyen sua bao cao nay");
+    }
+    if (!isWithinDays(report.reportDate, LIMITS.REPORT_EDIT_DAYS)) {
+      throw new ForbiddenError("Khong the sua bao cao da qua 7 ngay");
     }
 
     if (typeof data.progress === "number") {
@@ -127,14 +125,12 @@ export const reportService = {
     return updated;
   },
 
-  async updateStatus(id: string, status: string, userId: string, userRole: string) {
+  async updateStatus(id: string, status: string, userId: string) {
     const report = await reportRepository.findById(id);
     if (!report) throw new NotFoundError("Không tìm thấy báo cáo");
 
-    if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER") {
-      if (report.createdBy !== userId) {
-        throw new ForbiddenError("Bạn không có quyền đổi trạng thái báo cáo này");
-      }
+    if (report.createdBy !== userId) {
+      throw new ForbiddenError("Bạn không có quyền đổi trạng thái báo cáo này");
     }
 
     const updated = await reportRepository.update(id, { status });
@@ -150,16 +146,11 @@ export const reportService = {
     return updated;
   },
 
-  async submitForApproval(id: string, userId: string, userRole: string) {
+  async submitForApproval(id: string, userId: string) {
     const report = await reportRepository.findById(id);
     if (!report) throw new NotFoundError("Không tìm thấy báo cáo");
 
-    const canSubmit =
-      userRole === "ADMIN" ||
-      userRole === "PROJECT_MANAGER" ||
-      userRole === "SITE_ENGINEER";
-
-    if (!canSubmit) throw new ForbiddenError("Bạn không có quyền gửi duyệt báo cáo này");
+    if (report.createdBy !== userId) throw new ForbiddenError("Chỉ người tạo báo cáo mới được nộp duyệt");
     if (report.approvalStatus !== "PENDING") throw new ForbiddenError("Báo cáo đã được xử lý");
 
     const updated = await reportRepository.update(id, {

@@ -7,17 +7,60 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
+// ============================================================
+// System Role — cấp công ty
+// ============================================================
+enum SystemRole {
   ADMIN
-  PROJECT_MANAGER
-  SITE_ENGINEER
-  VIEWER
+  STAFF
 }
 
-enum ProjectMemberRole {
-  PROJECT_MANAGER
-  SITE_ENGINEER
-  VIEWER
+// ============================================================
+// Project Role — cấp dự án
+// ============================================================
+enum ProjectRole {
+  PROJECT_MANAGER // Trưởng ban chỉ huy
+  ENGINEER // Kỹ sư công trường
+  SAFETY_OFFICER // Cán bộ an toàn lao động
+  DESIGN_ENGINEER // Kỹ sư thiết kế
+  QUALITY_MANAGER // Kỹ sư quản lý chất lượng
+  WAREHOUSE_KEEPER // Thủ kho vật tư
+  CLIENT // Chủ đầu tư / giám sát
+  VIEWER // Người xem thuần túy
+}
+
+// ============================================================
+// Tool ID — các công cụ trong dự án
+// ============================================================
+enum ToolId {
+  PROJECT
+  TASK
+  DAILY_REPORT
+  FILE
+  DOCUMENT
+  SAFETY
+  QUALITY
+  WAREHOUSE
+  BUDGET
+}
+
+// ============================================================
+// Permission Level — mức quyền trên mỗi tool
+// ============================================================
+enum PermissionLevel {
+  NONE
+  READ
+  STANDARD
+  ADMIN
+}
+
+// ============================================================
+// Special Privilege — quyền đặc biệt theo luật
+// ============================================================
+enum SpecialPrivilege {
+  SAFETY_SIGNER // Ký duyệt báo cáo an toàn (QCVN 18:2014)
+  QUALITY_SIGNER // Ký nghiệm thu chất lượng (NĐ 06/2021)
+  BUDGET_APPROVER // Duyệt giải ngân
 }
 
 enum ProjectStatus {
@@ -64,6 +107,8 @@ enum AuditEntityType {
   USER
   PROJECT
   PROJECT_MEMBER
+  PROJECT_TOOL_PERMISSION
+  SPECIAL_PRIVILEGE_ASSIGNMENT
   DAILY_REPORT
   TASK
   FILE
@@ -83,58 +128,73 @@ enum ApprovalStatus {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String    @db.VarChar(200)
-  email         String    @unique @db.VarChar(255)
-  passwordHash  String    @map("password_hash") @db.VarChar(255)
-  phone         String?   @db.VarChar(20)
-  role          UserRole  @default(VIEWER)
-  avatarUrl     String?   @map("avatar_url") @db.VarChar(500)
-  isActive      Boolean   @default(true) @map("is_active")
-  lastLoginAt   DateTime? @map("last_login_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
+  id           String     @id @default(uuid())
+  name         String     @db.VarChar(200)
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  phone        String?    @db.VarChar(20)
+  systemRole   SystemRole @default(STAFF) @map("system_role")
+  specialty    String?    @map("specialty") @db.VarChar(100)
+  avatarUrl    String?    @map("avatar_url") @db.VarChar(500)
+  isActive     Boolean    @default(true) @map("is_active")
+  lastLoginAt  DateTime?  @map("last_login_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
+  deletedAt    DateTime?  @map("deleted_at")
 
-  createdProjects     Project[]           @relation("ProjectCreator")
+  createdProjects     Project[]                    @relation("ProjectCreator")
   projectMembers      ProjectMember[]
-  createdReports      DailyReport[]       @relation("ReportCreator")
-  assignedTasks       Task[]              @relation("TaskAssignee")
-  createdTasks        Task[]              @relation("TaskCreator")
-  uploadedFiles       ProjectFile[]       @relation("FileUploader")
+  createdReports      DailyReport[]                @relation("ReportCreator")
+  assignedTasks       Task[]                       @relation("TaskAssignee")
+  createdTasks        Task[]                       @relation("TaskCreator")
+  uploadedFiles       ProjectFile[]                @relation("FileUploader")
+  createdFolders      DocumentFolder[]             @relation("FolderCreator")
   auditLogs           AuditLog[]
   passwordResetTokens PasswordResetToken[]
-  comments            TaskComment[]       @relation("CommentAuthor")
+  comments            TaskComment[]                @relation("CommentAuthor")
   notifications       Notification[]
-  approvedReports    DailyReport[]  @relation("ReportApprover")
-  approvedTasks      Task[]         @relation("TaskApprover")
+  approvedReports     DailyReport[]                @relation("ReportApprover")
+  approvedTasks       Task[]                       @relation("TaskApprover")
+  grantedPrivileges   SpecialPrivilegeAssignment[] @relation("PrivilegeGranter")
+  toolPermissions     ProjectToolPermission[]
+  specialPrivileges   SpecialPrivilegeAssignment[]
+  safetyInspections   SafetyReport[]               @relation("SafetyInspectorReports")
+  qualityInspections  QualityReport[]              @relation("QualityInspectorReports")
+  warehouseRequests   WarehouseTransaction[]       @relation("WarehouseRequester")
 
-  @@index([role])
+  @@index([systemRole])
   @@index([isActive])
   @@index([deletedAt])
   @@map("users")
 }
 
 model Project {
-  id          String         @id @default(uuid())
-  code        String         @unique @db.VarChar(50)
-  name        String         @db.VarChar(200)
-  description String?        @db.Text
-  location    String         @db.VarChar(500)
-  clientName  String?        @map("client_name") @db.VarChar(200)
-  startDate   DateTime       @map("start_date") @db.Date
-  endDate     DateTime?      @map("end_date") @db.Date
-  status      ProjectStatus  @default(ACTIVE)
-  progress    Decimal        @default(0.00) @db.Decimal(5, 2)
-  createdBy   String         @map("created_by")
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at")
+  id          String        @id @default(uuid())
+  code        String        @unique @db.VarChar(50)
+  name        String        @db.VarChar(200)
+  description String?       @db.Text
+  location    String        @db.VarChar(500)
+  clientName  String?       @map("client_name") @db.VarChar(200)
+  startDate   DateTime      @map("start_date") @db.Date
+  endDate     DateTime?     @map("end_date") @db.Date
+  status      ProjectStatus @default(ACTIVE)
+  progress    Decimal       @default(0.00) @db.Decimal(5, 2)
+  createdBy   String        @map("created_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at")
 
-  creator      User            @relation("ProjectCreator", fields: [createdBy], references: [id])
-  members      ProjectMember[]
-  dailyReports DailyReport[]
-  tasks        Task[]
-  files        ProjectFile[]
+  creator           User                         @relation("ProjectCreator", fields: [createdBy], references: [id])
+  members           ProjectMember[]
+  dailyReports      DailyReport[]
+  tasks             Task[]
+  files             ProjectFile[]
+  documentFolders   DocumentFolder[]
+  safetyReports     SafetyReport[]
+  qualityReports    QualityReport[]
+  warehouseItems    WarehouseInventory[]
+  budgetItems       BudgetItem[]
+  toolPermissions   ProjectToolPermission[]
+  specialPrivileges SpecialPrivilegeAssignment[]
 
   @@index([status])
   @@index([createdBy])
@@ -143,12 +203,13 @@ model Project {
 }
 
 model ProjectMember {
-  id        String            @id @default(uuid())
-  projectId String            @map("project_id")
-  userId    String            @map("user_id")
-  role      ProjectMemberRole @default(SITE_ENGINEER)
-  joinedAt  DateTime          @default(now()) @map("joined_at")
-  createdAt DateTime          @default(now()) @map("created_at")
+  id        String      @id @default(uuid())
+  projectId String      @map("project_id")
+  userId    String      @map("user_id")
+  role      ProjectRole @default(ENGINEER)
+  specialty String?     @map("specialty") @db.VarChar(100)
+  joinedAt  DateTime    @default(now()) @map("joined_at")
+  createdAt DateTime    @default(now()) @map("created_at")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -160,32 +221,32 @@ model ProjectMember {
 }
 
 model DailyReport {
-  id              String        @id @default(uuid())
-  projectId       String        @map("project_id")
-  createdBy       String        @map("created_by")
-  reportDate      DateTime      @map("report_date") @db.Date
+  id              String           @id @default(uuid())
+  projectId       String           @map("project_id")
+  createdBy       String           @map("created_by")
+  reportDate      DateTime         @map("report_date") @db.Date
   weather         WeatherCondition
-  temperatureMin  Int?          @map("temperature_min")
-  temperatureMax  Int?          @map("temperature_max")
-  workerCount     Int           @default(0) @map("worker_count")
-  workDescription String        @map("work_description") @db.Text
-  issues          String?       @db.Text
-  progress        Decimal       @default(0.00) @db.Decimal(5, 2)
-  notes           String?       @db.Text
-  status          ReportStatus    @default(SENT) @map("status")
-  approvalStatus  ApprovalStatus  @default(PENDING) @map("approval_status")
-  submittedAt     DateTime?       @map("submitted_at")
-  approvedBy     String?         @map("approved_by")
-  approvedAt     DateTime?       @map("approved_at")
-  rejectedReason String?         @map("rejected_reason") @db.Text
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @default(now()) @updatedAt @map("updated_at")
+  temperatureMin  Int?             @map("temperature_min")
+  temperatureMax  Int?             @map("temperature_max")
+  workerCount     Int              @default(0) @map("worker_count")
+  workDescription String           @map("work_description") @db.Text
+  issues          String?          @db.Text
+  progress        Decimal          @default(0.00) @db.Decimal(5, 2)
+  notes           String?          @db.Text
+  status          ReportStatus     @default(SENT) @map("status")
+  approvalStatus  ApprovalStatus   @default(PENDING) @map("approval_status")
+  submittedAt     DateTime?        @map("submitted_at")
+  approvedBy      String?          @map("approved_by")
+  approvedAt      DateTime?        @map("approved_at")
+  rejectedReason  String?          @map("rejected_reason") @db.Text
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at")
 
-  project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  creator User           @relation("ReportCreator", fields: [createdBy], references: [id], onDelete: Restrict)
-  approver User?        @relation("ReportApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
-  images  ReportImage[]
-  tasks   Task[]
+  project  Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator  User          @relation("ReportCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  approver User?         @relation("ReportApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+  images   ReportImage[]
+  tasks    Task[]
 
   @@index([projectId])
   @@index([createdBy])
@@ -212,31 +273,31 @@ model ReportImage {
 }
 
 model Task {
-  id          String       @id @default(uuid())
-  projectId   String       @map("project_id")
-  title       String       @db.VarChar(200)
-  description String?      @db.Text
-  assignedTo  String?      @map("assigned_to")
-  createdBy   String       @map("created_by")
-  reportId    String?      @map("report_id")
-  status      TaskStatus   @default(TO_DO)
-  priority    TaskPriority @default(MEDIUM)
-  dueDate     DateTime?    @map("due_date") @db.Date
-  completedAt DateTime?    @map("completed_at")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at")
-  requiresApproval  Boolean       @default(false) @map("requires_approval")
-  approvalStatus    ApprovalStatus @default(PENDING) @map("approval_status")
-  submittedAt      DateTime?     @map("submitted_at")
-  approvedBy       String?       @map("approved_by")
-  approvedAt       DateTime?     @map("approved_at")
-  rejectedReason   String?       @map("rejected_reason") @db.Text
+  id               String         @id @default(uuid())
+  projectId        String         @map("project_id")
+  title            String         @db.VarChar(200)
+  description      String?        @db.Text
+  assignedTo       String?        @map("assigned_to")
+  createdBy        String         @map("created_by")
+  reportId         String?        @map("report_id")
+  status           TaskStatus     @default(TO_DO)
+  priority         TaskPriority   @default(MEDIUM)
+  dueDate          DateTime?      @map("due_date") @db.Date
+  completedAt      DateTime?      @map("completed_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @default(now()) @updatedAt @map("updated_at")
+  requiresApproval Boolean        @default(false) @map("requires_approval")
+  approvalStatus   ApprovalStatus @default(PENDING) @map("approval_status")
+  submittedAt      DateTime?      @map("submitted_at")
+  approvedBy       String?        @map("approved_by")
+  approvedAt       DateTime?      @map("approved_at")
+  rejectedReason   String?        @map("rejected_reason") @db.Text
 
-  project  Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignee User?        @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
-  creator  User         @relation("TaskCreator", fields: [createdBy], references: [id], onDelete: Restrict)
-  approver User?       @relation("TaskApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
-  report   DailyReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  project  Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?         @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator  User          @relation("TaskCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  approver User?         @relation("TaskApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+  report   DailyReport?  @relation(fields: [reportId], references: [id], onDelete: SetNull)
   comments TaskComment[]
 
   @@index([projectId])
@@ -266,37 +327,69 @@ model TaskComment {
 }
 
 model ProjectFile {
-  id           String   @id @default(uuid())
-  projectId    String   @map("project_id")
-  uploadedBy   String   @map("uploaded_by")
-  fileName     String   @map("file_name") @db.VarChar(255)
-  originalName String   @map("original_name") @db.VarChar(255)
-  fileSize     Int      @map("file_size")
-  mimeType     String   @map("mime_type") @db.VarChar(100)
-  filePath     String   @map("file_path") @db.VarChar(500)
-  fileType     String   @map("file_type") @db.VarChar(50)
-  createdAt    DateTime @default(now()) @map("created_at")
+  id              String    @id @default(uuid())
+  projectId       String    @map("project_id")
+  uploadedBy      String    @map("uploaded_by")
+  folderId        String?   @map("folder_id")
+  fileName        String    @map("file_name") @db.VarChar(255)
+  originalName    String    @map("original_name") @db.VarChar(255)
+  fileSize        Int       @map("file_size")
+  mimeType        String    @map("mime_type") @db.VarChar(100)
+  filePath        String    @map("file_path") @db.VarChar(500)
+  fileType        String    @map("file_type") @db.VarChar(50)
+  version         Int       @default(1)
+  parentVersionId String?   @map("parent_version_id")
+  tags            String?   @db.VarChar(500)
+  deletedAt       DateTime? @map("deleted_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
-  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  uploader User    @relation("FileUploader", fields: [uploadedBy], references: [id], onDelete: Restrict)
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploader      User            @relation("FileUploader", fields: [uploadedBy], references: [id], onDelete: Restrict)
+  folder        DocumentFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  parentVersion ProjectFile?    @relation("ProjectFileVersionChain", fields: [parentVersionId], references: [id], onDelete: SetNull)
+  nextVersions  ProjectFile[]   @relation("ProjectFileVersionChain")
 
   @@index([projectId])
   @@index([uploadedBy])
+  @@index([folderId])
   @@index([fileType])
+  @@index([version])
+  @@index([parentVersionId])
+  @@index([deletedAt])
   @@index([createdAt])
   @@map("project_files")
 }
 
+model DocumentFolder {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  name      String   @db.VarChar(200)
+  parentId  String?  @map("parent_id")
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project  Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent   DocumentFolder?  @relation("DocumentFolderTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children DocumentFolder[] @relation("DocumentFolderTree")
+  creator  User             @relation("FolderCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  files    ProjectFile[]
+
+  @@index([projectId])
+  @@index([parentId])
+  @@index([createdBy])
+  @@map("document_folders")
+}
+
 model AuditLog {
-  id          String           @id @default(uuid())
-  userId      String?          @map("user_id")
+  id          String          @id @default(uuid())
+  userId      String?         @map("user_id")
   action      AuditAction
-  entityType  AuditEntityType  @map("entity_type")
-  entityId    String?          @map("entity_id")
-  description String           @db.Text
-  ipAddress   String?          @map("ip_address") @db.VarChar(45)
-  userAgent   String?          @map("user_agent") @db.VarChar(500)
-  createdAt   DateTime         @default(now()) @map("created_at")
+  entityType  AuditEntityType @map("entity_type")
+  entityId    String?         @map("entity_id")
+  description String          @db.Text
+  ipAddress   String?         @map("ip_address") @db.VarChar(45)
+  userAgent   String?         @map("user_agent") @db.VarChar(500)
+  createdAt   DateTime        @default(now()) @map("created_at")
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -324,14 +417,14 @@ model PasswordResetToken {
 }
 
 model Notification {
-  id         String           @id @default(uuid())
-  userId     String           @map("user_id")
-  title      String           @db.VarChar(255)
-  message    String?          @db.Text
-  type       NotificationType @default(INFO)
-  isRead     Boolean          @default(false) @map("is_read")
-  link       String?          @db.VarChar(500)
-  createdAt  DateTime         @default(now()) @map("created_at")
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  title     String           @db.VarChar(255)
+  message   String?          @db.Text
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false) @map("is_read")
+  link      String?          @db.VarChar(500)
+  createdAt DateTime         @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -339,4 +432,165 @@ model Notification {
   @@index([isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model SafetyReport {
+  id          String         @id @default(uuid())
+  projectId   String         @map("project_id")
+  reportDate  DateTime       @map("report_date") @db.Date
+  inspectorId String         @map("inspector_id")
+  location    String         @db.VarChar(500)
+  description String         @db.Text
+  violations  Int            @default(0)
+  photos      Json?
+  status      ApprovalStatus @default(PENDING)
+  signedBy    String?        @map("signed_by")
+  signedAt    DateTime?      @map("signed_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inspector User    @relation("SafetyInspectorReports", fields: [inspectorId], references: [id], onDelete: Restrict)
+
+  @@index([projectId])
+  @@index([reportDate])
+  @@index([inspectorId])
+  @@map("safety_reports")
+}
+
+model QualityReport {
+  id          String         @id @default(uuid())
+  projectId   String         @map("project_id")
+  reportDate  DateTime       @map("report_date") @db.Date
+  inspectorId String         @map("inspector_id")
+  location    String         @db.VarChar(500)
+  description String         @db.Text
+  status      ApprovalStatus @default(PENDING)
+  signedBy    String?        @map("signed_by")
+  signedAt    DateTime?      @map("signed_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inspector User    @relation("QualityInspectorReports", fields: [inspectorId], references: [id], onDelete: Restrict)
+
+  @@index([projectId])
+  @@index([reportDate])
+  @@index([inspectorId])
+  @@map("quality_reports")
+}
+
+model WarehouseInventory {
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  materialName String   @map("material_name") @db.VarChar(200)
+  unit         String   @db.VarChar(20)
+  quantity     Decimal  @default(0) @db.Decimal(15, 3)
+  minQuantity  Decimal  @default(0) @map("min_quantity") @db.Decimal(15, 3)
+  maxQuantity  Decimal  @default(0) @map("max_quantity") @db.Decimal(15, 3)
+  location     String?  @db.VarChar(200)
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  project      Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  transactions WarehouseTransaction[]
+
+  @@index([projectId])
+  @@map("warehouse_inventory")
+}
+
+model WarehouseTransaction {
+  id          String   @id @default(uuid())
+  inventoryId String   @map("inventory_id")
+  type        String   @db.VarChar(20)
+  quantity    Decimal  @db.Decimal(15, 3)
+  note        String?  @db.Text
+  requestedBy String?  @map("requested_by")
+  approvedBy  String?  @map("approved_by")
+  status      String   @default("PENDING") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  inventory WarehouseInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  requester User?              @relation("WarehouseRequester", fields: [requestedBy], references: [id], onDelete: SetNull)
+
+  @@index([inventoryId])
+  @@index([status])
+  @@index([requestedBy])
+  @@map("warehouse_transactions")
+}
+
+model BudgetItem {
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  category     String   @db.VarChar(100)
+  description  String   @db.VarChar(500)
+  estimatedCost Decimal @map("estimated_cost") @db.Decimal(15, 0)
+  approvedCost Decimal? @map("approved_cost") @db.Decimal(15, 0)
+  spentCost    Decimal  @default(0) @map("spent_cost") @db.Decimal(15, 0)
+  status       String   @default("PENDING") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  project       Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  disbursements BudgetDisbursement[]
+
+  @@index([projectId])
+  @@map("budget_items")
+}
+
+model BudgetDisbursement {
+  id           String    @id @default(uuid())
+  budgetItemId String    @map("budget_item_id")
+  amount       Decimal   @db.Decimal(15, 0)
+  approvedBy   String?   @map("approved_by")
+  approvedAt   DateTime? @map("approved_at")
+  status       String    @default("PENDING") @db.VarChar(20)
+  note         String?   @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  budgetItem BudgetItem @relation(fields: [budgetItemId], references: [id], onDelete: Cascade)
+
+  @@index([budgetItemId])
+  @@index([status])
+  @@map("budget_disbursements")
+}
+
+// ============================================================
+// Project Tool Permission — override quyền trên tool cho từng user × project
+// ============================================================
+model ProjectToolPermission {
+  id        String          @id @default(uuid())
+  projectId String          @map("project_id")
+  userId    String          @map("user_id")
+  toolId    ToolId
+  level     PermissionLevel @default(READ)
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId, toolId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_tool_permissions")
+}
+
+// ============================================================
+// Special Privilege Assignment — quyền đặc biệt cho từng user × project
+// ============================================================
+model SpecialPrivilegeAssignment {
+  id        String           @id @default(uuid())
+  projectId String           @map("project_id")
+  userId    String           @map("user_id")
+  privilege SpecialPrivilege
+  grantedBy String?          @map("granted_by")
+  grantedAt DateTime         @default(now()) @map("granted_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  granter User?   @relation("PrivilegeGranter", fields: [grantedBy], references: [id])
+
+  @@unique([projectId, userId, privilege])
+  @@index([projectId])
+  @@index([userId])
+  @@map("special_privilege_assignments")
 }
