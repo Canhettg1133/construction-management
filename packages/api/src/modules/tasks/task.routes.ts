@@ -13,6 +13,7 @@ router.get("/:taskId", asyncHandler(taskController.getById));
 router.post("/", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), validate(createTaskSchema), asyncHandler(taskController.create));
 router.patch("/:taskId", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), validate(updateTaskSchema), asyncHandler(taskController.update));
 router.patch("/:taskId/status", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), validate(updateTaskStatusSchema), asyncHandler(taskController.updateStatus));
+router.post("/:taskId/submit", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), asyncHandler(taskController.submitForApproval));
 router.delete("/:taskId", authorize("ADMIN", "PROJECT_MANAGER"), asyncHandler(taskController.delete));
 
 // Comment routes

@@ -1,7 +1,8 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuthStore } from "../../../store/authStore";
 import { useUiStore } from "../../../store/uiStore";
-import { useNotificationStore } from "../../../store/notificationStore";
+import { useNotificationStore, selectUnreadCount } from "../../../store/notificationStore";
 import { ROUTES } from "../../constants/routes";
 import {
   LayoutDashboard,
@@ -16,14 +17,17 @@ import {
   Bell,
   Sparkles,
   Settings,
-  ChevronRight,
+  Loader2,
+  ClipboardCheck,
 } from "lucide-react";
 import { logout as logoutApi } from "../../../features/auth/api/authApi";
+import { connectSocket, disconnectSocket } from "../../../socket/socketClient";
 
 const navItems = [
   { to: ROUTES.DASHBOARD, label: "Dashboard", icon: LayoutDashboard },
   { to: ROUTES.PROJECTS, label: "Dự án", icon: FolderKanban },
   { to: ROUTES.USERS, label: "Người dùng", icon: Users, roles: ["ADMIN"] },
+  { to: ROUTES.APPROVALS, label: "Duyệt", icon: ClipboardCheck, roles: ["ADMIN", "PROJECT_MANAGER"] },
   { to: ROUTES.AUDIT_LOGS, label: "Audit Logs", icon: FileText, roles: ["ADMIN", "PROJECT_MANAGER"] },
   { to: ROUTES.SETTINGS, label: "Cài đặt", icon: Settings },
   { to: ROUTES.SETTINGS_PROFILE, label: "Hồ sơ", icon: UserCircle2 },
@@ -33,10 +37,21 @@ const navItems = [
 export function AppLayout() {
   const { user, clearAuth } = useAuthStore();
   const { sidebarOpen, toggleSidebar, setSidebarOpen, toast, clearToast } = useUiStore();
-  const { unreadCount, panelOpen, setPanelOpen, markAllAsRead } = useNotificationStore();
+  const unreadCount = useNotificationStore(selectUnreadCount);
+  const { panelOpen, setPanelOpen, markAllAsRead, fetchNotifications } = useNotificationStore();
   const location = useLocation();
   const navigate = useNavigate();
   const normalizedRole = user?.role?.toUpperCase?.();
+
+  // Connect WebSocket and fetch initial data
+  useEffect(() => {
+    if (!user) return;
+    connectSocket();
+    fetchNotifications();
+    // Fetch unread count once on mount (real-time updates via WebSocket afterwards)
+    useNotificationStore.getState().fetchUnreadCount();
+    return () => disconnectSocket();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -194,8 +209,17 @@ export function AppLayout() {
 }
 
 function NotificationList() {
-  const { notifications, markAsRead, setPanelOpen } = useNotificationStore();
+  const { notifications, markAsRead, setPanelOpen, initialized } = useNotificationStore();
   const n = useNavigate();
+
+  if (!initialized) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
+        <p className="mt-3 text-sm text-slate-400">Đang tải thông báo...</p>
+      </div>
+    );
+  }
 
   if (notifications.length === 0) {
     return (
@@ -213,23 +237,23 @@ function NotificationList() {
         <div
           key={notification.id}
           onClick={() => {
-            if (!notification.read) markAsRead(notification.id);
+            if (!notification.isRead) markAsRead(notification.id);
             if (notification.link) {
               n(notification.link);
               setPanelOpen(false);
             }
           }}
           className={`flex cursor-pointer items-start gap-3 border-b border-slate-100 px-4 py-3 transition-colors hover:bg-slate-50 ${
-            !notification.read ? "bg-brand-50/40" : ""
+            !notification.isRead ? "bg-brand-50/40" : ""
           }`}
         >
           <div className={`mt-0.5 h-2 w-2 flex-shrink-0 rounded-full ${
-            notification.type === "error" ? "bg-red-500" :
-            notification.type === "success" ? "bg-emerald-500" :
-            notification.type === "warning" ? "bg-amber-500" : "bg-brand-500"
+            notification.type === "ERROR" ? "bg-red-500" :
+            notification.type === "SUCCESS" ? "bg-emerald-500" :
+            notification.type === "WARNING" ? "bg-amber-500" : "bg-brand-500"
           }`} />
           <div className="min-w-0 flex-1">
-            <p className={`text-sm ${!notification.read ? "font-semibold text-slate-900" : "font-medium text-slate-700"}`}>
+            <p className={`text-sm ${!notification.isRead ? "font-semibold text-slate-900" : "font-medium text-slate-700"}`}>
               {notification.title}
             </p>
             {notification.message && (
@@ -239,7 +263,7 @@ function NotificationList() {
               {new Date(notification.createdAt).toLocaleString("vi-VN")}
             </p>
           </div>
-          {!notification.read && (
+          {!notification.isRead && (
             <div className="h-2 w-2 flex-shrink-0 rounded-full bg-brand-500" />
           )}
         </div>

@@ -19,7 +19,6 @@ export const reportImageRepository = {
     fileSize: number;
     mimeType: string;
     filePath: string;
-    uploadedBy: string;
   }) {
     return prisma.reportImage.create({ data: data as any });
   },

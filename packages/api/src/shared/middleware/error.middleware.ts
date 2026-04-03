@@ -22,7 +22,7 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
 
   // Prisma known errors
   if (err.name === "PrismaClientKnownRequestError") {
-    const prismaErr = err as { code: string; meta?: Record<string, unknown> };
+    const prismaErr = err as unknown as { code: string; meta?: Record<string, unknown> };
     logger.error({ code: prismaErr.code, meta: prismaErr.meta }, "Prisma error");
 
     if (prismaErr.code === "P2002") {

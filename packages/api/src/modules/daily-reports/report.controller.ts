@@ -46,4 +46,13 @@ export const reportController = {
     await reportService.delete(String(req.params.reportId), req.user!.id);
     return sendNoContent(res);
   },
+
+  async submitForApproval(req: Request, res: Response) {
+    const report = await reportService.submitForApproval(
+      String(req.params.reportId),
+      req.user!.id,
+      req.user!.role
+    );
+    return sendSuccess(res, report);
+  },
 };

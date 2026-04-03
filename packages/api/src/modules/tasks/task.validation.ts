@@ -8,6 +8,7 @@ export const createTaskSchema = z.object({
     reportId: z.string().uuid().optional(),
     priority: z.enum(["LOW", "MEDIUM", "HIGH"]).default("MEDIUM"),
     dueDate: z.coerce.date().optional(),
+    requiresApproval: z.boolean().default(false),
   }),
 });
 

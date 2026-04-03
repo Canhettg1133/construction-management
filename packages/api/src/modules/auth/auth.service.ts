@@ -2,7 +2,8 @@ import * as bcrypt from "@node-rs/bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { authRepository } from "./auth.repository";
-import { UnauthorizedError, ValidationError, ConflictError } from "../../shared/errors";
+import { mailService } from "../../shared/services/mail.service";
+import { UnauthorizedError, ValidationError } from "../../shared/errors";
 import { env } from "../../config/env";
 import { logger } from "../../config/logger";
 
@@ -54,8 +55,8 @@ export const authService = {
 
     await authRepository.createResetToken(user.id, tokenHash, expiresAt);
 
-    // TODO: Gửi email với link reset: ${env.APP_URL}/reset-password?token=${rawToken}
-    logger.info({ userId: user.id }, "Password reset requested");
+    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+    await mailService.sendPasswordReset(user.email, resetUrl);
   },
 
   async resetPassword(token: string, newPassword: string) {

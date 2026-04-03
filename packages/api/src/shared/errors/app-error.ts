@@ -24,6 +24,12 @@ export class ForbiddenError extends AppError {
   }
 }
 
+export class BadRequestError extends AppError {
+  constructor(message = "Yêu cầu không hợp lệ") {
+    super(message, 400, "BAD_REQUEST");
+  }
+}
+
 export class ValidationError extends AppError {
   public readonly details?: Array<{ field: string; message: string }>;
 

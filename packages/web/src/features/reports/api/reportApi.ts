@@ -78,3 +78,12 @@ export async function uploadReportImages(projectId: string, reportId: string, fi
 export async function deleteReportImage(projectId: string, reportId: string, imageId: string): Promise<void> {
   await api.delete(`/projects/${projectId}/reports/${reportId}/images/${imageId}`);
 }
+
+export async function submitReportForApproval(projectId: string, reportId: string): Promise<DailyReport> {
+  const res = await api.post<SingleReportResponse>(`/projects/${projectId}/reports/${reportId}/submit`);
+  return res.data.data;
+}
+
+export function getReportImageViewUrl(projectId: string, reportId: string, imageId: string) {
+  return `/api/v1/projects/${projectId}/reports/${reportId}/images/${imageId}/view`;
+}

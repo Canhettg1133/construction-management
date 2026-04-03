@@ -10,6 +10,8 @@ import fileRoutes from "../modules/files/file.routes";
 import auditRoutes from "../modules/audit/audit.routes";
 import dashboardRoutes from "../modules/dashboard/dashboard.routes";
 import healthRoutes from "../modules/health/health.routes";
+import notificationRoutes from "../modules/notifications/notification.routes";
+import approvalRoutes from "../modules/approvals/approval.routes";
 
 const router: Router = Router();
 
@@ -24,5 +26,7 @@ router.use("/projects/:projectId/tasks", taskRoutes);
 router.use("/projects/:projectId/files", fileRoutes);
 router.use("/audit-logs", auditRoutes);
 router.use("/dashboard", dashboardRoutes);
+router.use("/notifications", notificationRoutes);
+router.use("/approvals", approvalRoutes);
 
 export default router;

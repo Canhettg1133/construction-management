@@ -23,6 +23,10 @@ export async function resetPassword(payload: { token: string; newPassword: strin
   await api.post("/auth/reset-password", payload);
 }
 
+export async function updateProfile(payload: { name?: string; phone?: string }) {
+  await api.patch("/users/me", payload);
+}
+
 export async function changePassword(payload: { currentPassword: string; newPassword: string }) {
   await api.post("/auth/change-password", payload);
 }

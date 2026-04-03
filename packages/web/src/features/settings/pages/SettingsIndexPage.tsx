@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { UserCircle2, KeyRound, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "../../shared/components/Card";
-import { ROUTES } from "../../shared/constants/routes";
+import { Card, CardContent } from "../../../shared/components/Card";
+import { ROUTES } from "../../../shared/constants/routes";
 
 const settingsCards = [
   {

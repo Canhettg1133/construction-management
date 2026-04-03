@@ -8,21 +8,21 @@ export function AppBootstrap() {
   const setInitialized = useAuthStore((s) => s.setInitialized);
 
   useEffect(() => {
-    let active = true;
+    let cancelled = false;
 
     (async () => {
       try {
         const user = await me();
-        if (active) setUser(user);
+        if (!cancelled) setUser(user);
       } catch {
-        if (active) clearAuth();
+        if (!cancelled) clearAuth();
       } finally {
-        if (active) setInitialized(true);
+        if (!cancelled) setInitialized(true);
       }
     })();
 
     return () => {
-      active = false;
+      cancelled = true;
     };
   }, [setUser, clearAuth, setInitialized]);
 

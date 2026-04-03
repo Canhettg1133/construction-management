@@ -23,7 +23,14 @@ export function loginRateLimit(req: Request, _res: Response, next: NextFunction)
     });
 }
 
+const AUTH_EXEMPT_PATHS = ["/auth/me", "/auth/refresh"];
+
 export function apiRateLimit(req: Request, _res: Response, next: NextFunction) {
+  // Exempt high-frequency auth endpoints to avoid 429 on page loads
+  if (AUTH_EXEMPT_PATHS.some((p) => req.path.endsWith(p))) {
+    return next();
+  }
+
   const key = req.ip ?? "unknown";
   apiLimiter
     .consume(key)

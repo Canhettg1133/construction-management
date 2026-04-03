@@ -12,6 +12,7 @@ router.get("/:reportId", asyncHandler(reportController.getById));
 router.post("/", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), validate(createReportSchema), asyncHandler(reportController.create));
 router.patch("/:reportId", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), validate(updateReportSchema), asyncHandler(reportController.update));
 router.patch("/:reportId/status", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), validate(updateReportStatusSchema), asyncHandler(reportController.updateStatus));
+router.post("/:reportId/submit", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), asyncHandler(reportController.submitForApproval));
 router.delete("/:reportId", authorize("ADMIN", "PROJECT_MANAGER"), asyncHandler(reportController.delete));
 
 export default router;

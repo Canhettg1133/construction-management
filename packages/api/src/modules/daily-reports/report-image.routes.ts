@@ -1,5 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
+import fs from "fs";
 import { env } from "../../config/env";
 import { authenticate, authorize, asyncHandler } from "../../shared/middleware";
 import { reportImageController } from "./report-image.controller";
@@ -9,6 +10,7 @@ const router: Router = Router({ mergeParams: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
+    fs.mkdirSync(env.UPLOAD_DIR, { recursive: true });
     cb(null, env.UPLOAD_DIR);
   },
   filename: (_req, file, cb) => {
@@ -31,6 +33,7 @@ const upload = multer({
 router.use(authenticate);
 
 router.get("/", asyncHandler(reportImageController.list));
+router.get("/:imageId/view", asyncHandler(reportImageController.view));
 router.post("/", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), upload.array("images", LIMITS.MAX_REPORT_IMAGES), asyncHandler(reportImageController.upload));
 router.delete("/:imageId", authorize("ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER"), asyncHandler(reportImageController.delete));
 

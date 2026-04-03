@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import path from "path";
-import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import { env } from "../../config/env";
 import { reportImageRepository } from "./report-image.repository";
 import { NotFoundError, ForbiddenError } from "../../shared/errors";
 import { sendSuccess, sendNoContent } from "../../shared/utils";
@@ -17,7 +18,6 @@ function getFileExtension(mimeType: string): string {
 export const reportImageController = {
   async upload(req: Request, res: Response) {
     const { projectId, reportId } = req.params as { projectId: string; reportId: string };
-    const userId = req.user!.id;
     const files = req.files as Express.Multer.File[] | undefined;
 
     if (!files || files.length === 0) {
@@ -30,7 +30,8 @@ export const reportImageController = {
     const images = [];
     for (const file of files) {
       const ext = getFileExtension(file.mimetype);
-      const fileName = `${uuidv4()}${ext}`;
+      const baseName = path.parse(file.filename).name;
+      const fileName = `${baseName}${ext}`;
       const filePath = path.join("projects", projectId, "reports", reportId, "images", fileName);
 
       const image = await reportImageRepository.create({
@@ -40,7 +41,6 @@ export const reportImageController = {
         fileSize: file.size,
         mimeType: file.mimetype,
         filePath,
-        uploadedBy: userId,
       });
       images.push(image);
     }
@@ -51,6 +51,24 @@ export const reportImageController = {
   async list(req: Request, res: Response) {
     const images = await reportImageRepository.findByReport(String(req.params.reportId));
     return sendSuccess(res, images);
+  },
+
+  async view(req: Request, res: Response) {
+    const { reportId, imageId } = req.params as { reportId: string; imageId: string };
+
+    const image = await reportImageRepository.findById(imageId);
+    if (!image || image.reportId !== reportId) {
+      throw new NotFoundError("Khong tim thay anh");
+    }
+
+    const fullPath = path.resolve(env.UPLOAD_DIR, path.basename(image.fileName));
+    if (!fs.existsSync(fullPath)) {
+      throw new NotFoundError("Anh khong ton tai tren disk");
+    }
+
+    res.setHeader("Content-Type", image.mimeType);
+    res.setHeader("Cache-Control", "private, max-age=300");
+    return res.sendFile(fullPath);
   },
 
   async delete(req: Request, res: Response) {
@@ -75,3 +93,4 @@ export const reportImageController = {
     return sendNoContent(res);
   },
 };
+

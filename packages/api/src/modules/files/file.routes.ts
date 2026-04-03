@@ -1,5 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
+import fs from "fs";
 import { fileController } from "./file.controller";
 import { authenticate, authorize, asyncHandler } from "../../shared/middleware";
 import { env } from "../../config/env";
@@ -9,6 +10,7 @@ const router: Router = Router({ mergeParams: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
+    fs.mkdirSync(env.UPLOAD_DIR, { recursive: true });
     cb(null, env.UPLOAD_DIR);
   },
   filename: (_req, file, cb) => {

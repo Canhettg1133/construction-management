@@ -16,6 +16,10 @@ export type AuditAction = "LOGIN" | "LOGOUT" | "CREATE" | "UPDATE" | "DELETE" | 
 
 export type AuditEntityType = "USER" | "PROJECT" | "PROJECT_MEMBER" | "DAILY_REPORT" | "TASK" | "FILE";
 
+export type NotificationType = "INFO" | "SUCCESS" | "WARNING" | "ERROR";
+
+export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface User {
   id: string;
   name: string;
@@ -69,6 +73,11 @@ export interface DailyReport {
   progress: number;
   notes?: string | null;
   status: ReportStatus;
+  approvalStatus: ApprovalStatus;
+  submittedAt?: string | null;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  rejectedReason?: string | null;
   createdAt: string;
   updatedAt: string;
   creator?: User;
@@ -99,6 +108,12 @@ export interface Task {
   priority: TaskPriority;
   dueDate?: string | null;
   completedAt?: string | null;
+  requiresApproval: boolean;
+  approvalStatus: ApprovalStatus;
+  submittedAt?: string | null;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  rejectedReason?: string | null;
   createdAt: string;
   updatedAt: string;
   assignee?: User;
@@ -153,4 +168,15 @@ export interface TaskComment {
   createdAt: string;
   updatedAt: string;
   author?: User;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message?: string | null;
+  type: NotificationType;
+  isRead: boolean;
+  link?: string | null;
+  createdAt: string;
 }

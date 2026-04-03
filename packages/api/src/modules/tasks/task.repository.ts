@@ -39,8 +39,15 @@ export const taskRepository = {
     });
   },
 
-  create(data: { projectId: string; title: string; createdBy: string; description?: string; assignedTo?: string; reportId?: string; priority?: string; dueDate?: Date }) {
+  create(data: { projectId: string; title: string; createdBy: string; description?: string; assignedTo?: string; reportId?: string; priority?: string; dueDate?: Date; requiresApproval?: boolean }) {
     return prisma.task.create({ data: data as any });
+  },
+
+  getProjectPmIds(projectId: string) {
+    return prisma.projectMember.findMany({
+      where: { projectId, role: "PROJECT_MANAGER" },
+      select: { userId: true },
+    }).then((rows) => rows.map((r) => r.userId));
   },
 
   update(id: string, data: Record<string, unknown>) {

@@ -38,4 +38,13 @@ export const taskController = {
     await taskService.delete(String(req.params.taskId), req.user!.id);
     return sendNoContent(res);
   },
+
+  async submitForApproval(req: Request, res: Response) {
+    const task = await taskService.submitForApproval(
+      String(req.params.taskId),
+      req.user!.id,
+      req.user!.role
+    );
+    return sendSuccess(res, task);
+  },
 };

@@ -7,6 +7,7 @@ export const ROUTES = {
   PROJECT_TASKS: (id: string) => `/projects/${id}/tasks`,
   PROJECT_FILES: (id: string) => `/projects/${id}/files`,
   USERS: "/users",
+  APPROVALS: "/approvals",
   AUDIT_LOGS: "/audit-logs",
   SETTINGS: "/settings",
   SETTINGS_PROFILE: "/settings/profile",

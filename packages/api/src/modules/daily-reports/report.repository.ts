@@ -49,6 +49,30 @@ export const reportRepository = {
     });
   },
 
+  findLatestBeforeDate(projectId: string, reportDate: Date, excludeId?: string) {
+    return prisma.dailyReport.findFirst({
+      where: {
+        projectId,
+        reportDate: { lt: reportDate },
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      orderBy: { reportDate: "desc" },
+      select: { id: true, reportDate: true, progress: true },
+    });
+  },
+
+  findEarliestAfterDate(projectId: string, reportDate: Date, excludeId?: string) {
+    return prisma.dailyReport.findFirst({
+      where: {
+        projectId,
+        reportDate: { gt: reportDate },
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      orderBy: { reportDate: "asc" },
+      select: { id: true, reportDate: true, progress: true },
+    });
+  },
+
   create(data: { projectId: string; createdBy: string; reportDate: Date; weather: string; workerCount: number; workDescription: string; progress: number; temperatureMin?: number; temperatureMax?: number; issues?: string; notes?: string; status?: "DRAFT" | "SENT" }) {
     return prisma.dailyReport.create({ data: data as any });
   },
@@ -71,5 +95,12 @@ export const reportRepository = {
         ],
       },
     });
+  },
+
+  getProjectPmIds(projectId: string) {
+    return prisma.projectMember.findMany({
+      where: { projectId, role: "PROJECT_MANAGER" },
+      select: { userId: true },
+    }).then((rows) => rows.map((r) => r.userId));
   },
 };

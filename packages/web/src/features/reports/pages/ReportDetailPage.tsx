@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Edit2, Trash2, Upload, X, Image as ImageIcon,
-  Save, AlertCircle
+  Edit2, Trash2, Upload, X,
+  Save, AlertCircle, CheckCircle, XCircle,
 } from "lucide-react";
 import {
   getReport,
@@ -15,7 +15,10 @@ import {
   uploadReportImages,
   deleteReportImage,
   updateReportStatus,
+  submitReportForApproval,
+  getReportImageViewUrl,
 } from "../api/reportApi";
+import { approveReport, rejectReport } from "../../approvals/api/approvalApi";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
 import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
 import { Button } from "../../../shared/components/Button";
@@ -53,6 +56,8 @@ export function ReportDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [saveError, setSaveError] = useState("");
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   const { data: report, isLoading, isError } = useQuery({
     queryKey: ["report", projectId, reportId],
@@ -152,6 +157,46 @@ export function ReportDetailPage() {
     },
   });
 
+  const submitMutation = useMutation({
+    mutationFn: () => submitReportForApproval(String(projectId), String(reportId)),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["report", projectId, reportId], updated);
+      queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
+      showToast({ type: "success", title: "Đã gửi duyệt báo cáo" });
+    },
+    onError: (e: unknown) => {
+      showToast({ type: "error", title: "Lỗi", description: e instanceof Error ? e.message : "Gửi duyệt thất bại" });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: () => approveReport(String(reportId)),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["report", projectId, reportId], updated);
+      queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
+      showToast({ type: "success", title: "Đã duyệt báo cáo" });
+    },
+    onError: (e: unknown) => {
+      showToast({ type: "error", title: "Lỗi", description: e instanceof Error ? e.message : "Duyệt thất bại" });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (reason: string) => rejectReport(String(reportId), reason),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["report", projectId, reportId], updated);
+      queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
+      setShowRejectModal(false);
+      setRejectReason("");
+      showToast({ type: "success", title: "Đã từ chối báo cáo" });
+    },
+    onError: (e: unknown) => {
+      showToast({ type: "error", title: "Lỗi", description: e instanceof Error ? e.message : "Từ chối thất bại" });
+    },
+  });
+
+  const isPmOrAdmin = normalizedRole === "ADMIN" || normalizedRole === "PROJECT_MANAGER";
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const next = [...pendingImages, ...files].slice(0, LIMITS.MAX_REPORT_IMAGES);
@@ -199,27 +244,65 @@ export function ReportDetailPage() {
           }`}>
             {report.status === "SENT" ? "Đã gửi" : "Nháp"}
           </span>
+          {report.approvalStatus === "APPROVED" && (
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Đã duyệt</span>
+          )}
+          {report.approvalStatus === "REJECTED" && (
+            <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">Từ chối</span>
+          )}
+          {report.approvalStatus === "REJECTED" && report.rejectedReason && (
+            <div className="mt-2 rounded-lg border border-red-100 bg-red-50 p-2 text-xs text-red-600">
+              <span className="font-semibold">Lý do từ chối:</span> {report.rejectedReason}
+            </div>
+          )}
+          {/* SE/PM actions */}
+          {canEdit && !isEditing && report.approvalStatus === "PENDING" && (
+            <button
+              onClick={() => submitMutation.mutate()}
+              disabled={submitMutation.isPending}
+              className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 shadow-sm hover:bg-brand-100"
+            >
+              Gửi duyệt
+            </button>
+          )}
+          {canEdit && isEditing && (
+            <Button variant="secondary" size="sm" onClick={cancelEdit}>Hủy</Button>
+          )}
+          {canEdit && !isEditing && (
+            <button
+              onClick={startEdit}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+              Sửa
+            </button>
+          )}
           {canEdit && (
+            <button
+              onClick={() => { if (confirm("Xóa báo cáo này?")) deleteMutation.mutate(); }}
+              disabled={deleteMutation.isPending}
+              className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {/* PM/Admin approval actions */}
+          {isPmOrAdmin && report.approvalStatus === "PENDING" && (
             <>
-              {isEditing ? (
-                <Button variant="secondary" size="sm" onClick={cancelEdit}>Hủy</Button>
-              ) : (
-                <button
-                  onClick={startEdit}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  Sửa
-                </button>
-              )}
               <button
-                onClick={() => {
-                  if (confirm("Xóa báo cáo này?")) deleteMutation.mutate();
-                }}
-                disabled={deleteMutation.isPending}
-                className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50"
+                onClick={() => approveMutation.mutate()}
+                disabled={approveMutation.isPending}
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <CheckCircle className="h-3.5 w-3.5" />
+                Duyệt
+              </button>
+              <button
+                onClick={() => setShowRejectModal(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                Từ chối
               </button>
             </>
           )}
@@ -241,9 +324,9 @@ export function ReportDetailPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className="form-label">Thời tiết</label>
+              <label className="form-label">Thoi tiet</label>
               <select {...register("weather")} className="form-input">
                 {WEATHER_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -251,13 +334,18 @@ export function ReportDetailPage() {
               </select>
             </div>
             <div>
-              <label className="form-label">Số công nhân</label>
+              <label className="form-label">So cong nhan</label>
               <input {...register("workerCount")} type="number" min={0} className="form-input" />
+            </div>
+            <div>
+              <label className="form-label">Tien do (%)</label>
+              <input {...register("progress")} type="number" min={0} max={100} className="form-input" />
+              <p className="form-help">Tien do luy ke, khong giam so voi cac bao cao truoc.</p>
             </div>
           </div>
 
           <div>
-            <label className="form-label">Công việc đã làm</label>
+            <label className="form-label">Cong viec da lam</label>
             <textarea {...register("workDescription")} rows={4} className="form-input" />
             {errors.workDescription && <p className="form-error">{errors.workDescription.message}</p>}
           </div>
@@ -364,8 +452,13 @@ export function ReportDetailPage() {
             <div className="grid grid-cols-3 gap-2">
               {pendingImages.map((file, idx) => (
                 <div key={`${file.name}-${idx}`} className="relative group rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-                  <div className="aspect-square flex items-center justify-center">
-                    <ImageIcon className="h-8 w-8 text-slate-300" />
+                  <div className="aspect-square">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      className="h-full w-full object-cover"
+                      onLoad={(e) => URL.revokeObjectURL((e.currentTarget as HTMLImageElement).src)}
+                    />
                   </div>
                   <p className="truncate px-1 py-0.5 text-xs text-slate-600">{file.name}</p>
                   <button
@@ -396,8 +489,13 @@ export function ReportDetailPage() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {displayImages.map((img) => (
               <div key={img.id} className="relative group rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
-                <div className="aspect-square flex items-center justify-center">
-                  <ImageIcon className="h-10 w-10 text-slate-300" />
+                <div className="aspect-square">
+                  <img
+                    src={getReportImageViewUrl(String(projectId), String(reportId), img.id)}
+                    alt={img.originalName}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
                 <p className="truncate px-2 py-1 text-xs text-slate-600">{img.originalName}</p>
                 {canEdit && (
@@ -416,6 +514,44 @@ export function ReportDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <h2 className="text-base font-semibold text-slate-900">Từ chối báo cáo</h2>
+              <button onClick={() => setShowRejectModal(false)} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4 p-5">
+              <div>
+                <label className="form-label">Lý do từ chối</label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={4}
+                  className="form-input"
+                  placeholder="Nhập lý do từ chối..."
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" onClick={() => setShowRejectModal(false)}>Hủy</Button>
+                <Button
+                  onClick={() => rejectMutation.mutate(rejectReason)}
+                  isLoading={rejectMutation.isPending}
+                  disabled={!rejectReason.trim()}
+                >
+                  Từ chối
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

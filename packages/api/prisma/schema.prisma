@@ -69,6 +69,19 @@ enum AuditEntityType {
   FILE
 }
 
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id            String    @id @default(uuid())
   name          String    @db.VarChar(200)
@@ -92,6 +105,9 @@ model User {
   auditLogs           AuditLog[]
   passwordResetTokens PasswordResetToken[]
   comments            TaskComment[]       @relation("CommentAuthor")
+  notifications       Notification[]
+  approvedReports    DailyReport[]  @relation("ReportApprover")
+  approvedTasks      Task[]         @relation("TaskApprover")
 
   @@index([role])
   @@index([isActive])
@@ -156,12 +172,18 @@ model DailyReport {
   issues          String?       @db.Text
   progress        Decimal       @default(0.00) @db.Decimal(5, 2)
   notes           String?       @db.Text
-  status          ReportStatus  @default(SENT) @map("status")
+  status          ReportStatus    @default(SENT) @map("status")
+  approvalStatus  ApprovalStatus  @default(PENDING) @map("approval_status")
+  submittedAt     DateTime?       @map("submitted_at")
+  approvedBy     String?         @map("approved_by")
+  approvedAt     DateTime?       @map("approved_at")
+  rejectedReason String?         @map("rejected_reason") @db.Text
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @default(now()) @updatedAt @map("updated_at")
 
   project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   creator User           @relation("ReportCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  approver User?        @relation("ReportApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
   images  ReportImage[]
   tasks   Task[]
 
@@ -201,12 +223,19 @@ model Task {
   priority    TaskPriority @default(MEDIUM)
   dueDate     DateTime?    @map("due_date") @db.Date
   completedAt DateTime?    @map("completed_at")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at")
+  requiresApproval  Boolean       @default(false) @map("requires_approval")
+  approvalStatus    ApprovalStatus @default(PENDING) @map("approval_status")
+  submittedAt      DateTime?     @map("submitted_at")
+  approvedBy       String?       @map("approved_by")
+  approvedAt       DateTime?     @map("approved_at")
+  rejectedReason   String?       @map("rejected_reason") @db.Text
 
   project  Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee User?        @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
   creator  User         @relation("TaskCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  approver User?       @relation("TaskApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
   report   DailyReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
   comments TaskComment[]
 
@@ -292,4 +321,22 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("password_reset_tokens")
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  userId     String           @map("user_id")
+  title      String           @db.VarChar(255)
+  message    String?          @db.Text
+  type       NotificationType @default(INFO)
+  isRead     Boolean          @default(false) @map("is_read")
+  link       String?          @db.VarChar(500)
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
 }

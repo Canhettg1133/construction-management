@@ -28,4 +28,9 @@ export const userController = {
     const user = await userService.toggleStatus(String(req.params.id), req.body.isActive, req.user?.id);
     return sendSuccess(res, user);
   },
+
+  async updateMe(req: Request, res: Response) {
+    const user = await userService.updateMe(String(req.user!.id), req.body);
+    return sendSuccess(res, user);
+  },
 };

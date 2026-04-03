@@ -16,9 +16,36 @@ const taskSchema = z.object({
   assignee: z.string().min(1, "Vui lòng chọn người phụ trách"),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
   dueDate: z.string().min(1, "Vui lòng chọn deadline"),
+  requiresApproval: z.boolean(),
 });
 
 type TaskForm = z.infer<typeof taskSchema>;
+
+function getCachedTasks(cache: unknown): Task[] {
+  if (Array.isArray(cache)) {
+    return cache;
+  }
+
+  if (cache && typeof cache === "object" && "tasks" in cache) {
+    const nestedTasks = (cache as { tasks?: unknown }).tasks;
+    if (Array.isArray(nestedTasks)) {
+      return nestedTasks;
+    }
+  }
+
+  return [];
+}
+
+function mergeTasksIntoCache(cache: unknown, tasks: Task[]) {
+  if (cache && typeof cache === "object" && "tasks" in cache) {
+    return {
+      ...(cache as Record<string, unknown>),
+      tasks,
+    };
+  }
+
+  return tasks;
+}
 
 export function TaskCreatePage() {
   const [error, setError] = useState("");
@@ -46,6 +73,7 @@ export function TaskCreatePage() {
       assignee: "",
       priority: "MEDIUM",
       dueDate: "",
+      requiresApproval: false,
     },
   });
 
@@ -57,11 +85,13 @@ export function TaskCreatePage() {
         assignedTo: payload.assignee || undefined,
         priority: payload.priority,
         dueDate: payload.dueDate || undefined,
+        requiresApproval: payload.requiresApproval,
       }),
     onMutate: async (payload) => {
       const queryKey = ["tasks", projectId] as const;
       await queryClient.cancelQueries({ queryKey });
-      const previousTasks = queryClient.getQueryData<Task[]>(queryKey) ?? [];
+      const previousCache = queryClient.getQueryData(queryKey);
+      const previousTasks = getCachedTasks(previousCache);
 
       const optimisticTask: Task = {
         id: `temp-${crypto.randomUUID()}`,
@@ -75,18 +105,21 @@ export function TaskCreatePage() {
         priority: payload.priority,
         dueDate: payload.dueDate || null,
         completedAt: null,
+        requiresApproval: payload.requiresApproval,
+        approvalStatus: "PENDING",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
-      queryClient.setQueryData<Task[]>(queryKey, [optimisticTask, ...previousTasks]);
-      return { previousTasks, queryKey };
+      queryClient.setQueryData(queryKey, mergeTasksIntoCache(previousCache, [optimisticTask, ...previousTasks]));
+      return { previousCache, queryKey };
     },
     onSuccess: async (createdTask, _payload, context) => {
       if (context) {
-        queryClient.setQueryData<Task[]>(context.queryKey, (current = []) => {
-          const withoutTemp = current.filter((task) => !task.id.startsWith("temp-"));
-          return [createdTask, ...withoutTemp];
+        queryClient.setQueryData(context.queryKey, (current: unknown) => {
+          const currentTasks = getCachedTasks(current);
+          const withoutTemp = currentTasks.filter((task) => !task.id.startsWith("temp-"));
+          return mergeTasksIntoCache(current, [createdTask, ...withoutTemp]);
         });
       }
 
@@ -101,7 +134,7 @@ export function TaskCreatePage() {
     },
     onError: (e, _payload, context) => {
       if (context) {
-        queryClient.setQueryData(context.queryKey, context.previousTasks);
+        queryClient.setQueryData(context.queryKey, context.previousCache);
       }
       const message = e instanceof Error ? e.message : "Tạo task thất bại";
       setError(message);
@@ -165,6 +198,18 @@ export function TaskCreatePage() {
           <label className="form-label">Deadline</label>
           <input {...register("dueDate")} type="date" className="form-input" />
           {errors.dueDate && <p className="form-error">{errors.dueDate.message}</p>}
+        </div>
+
+        <div>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              {...register("requiresApproval")}
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span className="text-sm text-slate-700">Yêu cầu duyệt trước khi hoàn thành</span>
+          </label>
+          <p className="mt-1 text-xs text-slate-500">Khi bật, task sẽ cần được PM duyệt trước khi đánh dấu hoàn thành.</p>
         </div>
 
         <div className="sticky bottom-0 -mx-4 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">

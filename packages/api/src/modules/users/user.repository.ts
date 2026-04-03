@@ -50,6 +50,14 @@ export const userRepository = {
     return prisma.user.update({ where: { id }, data: data as any });
   },
 
+  updateMe(id: string, data: { name?: string; phone?: string }) {
+    return prisma.user.update({
+      where: { id },
+      data: { name: data.name, phone: data.phone },
+      select: { id: true, name: true, email: true, role: true, phone: true, avatarUrl: true, isActive: true, lastLoginAt: true, createdAt: true, updatedAt: true },
+    });
+  },
+
   toggleStatus(id: string, isActive: boolean) {
     return prisma.user.update({
       where: { id },

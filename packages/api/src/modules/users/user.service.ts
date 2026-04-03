@@ -82,4 +82,11 @@ export const userService = {
 
     return updated;
   },
+
+  async updateMe(id: string, data: { name?: string; phone?: string }) {
+    const user = await userRepository.findById(id);
+    if (!user) throw new NotFoundError("Không tìm thấy user");
+
+    return userRepository.updateMe(id, data);
+  },
 };

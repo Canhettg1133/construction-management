@@ -38,6 +38,7 @@ export async function createTask(projectId: string, payload: {
   assignedTo?: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
   dueDate?: string;
+  requiresApproval?: boolean;
 }) {
   const res = await api.post<ApiSingleResponse<Task>>(`/projects/${projectId}/tasks`, payload);
   return res.data.data;
@@ -49,6 +50,7 @@ export async function updateTask(projectId: string, taskId: string, payload: {
   assignedTo?: string;
   priority?: "LOW" | "MEDIUM" | "HIGH";
   dueDate?: string;
+  requiresApproval?: boolean;
 }) {
   const res = await api.patch<ApiSingleResponse<Task>>(`/projects/${projectId}/tasks/${taskId}`, payload);
   return res.data.data;
@@ -75,4 +77,9 @@ export async function createTaskComment(projectId: string, taskId: string, conte
 
 export async function deleteTaskComment(projectId: string, taskId: string, commentId: string) {
   await api.delete(`/projects/${projectId}/tasks/${taskId}/comments/${commentId}`);
+}
+
+export async function submitTaskForApproval(projectId: string, taskId: string) {
+  const res = await api.post<ApiSingleResponse<Task>>(`/projects/${projectId}/tasks/${taskId}/submit`);
+  return res.data.data;
 }

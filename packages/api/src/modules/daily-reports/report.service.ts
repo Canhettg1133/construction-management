@@ -1,8 +1,9 @@
 import { reportRepository } from "./report.repository";
-import { NotFoundError, ConflictError, ForbiddenError } from "../../shared/errors";
+import { NotFoundError, ConflictError, ForbiddenError, BadRequestError } from "../../shared/errors";
 import { isWithinDays, LIMITS } from "@construction/shared";
 import { auditService } from "../audit/audit.service";
 import { taskRepository } from "../tasks/task.repository";
+import { notificationTriggers } from "../notifications/notification.triggers";
 import { AuditEntityType } from "@prisma/client";
 
 export const reportService = {
@@ -38,7 +39,21 @@ export const reportService = {
     tasks?: Array<{ title: string; description?: string; assignedTo?: string; priority?: string; dueDate?: Date }>;
   }) {
     const existing = await reportRepository.findByProjectAndDate(data.projectId, data.reportDate);
-    if (existing) throw new ConflictError("Báo cáo cho ngày này đã tồn tại");
+    if (existing) throw new ConflictError("Bao cao cho ngay nay da ton tai");
+
+    const previousReport = await reportRepository.findLatestBeforeDate(data.projectId, data.reportDate);
+    if (previousReport && data.progress < Number(previousReport.progress)) {
+      throw new BadRequestError(
+        `Tien do bao cao phai >= ${previousReport.progress}% (bao cao ngay ${previousReport.reportDate.toLocaleDateString("vi-VN")})`
+      );
+    }
+
+    const nextReport = await reportRepository.findEarliestAfterDate(data.projectId, data.reportDate);
+    if (nextReport && data.progress > Number(nextReport.progress)) {
+      throw new BadRequestError(
+        `Tien do bao cao phai <= ${nextReport.progress}% (bao cao ngay ${nextReport.reportDate.toLocaleDateString("vi-VN")})`
+      );
+    }
 
     const { tasks, isDraft, ...reportData } = data;
     const report = await reportRepository.create({
@@ -76,10 +91,26 @@ export const reportService = {
 
     if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER") {
       if (report.createdBy !== userId) {
-        throw new ForbiddenError("Bạn không có quyền sửa báo cáo này");
+        throw new ForbiddenError("Ban khong co quyen sua bao cao nay");
       }
       if (!isWithinDays(report.reportDate, LIMITS.REPORT_EDIT_DAYS)) {
-        throw new ForbiddenError("Không thể sửa báo cáo đã quá 7 ngày");
+        throw new ForbiddenError("Khong the sua bao cao da qua 7 ngay");
+      }
+    }
+
+    if (typeof data.progress === "number") {
+      const previousReport = await reportRepository.findLatestBeforeDate(report.projectId, report.reportDate, id);
+      if (previousReport && data.progress < Number(previousReport.progress)) {
+        throw new BadRequestError(
+          `Tien do bao cao phai >= ${previousReport.progress}% (bao cao ngay ${previousReport.reportDate.toLocaleDateString("vi-VN")})`
+        );
+      }
+
+      const nextReport = await reportRepository.findEarliestAfterDate(report.projectId, report.reportDate, id);
+      if (nextReport && data.progress > Number(nextReport.progress)) {
+        throw new BadRequestError(
+          `Tien do bao cao phai <= ${nextReport.progress}% (bao cao ngay ${nextReport.reportDate.toLocaleDateString("vi-VN")})`
+        );
       }
     }
 
@@ -119,6 +150,46 @@ export const reportService = {
     return updated;
   },
 
+  async submitForApproval(id: string, userId: string, userRole: string) {
+    const report = await reportRepository.findById(id);
+    if (!report) throw new NotFoundError("Không tìm thấy báo cáo");
+
+    const canSubmit =
+      userRole === "ADMIN" ||
+      userRole === "PROJECT_MANAGER" ||
+      userRole === "SITE_ENGINEER";
+
+    if (!canSubmit) throw new ForbiddenError("Bạn không có quyền gửi duyệt báo cáo này");
+    if (report.approvalStatus !== "PENDING") throw new ForbiddenError("Báo cáo đã được xử lý");
+
+    const updated = await reportRepository.update(id, {
+      submittedAt: new Date(),
+      approvalStatus: "PENDING",
+      status: "SENT",
+    });
+
+    await auditService.log({
+      userId,
+      action: "STATUS_CHANGE",
+      entityType: AuditEntityType.DAILY_REPORT,
+      entityId: id,
+      description: `Đã gửi duyệt báo cáo ngày ${report.reportDate.toLocaleDateString("vi-VN")}`,
+    });
+
+    // Notify PMs of the project
+    const pmIds = await reportRepository.getProjectPmIds(report.projectId);
+    if (pmIds.length > 0) {
+      await notificationTriggers.reportSubmitted({
+        pmIds,
+        reportId: report.id,
+        reportDate: report.reportDate,
+        projectId: report.projectId,
+      });
+    }
+
+    return updated;
+  },
+
   async delete(id: string, userId: string) {
     const report = await reportRepository.findById(id);
     if (!report) throw new NotFoundError("Không tìm thấy báo cáo");
@@ -134,3 +205,5 @@ export const reportService = {
     });
   },
 };
+
+

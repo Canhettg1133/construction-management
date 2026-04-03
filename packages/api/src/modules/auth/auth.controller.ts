@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import { authService } from "./auth.service";
+import { authRepository } from "./auth.repository";
+import { UnauthorizedError } from "../../shared/errors";
 import { sendSuccess } from "../../shared/utils";
 import { env } from "../../config/env";
 import { logger } from "../../config/logger";
@@ -81,6 +83,21 @@ export const authController = {
   },
 
   async me(req: Request, res: Response) {
-    return sendSuccess(res, req.user);
+    const user = await authRepository.findById(req.user!.id);
+    if (!user || user.deletedAt) {
+      throw new UnauthorizedError("Không tìm thấy người dùng");
+    }
+    return sendSuccess(res, {
+      id: user.id,
+      name: user.name ?? "",
+      email: user.email,
+      role: user.role,
+      phone: user.phone ?? null,
+      avatarUrl: user.avatarUrl ?? null,
+      isActive: user.isActive,
+      lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    });
   },
 };

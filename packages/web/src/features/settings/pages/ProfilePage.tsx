@@ -1,18 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import { Button } from "../../../shared/components/Button";
 import { useUiStore } from "../../../store/uiStore";
+import { Button } from "../../../shared/components/Button";
+import { updateProfile } from "../../../features/auth/api/authApi";
 
 export function ProfilePage() {
   const { user, setUser } = useAuthStore();
   const showToast = useUiStore((s) => s.showToast);
-  const [name, setName] = useState(user?.name ?? "");
-  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
-  const onSave = () => {
+  useEffect(() => {
+    if (user) {
+      setName(user.name ?? "");
+      setPhone(user.phone ?? "");
+    }
+  }, [user]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onSave = async () => {
     if (!user) return;
-    setUser({ ...user, name, phone });
-    showToast({ type: "success", title: "Đã lưu hồ sơ", description: "Thông tin cá nhân đã được cập nhật." });
+    setIsLoading(true);
+    try {
+      await updateProfile({ name, phone });
+      setUser({ ...user, name, phone });
+      showToast({ type: "success", title: "Đã lưu hồ sơ", description: "Thông tin cá nhân đã được cập nhật." });
+    } catch {
+      showToast({ type: "error", title: "Lỗi", description: "Không thể lưu hồ sơ. Vui lòng thử lại." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -39,7 +56,7 @@ export function ProfilePage() {
         </div>
 
         <div className="pt-2">
-          <Button onClick={onSave}>Lưu thay đổi</Button>
+          <Button onClick={onSave} isLoading={isLoading}>Lưu thay đổi</Button>
         </div>
       </div>
     </div>

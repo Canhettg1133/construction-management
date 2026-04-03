@@ -1,79 +1,80 @@
 import { create } from "zustand";
-
-export interface Notification {
-  id: string;
-  title: string;
-  message?: string;
-  type: "info" | "success" | "warning" | "error";
-  read: boolean;
-  createdAt: string;
-  link?: string;
-}
+import type { Notification } from "@construction/shared";
+import {
+  listNotifications,
+  getUnreadCount as getUnreadCountApi,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from "../features/notifications/api/notificationApi";
 
 interface NotificationState {
   notifications: Notification[];
+  unreadCount: number;
   panelOpen: boolean;
+  initialized: boolean;
   setPanelOpen: (open: boolean) => void;
-  addNotification: (n: Omit<Notification, "id" | "read" | "createdAt">) => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  get unreadCount() { return this.notifications.filter((n) => !n.read).length; }
+  fetchNotifications: (page?: number, pageSize?: number) => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  addNotification: (notification: Notification) => void;
+  setUnreadCount: (count: number) => void;
 }
 
-const SAMPLE_NOTIFICATIONS: Notification[] = [
-  {
-    id: "notif-1",
-    title: "Báo cáo ngày mới",
-    message: "Nguyễn Văn A đã gửi báo cáo ngày 02/04/2026 cho dự án Khu đô thị Phú Mỹ.",
-    type: "info",
-    read: false,
-    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    link: "/projects/proj-1/reports",
-  },
-  {
-    id: "notif-2",
-    title: "Công việc quá hạn",
-    message: "Công việc 'Kiểm tra kết cấu tầng 3' đã quá hạn 2 ngày.",
-    type: "warning",
-    read: false,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    link: "/projects/proj-1/tasks",
-  },
-  {
-    id: "notif-3",
-    title: "Thành viên mới được thêm",
-    message: "Trần Thị B đã được thêm vào dự án Công trình Trung tâm Thương mại.",
-    type: "success",
-    read: true,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    link: "/projects/proj-2/members",
-  },
-];
+export const selectUnreadCount = (state: NotificationState) => state.unreadCount;
 
 export const useNotificationStore = create<NotificationState>((set) => ({
-  notifications: SAMPLE_NOTIFICATIONS,
+  notifications: [],
+  unreadCount: 0,
   panelOpen: false,
+  initialized: false,
+
   setPanelOpen: (open) => set({ panelOpen: open }),
-  addNotification: (n) =>
-    set((state) => ({
-      notifications: [
-        {
-          ...n,
-          id: crypto.randomUUID(),
-          read: false,
-          createdAt: new Date().toISOString(),
-        },
-        ...state.notifications,
-      ],
-    })),
-  markAsRead: (id) =>
+
+  fetchNotifications: async (page = 1, pageSize = 20) => {
+    try {
+      const { notifications } = await listNotifications({ page, pageSize });
+      set({ notifications, initialized: true });
+    } catch {
+      set({ initialized: true });
+    }
+  },
+
+  fetchUnreadCount: async () => {
+    try {
+      const count = await getUnreadCountApi();
+      set({ unreadCount: count });
+    } catch {
+      // Silently fail
+    }
+  },
+
+  markAsRead: async (id) => {
+    await markNotificationAsRead(id);
     set((state) => ({
       notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
+        n.id === id ? { ...n, isRead: true } : n
       ),
-    })),
-  markAllAsRead: () =>
+      unreadCount: Math.max(0, state.unreadCount - 1),
+    }));
+  },
+
+  markAllAsRead: async () => {
+    await markAllNotificationsAsRead();
     set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, read: true })),
-    })),
+      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+      unreadCount: 0,
+    }));
+  },
+
+  addNotification: (notification) => {
+    set((state) => ({
+      notifications: [notification, ...state.notifications],
+      unreadCount: state.unreadCount + 1,
+    }));
+  },
+
+  setUnreadCount: (count) => {
+    set({ unreadCount: count });
+  },
 }));

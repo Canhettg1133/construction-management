@@ -4,7 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Upload, Image as ImageIcon } from "lucide-react";
+import { AxiosError } from "axios";
+import { X, Upload } from "lucide-react";
 import {
   createReport,
   uploadReportImages,
@@ -25,6 +26,46 @@ const reportSchema = z.object({
 });
 
 type ReportForm = z.infer<typeof reportSchema>;
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof AxiosError) {
+    const apiMessage =
+      (error.response?.data as { error?: { message?: string } } | undefined)?.error?.message;
+    if (apiMessage) return apiMessage;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+function getCachedReports(cache: unknown): DailyReport[] {
+  if (Array.isArray(cache)) {
+    return cache;
+  }
+
+  if (cache && typeof cache === "object" && "reports" in cache) {
+    const nestedReports = (cache as { reports?: unknown }).reports;
+    if (Array.isArray(nestedReports)) {
+      return nestedReports;
+    }
+  }
+
+  return [];
+}
+
+function mergeReportsIntoCache(cache: unknown, reports: DailyReport[]) {
+  if (cache && typeof cache === "object" && "reports" in cache) {
+    return {
+      ...(cache as Record<string, unknown>),
+      reports,
+    };
+  }
+
+  return reports;
+}
 
 export function ReportCreatePage() {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -86,7 +127,8 @@ export function ReportCreatePage() {
     onMutate: async (payload) => {
       const queryKey = ["reports", projectId] as const;
       await queryClient.cancelQueries({ queryKey });
-      const previousReports = queryClient.getQueryData(queryKey);
+      const previousCache = queryClient.getQueryData(queryKey);
+      const previousReports = getCachedReports(previousCache);
 
       const optimisticReport: DailyReport = {
         id: `temp-${crypto.randomUUID()}`,
@@ -100,18 +142,20 @@ export function ReportCreatePage() {
         progress: payload.progress,
         notes: payload.notes || null,
         status: "SENT",
+        approvalStatus: "PENDING",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
-      queryClient.setQueryData<DailyReport[]>(queryKey, [optimisticReport, ...(previousReports as DailyReport[] ?? [])]);
-      return { previousReports, queryKey };
+      queryClient.setQueryData(queryKey, mergeReportsIntoCache(previousCache, [optimisticReport, ...previousReports]));
+      return { previousCache, queryKey };
     },
     onSuccess: async (createdReport, _payload, context) => {
       if (context) {
-        queryClient.setQueryData<DailyReport[]>(context.queryKey, (current = []) => {
-          const withoutTemp = current.filter((report) => !report.id.startsWith("temp-"));
-          return [createdReport, ...withoutTemp];
+        queryClient.setQueryData(context.queryKey, (current: unknown) => {
+          const currentReports = getCachedReports(current);
+          const withoutTemp = currentReports.filter((report) => !report.id.startsWith("temp-"));
+          return mergeReportsIntoCache(current, [createdReport, ...withoutTemp]);
         });
       }
 
@@ -134,19 +178,27 @@ export function ReportCreatePage() {
       setSelectedImages([]);
       navigate(`/projects/${projectId}/reports`);
     },
-    onError: (e, _payload, context) => {
+    onError: (e, payload, context) => {
       if (context) {
-        queryClient.setQueryData(context.queryKey, context.previousReports);
+        queryClient.setQueryData(context.queryKey, context.previousCache);
       }
-      const msg = e instanceof Error ? e.message : "Tạo báo cáo thất bại";
+      const isConflict = e instanceof AxiosError && e.response?.status === 409;
+      const fallback = isConflict
+        ? `Bao cao ngay ${new Date(payload.reportDate).toLocaleDateString("vi-VN")} da ton tai. Vui long chon ngay khac.`
+        : "Tao bao cao that bai";
+      const msg = getApiErrorMessage(e, fallback);
       setGlobalError(msg);
-      showToast({ type: "error", title: "Không thể gửi báo cáo", description: msg });
+      showToast({ type: "error", title: "Khong the gui bao cao", description: msg });
     },
   });
 
   const onSubmit = async (data: ReportForm) => {
     setGlobalError("");
-    await createMutation.mutateAsync(data);
+    try {
+      await createMutation.mutateAsync(data);
+    } catch {
+      // Error UI is handled in onError. Prevent unhandled promise logs in console.
+    }
   };
 
   const WEATHER_OPTIONS = [
@@ -196,6 +248,7 @@ export function ReportCreatePage() {
             <label className="form-label">Tiến độ (%)</label>
             <input {...register("progress")} type="number" min={0} max={100} className="form-input" />
             {errors.progress && <p className="form-error">{errors.progress.message}</p>}
+            <p className="form-help">Tien do luy ke cua du an den ngay bao cao (khong giam so voi bao cao truoc).</p>
           </div>
         </div>
 
@@ -253,8 +306,13 @@ export function ReportCreatePage() {
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {selectedImages.map((file, idx) => (
                 <div key={`${file.name}-${idx}`} className="relative group rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-                  <div className="aspect-square flex items-center justify-center bg-slate-100">
-                    <ImageIcon className="h-8 w-8 text-slate-300" />
+                  <div className="aspect-square bg-slate-100">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      className="h-full w-full object-cover"
+                      onLoad={(e) => URL.revokeObjectURL((e.currentTarget as HTMLImageElement).src)}
+                    />
                   </div>
                   <p className="truncate px-2 py-1 text-xs text-slate-600">{file.name}</p>
                   <button
@@ -293,3 +351,5 @@ export function ReportCreatePage() {
     </div>
   );
 }
+
+
