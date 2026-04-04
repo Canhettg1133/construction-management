@@ -115,10 +115,16 @@ enum AuditEntityType {
 }
 
 enum NotificationType {
-  INFO
-  SUCCESS
-  WARNING
-  ERROR
+  TASK_ASSIGNED
+  TASK_DEADLINE_SOON
+  TASK_OVERDUE
+  REPORT_PENDING_APPROVAL
+  SAFETY_VIOLATION
+  SAFETY_REPORT_PENDING
+  QUALITY_REPORT_PENDING
+  LOW_STOCK_ALERT
+  TRANSACTION_PENDING
+  PROJECT_PROGRESS_UPDATE
 }
 
 enum ApprovalStatus {
@@ -419,18 +425,17 @@ model PasswordResetToken {
 model Notification {
   id        String           @id @default(uuid())
   userId    String           @map("user_id")
+  type      NotificationType
   title     String           @db.VarChar(255)
-  message   String?          @db.Text
-  type      NotificationType @default(INFO)
+  message   String           @db.Text
+  data      Json?
   isRead    Boolean          @default(false) @map("is_read")
-  link      String?          @db.VarChar(500)
   createdAt DateTime         @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([isRead])
-  @@index([createdAt])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
   @@map("notifications")
 }
 

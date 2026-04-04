@@ -20,6 +20,8 @@ export { Pagination } from "./Pagination";
 // Navigation
 export { Avatar, AvatarGroup } from "./Avatar";
 export { Dropdown } from "./Dropdown";
+export { NotificationBell } from "./NotificationBell";
+export { NotificationDropdown } from "./NotificationDropdown";
 
 // Overlays
 export { Tooltip } from "./Tooltip";

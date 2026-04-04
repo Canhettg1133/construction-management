@@ -184,11 +184,11 @@ export function ReportCreatePage() {
       }
       const isConflict = e instanceof AxiosError && e.response?.status === 409;
       const fallback = isConflict
-        ? `Bao cao ngay ${new Date(payload.reportDate).toLocaleDateString("vi-VN")} da ton tai. Vui long chon ngay khac.`
-        : "Tao bao cao that bai";
+        ? `Báo cáo ngày ${new Date(payload.reportDate).toLocaleDateString("vi-VN")} đã tồn tại. Vui lòng chọn ngày khác.`
+        : "Tạo báo cáo thất bại";
       const msg = getApiErrorMessage(e, fallback);
       setGlobalError(msg);
-      showToast({ type: "error", title: "Khong the gui bao cao", description: msg });
+      showToast({ type: "error", title: "Không thể gửi báo cáo", description: msg });
     },
   });
 
@@ -248,7 +248,7 @@ export function ReportCreatePage() {
             <label className="form-label">Tiến độ (%)</label>
             <input {...register("progress")} type="number" min={0} max={100} className="form-input" />
             {errors.progress && <p className="form-error">{errors.progress.message}</p>}
-            <p className="form-help">Tien do luy ke cua du an den ngay bao cao (khong giam so voi bao cao truoc).</p>
+            <p className="form-help">Tiến độ lũy kế của dự án đến ngày báo cáo (không giảm so với báo cáo trước).</p>
           </div>
         </div>
 

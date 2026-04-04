@@ -11,6 +11,7 @@ import { AuditLogPage } from "../features/audit/pages/AuditLogPage";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 import { DocumentsPage } from "../features/documents/pages/DocumentsPage";
 import { DocumentSearchPage } from "../features/documents/pages/DocumentSearchPage";
+import { NotificationsPage } from "../features/notifications/pages/NotificationsPage";
 import { ProfilePage } from "../features/settings/pages/ProfilePage";
 import { ProjectDetailPage } from "../features/projects/pages/ProjectDetailPage";
 import { ProjectFilesTab } from "../features/projects/pages/ProjectFilesTab";
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.DASHBOARD} replace /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "projects", element: <ProjectListPage /> },
+      { path: "notifications", element: <NotificationsPage /> },
       {
         path: "projects/:id",
         element: <ProjectDetailPage />,

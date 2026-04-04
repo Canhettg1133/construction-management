@@ -1,32 +1,40 @@
-import type {
-  PermissionLevel,
-  ProjectRole,
-  SpecialPrivilege,
-  SystemRole,
-  ToolId,
-} from "./roles"
+import type { PermissionLevel, ProjectRole, SpecialPrivilege, SystemRole, ToolId } from './roles'
 
-export type ProjectStatus = "ACTIVE" | "ON_HOLD" | "COMPLETED"
-export type TaskStatus = "TO_DO" | "IN_PROGRESS" | "DONE" | "CANCELLED"
-export type TaskPriority = "LOW" | "MEDIUM" | "HIGH"
-export type WeatherCondition = "SUNNY" | "RAINY" | "CLOUDY" | "OTHER"
-export type ReportStatus = "DRAFT" | "SENT"
-export type AuditAction = "LOGIN" | "LOGOUT" | "CREATE" | "UPDATE" | "DELETE" | "STATUS_CHANGE"
+export type ProjectStatus = 'ACTIVE' | 'ON_HOLD' | 'COMPLETED'
+export type TaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED'
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH'
+export type WeatherCondition = 'SUNNY' | 'RAINY' | 'CLOUDY' | 'OTHER'
+export type ReportStatus = 'DRAFT' | 'SENT'
+export type AuditAction = 'LOGIN' | 'LOGOUT' | 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE'
 export type AuditEntityType =
-  | "USER"
-  | "PROJECT"
-  | "PROJECT_MEMBER"
-  | "PROJECT_TOOL_PERMISSION"
-  | "SPECIAL_PRIVILEGE_ASSIGNMENT"
-  | "DAILY_REPORT"
-  | "TASK"
-  | "FILE"
-export type NotificationType = "INFO" | "SUCCESS" | "WARNING" | "ERROR"
-export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED"
-export type WarehouseTransactionType = "IN" | "OUT" | "REQUEST"
-export type WarehouseTransactionStatus = "PENDING" | "APPROVED" | "REJECTED"
-export type BudgetItemStatus = "PENDING" | "APPROVED" | "PAID"
-export type BudgetDisbursementStatus = "PENDING" | "APPROVED" | "PAID"
+  | 'USER'
+  | 'PROJECT'
+  | 'PROJECT_MEMBER'
+  | 'PROJECT_TOOL_PERMISSION'
+  | 'SPECIAL_PRIVILEGE_ASSIGNMENT'
+  | 'DAILY_REPORT'
+  | 'TASK'
+  | 'FILE'
+export type NotificationType =
+  | 'TASK_ASSIGNED'
+  | 'TASK_DEADLINE_SOON'
+  | 'TASK_OVERDUE'
+  | 'REPORT_PENDING_APPROVAL'
+  | 'SAFETY_VIOLATION'
+  | 'SAFETY_REPORT_PENDING'
+  | 'QUALITY_REPORT_PENDING'
+  | 'LOW_STOCK_ALERT'
+  | 'TRANSACTION_PENDING'
+  | 'PROJECT_PROGRESS_UPDATE'
+  | 'INFO'
+  | 'SUCCESS'
+  | 'WARNING'
+  | 'ERROR'
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+export type WarehouseTransactionType = 'IN' | 'OUT' | 'REQUEST'
+export type WarehouseTransactionStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+export type BudgetItemStatus = 'PENDING' | 'APPROVED' | 'PAID'
+export type BudgetDisbursementStatus = 'PENDING' | 'APPROVED' | 'PAID'
 
 export interface User {
   id: string
@@ -198,11 +206,12 @@ export interface AuditLog {
 export interface Notification {
   id: string
   userId: string
-  title: string
-  message?: string | null
   type: NotificationType
-  isRead: boolean
+  title: string
+  message: string
+  data?: Record<string, unknown> | null
   link?: string | null
+  isRead: boolean
   createdAt: string
 }
 
@@ -219,7 +228,7 @@ export interface SafetyReport {
   signedBy?: string | null
   signedAt?: string | null
   createdAt: string
-  inspector?: Pick<User, "id" | "name" | "email">
+  inspector?: Pick<User, 'id' | 'name' | 'email'>
 }
 
 export interface QualityReport {
@@ -233,7 +242,7 @@ export interface QualityReport {
   signedBy?: string | null
   signedAt?: string | null
   createdAt: string
-  inspector?: Pick<User, "id" | "name" | "email">
+  inspector?: Pick<User, 'id' | 'name' | 'email'>
 }
 
 export interface WarehouseInventory {
@@ -260,8 +269,8 @@ export interface WarehouseTransaction {
   approvedBy?: string | null
   status: WarehouseTransactionStatus | string
   createdAt: string
-  inventory?: Pick<WarehouseInventory, "id" | "materialName" | "unit" | "location">
-  requester?: Pick<User, "id" | "name" | "email"> | null
+  inventory?: Pick<WarehouseInventory, 'id' | 'materialName' | 'unit' | 'location'>
+  requester?: Pick<User, 'id' | 'name' | 'email'> | null
 }
 
 export interface BudgetItem {
@@ -305,6 +314,24 @@ export interface DashboardStats {
   riskyProjects: DashboardRiskyProject[]
   activeMembers: DashboardActiveMember[]
   weeklyProgress: DashboardWeeklyProgress[]
+  myTasks?: Task[]
+  myReports?: DailyReport[]
+  myTasksByStatus?: Record<TaskStatus, number>
+  safetyStats?: SafetyDashboardStats
+  pendingSafetyApprovals?: number
+  safetyViolations?: SafetyViolation[]
+  safetyTasks?: Task[]
+  qualityStats?: QualityDashboardStats
+  pendingQualityApprovals?: number
+  qualityReports?: QualityReport[]
+  warehouseStats?: WarehouseDashboardStats
+  lowStockItems?: WarehouseInventory[]
+  pendingTransactions?: number
+  recentTransactions?: WarehouseTransaction[]
+  warehouseTrendData?: WarehouseTrendDataPoint[]
+  projectProgress?: ProjectProgressStats[]
+  recentReports?: DailyReport[]
+  budgetOverview?: BudgetOverview[]
 }
 
 export interface DashboardOverdueTask {
@@ -338,6 +365,74 @@ export interface DashboardWeeklyProgress {
   totalTasks: number
   completedTasks: number
   newTasks: number
+}
+
+export interface SafetyDashboardStats {
+  totalReports: number
+  pendingApprovals: number
+  totalViolations: number
+  recentViolations: SafetyViolation[]
+  thisWeekReports: number
+  lastWeekReports: number
+  violationRate: number
+}
+
+export interface SafetyViolation {
+  id: string
+  date: string
+  location: string
+  description: string
+  severity: 'LOW' | 'MEDIUM' | 'HIGH'
+  resolved: boolean
+}
+
+export interface QualityDashboardStats {
+  totalReports: number
+  pendingApprovals: number
+  passRate: number
+  thisWeekReports: number
+  lastWeekReports: number
+  recentReports: QualityReport[]
+}
+
+export interface WarehouseDashboardStats {
+  totalItems: number
+  totalValue: number
+  lowStockCount: number
+  pendingRequests: number
+  thisMonthIn: number
+  thisMonthOut: number
+}
+
+export interface WarehouseTrendDataPoint {
+  date: string
+  itemId: string
+  itemName: string
+  quantity: number
+  minQuantity: number
+  maxQuantity: number
+  unit: string
+}
+
+export interface BudgetOverview {
+  projectId: string
+  projectName: string
+  totalEstimated: number
+  totalApproved: number
+  totalSpent: number
+  remaining: number
+  completionRate: number
+}
+
+export interface ProjectProgressStats {
+  projectId: string
+  projectName: string
+  progress: number
+  startDate: string
+  endDate: string
+  daysRemaining: number
+  status: ProjectStatus
+  completionRate: number
 }
 
 export interface TaskComment {

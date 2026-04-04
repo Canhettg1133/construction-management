@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+﻿import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { budgetApi } from "../api/budgetApi";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
@@ -28,13 +28,13 @@ export function BudgetApprovalPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budget-overview", projectId] });
       queryClient.invalidateQueries({ queryKey: ["budget-items", projectId] });
-      showToast({ type: "success", title: "Da duyet giai ngan" });
+      showToast({ type: "success", title: "Đã duyệt giải ngân" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the duyet giai ngan",
+        description: error instanceof Error ? error.message : "Không thể duyet giải ngân",
       });
     },
   });
@@ -48,7 +48,7 @@ export function BudgetApprovalPage() {
   }
 
   if (isError || !itemsData) {
-    return <ErrorState message="Khong tai duoc danh sach giai ngan." />;
+    return <ErrorState message="Không tải được danh sach giải ngân." />;
   }
 
   const pendingDisbursements = itemsData.items.flatMap((item) =>
@@ -69,13 +69,13 @@ export function BudgetApprovalPage() {
         >
           ← Budget overview
         </Link>
-        <h2 className="mt-1">Duyet giai ngan</h2>
-        <p className="page-subtitle">Danh sach phieu giai ngan dang cho phe duyet.</p>
+        <h2 className="mt-1">Duyệt giải ngân</h2>
+        <p className="page-subtitle">Danh sách phieu giải ngân dang cho phê duyệt.</p>
       </div>
 
       <div className="app-card space-y-3">
         {pendingDisbursements.length === 0 ? (
-          <p className="text-sm text-slate-500">Khong co phieu giai ngan nao dang cho duyet.</p>
+          <p className="text-sm text-slate-500">Không có phiếu giải ngân nào đang chờ duyệt.</p>
         ) : (
           pendingDisbursements.map((disbursement) => (
             <div key={disbursement.id} className="rounded-xl border border-slate-200 bg-white px-3 py-3">
@@ -95,7 +95,7 @@ export function BudgetApprovalPage() {
               </div>
 
               <div className="mt-2 text-xs text-slate-500">
-                Tao luc: {new Date(disbursement.createdAt).toLocaleString("vi-VN")}
+                Tạo lúc: {new Date(disbursement.createdAt).toLocaleString("vi-VN")}
               </div>
 
               <SpecialPrivilegeGate projectId={projectId} privilege="BUDGET_APPROVER">
@@ -110,7 +110,7 @@ export function BudgetApprovalPage() {
                     disabled={approveMutation.isPending}
                     className="rounded-xl border border-emerald-200 bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Duyet
+                    Duyệt
                   </button>
                   <button
                     onClick={() =>
@@ -122,7 +122,7 @@ export function BudgetApprovalPage() {
                     disabled={approveMutation.isPending}
                     className="rounded-xl bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Duyet & ghi nhan da chi
+                    Duyệt & ghi nhan da chi
                   </button>
                 </div>
               </SpecialPrivilegeGate>
@@ -133,3 +133,7 @@ export function BudgetApprovalPage() {
     </div>
   );
 }
+
+
+
+

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Save } from "lucide-react";
@@ -97,7 +97,7 @@ export function SafetyReportPage() {
       queryClient.invalidateQueries({ queryKey: ["safety-report", projectId, reportId] });
       showToast({
         type: "success",
-        title: isEditing ? "Da cap nhat bao cao an toan" : "Da tao bao cao an toan",
+        title: isEditing ? "Đã cập nhật báo cáo an toàn" : "Đã tạo báo cáo an toàn",
       });
 
       if (!isEditing) {
@@ -108,7 +108,7 @@ export function SafetyReportPage() {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the luu bao cao",
+        description: error instanceof Error ? error.message : "Không thể lưu báo cáo",
       });
     },
   });
@@ -118,19 +118,19 @@ export function SafetyReportPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["safety-reports", projectId] });
       queryClient.invalidateQueries({ queryKey: ["safety-report", projectId, reportId] });
-      showToast({ type: "success", title: "Da ky duyet bao cao an toan" });
+      showToast({ type: "success", title: "Đã ký duyệt báo cáo an toàn" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the ky duyet",
+        description: error instanceof Error ? error.message : "Không thể ký duyệt",
       });
     },
   });
 
   if (!projectId) {
-    return <ErrorState message="Khong tim thay thong tin du an." />;
+    return <ErrorState message="Không tìm thấy thông tin dự án." />;
   }
 
   if (isEditing && isLoading) {
@@ -143,11 +143,11 @@ export function SafetyReportPage() {
   }
 
   if (isEditing && (isError || !report)) {
-    return <ErrorState message="Khong tai duoc chi tiet bao cao an toan." />;
+    return <ErrorState message="Không tải được chi tiết báo cáo an toàn." />;
   }
 
   if (!canUseSafetyStandard && !isEditing) {
-    return <ErrorState message="Ban khong co quyen tao bao cao an toan." />;
+    return <ErrorState message="Bạn không có quyền tạo báo cáo an toàn." />;
   }
 
   return (
@@ -160,10 +160,10 @@ export function SafetyReportPage() {
           >
             ← Safety dashboard
           </Link>
-          <h2 className="mt-1">{isEditing ? "Chi tiet bao cao an toan" : "Tao bao cao an toan"}</h2>
+          <h2 className="mt-1">{isEditing ? "Chi tiết báo cáo an toàn" : "Tạo báo cáo an toàn"}</h2>
           {report && (
             <p className="page-subtitle">
-              Nguoi lap: {report.inspector?.name ?? report.inspectorId} · Trang thai: {report.status}
+              Người lap: {report.inspector?.name ?? report.inspectorId} · Trạng thái: {report.status}
             </p>
           )}
         </div>
@@ -176,7 +176,7 @@ export function SafetyReportPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <CheckCircle2 className="h-4 w-4" />
-              Ky duyet
+              Ký duyệt
             </button>
           </SpecialPrivilegeGate>
         )}
@@ -185,7 +185,7 @@ export function SafetyReportPage() {
       <div className="app-card space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="form-label">Ngay bao cao</label>
+            <label className="form-label">Ngay báo cáo</label>
             <input
               type="date"
               value={reportDate}
@@ -195,7 +195,7 @@ export function SafetyReportPage() {
             />
           </div>
           <div>
-            <label className="form-label">So vi pham</label>
+            <label className="form-label">So vi phạm</label>
             <input
               type="number"
               min={0}
@@ -208,7 +208,7 @@ export function SafetyReportPage() {
         </div>
 
         <div>
-          <label className="form-label">Vi tri</label>
+          <label className="form-label">Vị trí</label>
           <input
             value={location}
             onChange={(event) => setLocation(event.target.value)}
@@ -219,19 +219,19 @@ export function SafetyReportPage() {
         </div>
 
         <div>
-          <label className="form-label">Noi dung bao cao</label>
+          <label className="form-label">Nội dung báo cáo</label>
           <textarea
             rows={5}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             className="form-input"
-            placeholder="Mo ta tinh trang an toan..."
+            placeholder="Mô tả tinh trang an toàn..."
             disabled={!canEditReport}
           />
         </div>
 
         <div>
-          <label className="form-label">Anh hien truong (moi dong 1 URL)</label>
+          <label className="form-label">Anh hiện truong (moi dong 1 URL)</label>
           <textarea
             rows={4}
             value={photosText}
@@ -248,7 +248,7 @@ export function SafetyReportPage() {
               to={`/projects/${projectId}/safety`}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Huy
+              Hủy
             </Link>
             <button
               onClick={() => saveMutation.mutate()}
@@ -256,15 +256,19 @@ export function SafetyReportPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Save className="h-4 w-4" />
-              {isEditing ? "Luu thay doi" : "Tao bao cao"}
+              {isEditing ? "Lưu thay đổi" : "Tạo báo cáo"}
             </button>
           </div>
         ) : (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-            Ban khong co quyen sua bao cao nay.
+            Bạn không có quyền sửa báo cáo này.
           </div>
         )}
       </div>
     </div>
   );
 }
+
+
+
+

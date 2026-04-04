@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import {
   PERMISSION_LEVELS,
   PERMISSION_LEVEL_LABELS,
@@ -73,12 +73,12 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
 
       setPending({});
       await onRefresh();
-      showToast({ type: "success", title: "Da cap nhat permission matrix" });
+      showToast({ type: "success", title: "Đã cập nhật permission matrix" });
     } catch (error) {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the cap nhat permission matrix",
+        description: error instanceof Error ? error.message : "Không thể cập nhật permission matrix",
       });
     } finally {
       setIsApplying(false);
@@ -115,7 +115,7 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the reset override",
+        description: error instanceof Error ? error.message : "Không thể reset override",
       });
     } finally {
       setResettingUserId(null);
@@ -209,3 +209,6 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
     </div>
   );
 }
+
+
+

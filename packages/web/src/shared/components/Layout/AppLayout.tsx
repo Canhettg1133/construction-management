@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Bell,
   CheckSquare,
   ClipboardCheck,
   FileText,
@@ -30,9 +29,10 @@ import { getProject } from "../../../features/projects/api/projectApi";
 import { useProjectPermissions } from "../../hooks/useProjectPermissions";
 import { ROUTES } from "../../constants/routes";
 import { useAuthStore } from "../../../store/authStore";
-import { useNotificationStore, selectUnreadCount } from "../../../store/notificationStore";
+import { useNotificationStore } from "../../../store/notificationStore";
 import { useUiStore } from "../../../store/uiStore";
 import { connectSocket, disconnectSocket } from "../../../socket/socketClient";
+import { NotificationBell } from "../NotificationBell";
 
 interface NavItem {
   to: string;
@@ -47,27 +47,27 @@ const DESKTOP_SIDEBAR_STORAGE_KEY = "desktopSidebarOpen";
 
 const globalNavItems: NavItem[] = [
   { to: ROUTES.DASHBOARD, label: "Dashboard", icon: FolderKanban },
-  { to: ROUTES.PROJECTS, label: "Du an", icon: FolderKanban },
+  { to: ROUTES.PROJECTS, label: "Dự án", icon: FolderKanban },
 ];
 
 const systemNavItems: NavItem[] = [
-  { to: ROUTES.USERS, label: "Nguoi dung", icon: Users, systemRoles: ["ADMIN"] },
-  { to: ROUTES.APPROVALS, label: "Duyet", icon: ClipboardCheck, systemRoles: ["ADMIN", "STAFF"] },
+  { to: ROUTES.USERS, label: "Người dùng", icon: Users, systemRoles: ["ADMIN"] },
+  { to: ROUTES.APPROVALS, label: "Duyệt", icon: ClipboardCheck, systemRoles: ["ADMIN", "STAFF"] },
   { to: ROUTES.AUDIT_LOGS, label: "Audit logs", icon: FileText, systemRoles: ["ADMIN"] },
 ];
 
 const accountNavItems: NavItem[] = [
-  { to: ROUTES.DOCUMENT_SEARCH, label: "Tim tai lieu", icon: Search },
-  { to: ROUTES.SETTINGS, label: "Cai dat", icon: Settings },
-  { to: ROUTES.SETTINGS_PROFILE, label: "Ho so", icon: UserCircle2 },
-  { to: ROUTES.SETTINGS_CHANGE_PASSWORD, label: "Doi mat khau", icon: KeyRound },
+  { to: ROUTES.DOCUMENT_SEARCH, label: "Tìm tài liệu", icon: Search },
+  { to: ROUTES.SETTINGS, label: "Cài đặt", icon: Settings },
+  { to: ROUTES.SETTINGS_PROFILE, label: "Hồ sơ", icon: UserCircle2 },
+  { to: ROUTES.SETTINGS_CHANGE_PASSWORD, label: "Đổi mật khẩu", icon: KeyRound },
 ];
 
 export function AppLayout() {
   const { user, clearAuth } = useAuthStore();
   const { sidebarOpen, toggleSidebar, setSidebarOpen, toast, clearToast } = useUiStore();
-  const unreadCount = useNotificationStore(selectUnreadCount);
-  const { panelOpen, setPanelOpen, markAllAsRead, fetchNotifications } = useNotificationStore();
+  const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
+  const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount);
   const location = useLocation();
   const navigate = useNavigate();
   const normalizedSystemRole = user?.systemRole?.toUpperCase?.();
@@ -100,14 +100,14 @@ export function AppLayout() {
     ? [
         {
           to: ROUTES.PROJECT_DETAIL(currentProjectId),
-          label: "Tong quan",
+          label: "Tổng quan",
           icon: FolderKanban,
           toolId: "PROJECT",
           minLevel: "READ",
         },
         {
           to: ROUTES.PROJECT_REPORTS(currentProjectId),
-          label: "Bao cao ngay",
+          label: "Báo cáo ngày",
           icon: FileText,
           toolId: "DAILY_REPORT",
           minLevel: "READ",
@@ -128,35 +128,35 @@ export function AppLayout() {
         },
         {
           to: ROUTES.PROJECT_DOCUMENTS(currentProjectId),
-          label: "Tai lieu",
+          label: "Tài liệu",
           icon: FileText,
           toolId: "DOCUMENT",
           minLevel: "READ",
         },
         {
           to: ROUTES.PROJECT_SAFETY(currentProjectId),
-          label: "An toan",
+          label: "An toàn",
           icon: ShieldAlert,
           toolId: "SAFETY",
           minLevel: "READ",
         },
         {
           to: ROUTES.PROJECT_QUALITY(currentProjectId),
-          label: "Chat luong",
+          label: "Chất lượng",
           icon: CheckSquare,
           toolId: "QUALITY",
           minLevel: "READ",
         },
         {
           to: ROUTES.PROJECT_WAREHOUSE(currentProjectId),
-          label: "Kho vat tu",
+          label: "Kho vật tư",
           icon: Warehouse,
           toolId: "WAREHOUSE",
           minLevel: "READ",
         },
         {
           to: ROUTES.PROJECT_BUDGET(currentProjectId),
-          label: "Ngan sach",
+          label: "Ngân sách",
           icon: Wallet,
           toolId: "BUDGET",
           minLevel: "READ",
@@ -168,14 +168,14 @@ export function AppLayout() {
     ? [
         {
           to: ROUTES.PROJECT_MEMBERS(currentProjectId),
-          label: "Thanh vien",
+          label: "Thành viên",
           icon: Users,
           toolId: "PROJECT",
           minLevel: "READ",
         },
         {
           to: ROUTES.PROJECT_SETTINGS(currentProjectId),
-          label: "Cai dat du an",
+          label: "Cài đặt dự án",
           icon: Settings,
           toolId: "PROJECT",
           minLevel: "ADMIN",
@@ -187,10 +187,10 @@ export function AppLayout() {
   useEffect(() => {
     if (!user) return;
     connectSocket();
-    fetchNotifications();
-    useNotificationStore.getState().fetchUnreadCount();
+    void fetchNotifications();
+    void fetchUnreadCount();
     return () => disconnectSocket();
-  }, [user, fetchNotifications]);
+  }, [fetchNotifications, fetchUnreadCount, user]);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -295,7 +295,7 @@ export function AppLayout() {
           <button
             onClick={toggleSidebar}
             className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
-            aria-label="Dong sidebar"
+            aria-label="Đóng sidebar"
           >
             <X className="h-5 w-5" />
           </button>
@@ -303,12 +303,12 @@ export function AppLayout() {
 
         <nav className="h-[calc(100vh-4rem)] space-y-5 overflow-y-auto p-4 pb-36">
           <NavSection label="Chung" items={visibleGlobalNavItems} renderNavItem={renderNavItem} />
-          <NavSection label="He thong" items={visibleSystemNavItems} renderNavItem={renderNavItem} />
+          <NavSection label="Hệ thống" items={visibleSystemNavItems} renderNavItem={renderNavItem} />
 
           {isProjectContext && (
             <>
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Du an hien tai</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Dự án hiện tại</p>
                 <p className="truncate text-sm font-medium text-slate-800">
                   {currentProject?.name ?? `Project ${currentProjectId.slice(0, 8)}`}
                 </p>
@@ -317,18 +317,18 @@ export function AppLayout() {
               {isLoadingProjectPermissions ? (
                 <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Dang tai quyen du an...
+                  Đang tải quyền dự án...
                 </div>
               ) : (
                 <>
-                  <NavSection label="Cong cu du an" items={visibleProjectToolNavItems} renderNavItem={renderNavItem} />
-                  <NavSection label="Quan ly du an" items={visibleProjectMgmtNavItems} renderNavItem={renderNavItem} />
+                  <NavSection label="Công cụ dự án" items={visibleProjectToolNavItems} renderNavItem={renderNavItem} />
+                  <NavSection label="Quản lý dự án" items={visibleProjectMgmtNavItems} renderNavItem={renderNavItem} />
                 </>
               )}
             </>
           )}
 
-          <NavSection label="Tai khoan" items={visibleAccountNavItems} renderNavItem={renderNavItem} />
+          <NavSection label="Tài khoản" items={visibleAccountNavItems} renderNavItem={renderNavItem} />
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white p-4">
@@ -341,7 +341,7 @@ export function AppLayout() {
             className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
           >
             <LogOut className="h-4 w-4" />
-            Dang xuat
+            Đăng xuất
           </button>
         </div>
       </aside>
@@ -352,14 +352,14 @@ export function AppLayout() {
             <button
               onClick={toggleSidebar}
               className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
-              aria-label="Mo sidebar"
+              aria-label="Mở sidebar"
             >
               <Menu className="h-5 w-5" />
             </button>
             <button
               onClick={() => setDesktopSidebarOpen((value) => !value)}
               className="hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:inline-flex"
-              aria-label={desktopSidebarOpen ? "An sidebar" : "Mo sidebar"}
+              aria-label={desktopSidebarOpen ? "Ẩn sidebar" : "Mở sidebar"}
             >
               {desktopSidebarOpen ? (
                 <PanelLeftClose className="h-5 w-5" />
@@ -368,23 +368,12 @@ export function AppLayout() {
               )}
             </button>
             <div className="hidden text-sm text-slate-500 sm:block">
-              Chao mung, {user?.name?.split(" ").slice(-1)[0]}
+              Chào mừng, {user?.name?.split(" ").slice(-1)[0]}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPanelOpen(!panelOpen)}
-              className="relative rounded-xl border border-slate-200 p-2 text-slate-600 transition-colors hover:bg-slate-100"
-              aria-label="Thong bao"
-            >
-              <Bell className="h-4 w-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </button>
+            <NotificationBell />
           </div>
         </header>
 
@@ -396,30 +385,6 @@ export function AppLayout() {
       </div>
 
       {sidebarOpen && <div onClick={toggleSidebar} className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden" />}
-
-      {panelOpen && (
-        <div className="fixed inset-0 z-50" onClick={() => setPanelOpen(false)}>
-          <div
-            className="absolute right-0 top-0 h-full w-full max-w-sm animate-[slide-in-right_200ms_ease-out] border-l border-slate-200 bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
-              <h2 className="text-base font-semibold text-slate-900">Thong bao</h2>
-              <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <button onClick={markAllAsRead} className="text-xs text-brand-600 hover:text-brand-700">
-                    Danh dau da doc
-                  </button>
-                )}
-                <button onClick={() => setPanelOpen(false)} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <NotificationList />
-          </div>
-        </div>
-      )}
 
       {toast && (
         <div className="toast-enter fixed right-4 top-4 z-[60] w-[calc(100%-2rem)] max-w-sm rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
@@ -438,7 +403,7 @@ export function AppLayout() {
               </p>
               {toast.description && <p className="mt-1 text-xs text-slate-500">{toast.description}</p>}
             </div>
-            <button onClick={clearToast} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Dong thong bao">
+            <button onClick={clearToast} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Đóng thông báo">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -469,68 +434,5 @@ function NavSection({
   );
 }
 
-function NotificationList() {
-  const { notifications, markAsRead, setPanelOpen, initialized } = useNotificationStore();
-  const navigate = useNavigate();
 
-  if (!initialized) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
-        <p className="mt-3 text-sm text-slate-400">Dang tai thong bao...</p>
-      </div>
-    );
-  }
 
-  if (notifications.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Bell className="h-12 w-12 text-slate-200" />
-        <p className="mt-3 text-sm font-medium text-slate-500">Khong co thong bao nao</p>
-        <p className="mt-1 text-xs text-slate-400">Ban se nhan thong bao khi co cap nhat moi</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-y-auto" style={{ height: "calc(100vh - 4rem)" }}>
-      {notifications.map((notification) => (
-        <div
-          key={notification.id}
-          onClick={() => {
-            if (!notification.isRead) {
-              markAsRead(notification.id);
-            }
-            if (notification.link) {
-              navigate(notification.link);
-              setPanelOpen(false);
-            }
-          }}
-          className={`flex cursor-pointer items-start gap-3 border-b border-slate-100 px-4 py-3 transition-colors hover:bg-slate-50 ${
-            !notification.isRead ? "bg-brand-50/40" : ""
-          }`}
-        >
-          <div
-            className={`mt-0.5 h-2 w-2 flex-shrink-0 rounded-full ${
-              notification.type === "ERROR"
-                ? "bg-red-500"
-                : notification.type === "SUCCESS"
-                  ? "bg-emerald-500"
-                  : notification.type === "WARNING"
-                    ? "bg-amber-500"
-                    : "bg-brand-500"
-            }`}
-          />
-          <div className="min-w-0 flex-1">
-            <p className={`text-sm ${!notification.isRead ? "font-semibold text-slate-900" : "font-medium text-slate-700"}`}>
-              {notification.title}
-            </p>
-            {notification.message && <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{notification.message}</p>}
-            <p className="mt-1 text-[10px] text-slate-400">{new Date(notification.createdAt).toLocaleString("vi-VN")}</p>
-          </div>
-          {!notification.isRead && <div className="h-2 w-2 flex-shrink-0 rounded-full bg-brand-500" />}
-        </div>
-      ))}
-    </div>
-  );
-}

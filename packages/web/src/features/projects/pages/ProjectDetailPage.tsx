@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation, useParams } from "react-router-dom";
+﻿import { Link, Outlet, useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   FolderKanban,
@@ -29,17 +29,17 @@ interface Tab {
 }
 
 const tabs: Tab[] = [
-  { label: "Tong quan", path: "", icon: FolderKanban, toolId: "PROJECT", minLevel: "READ" },
-  { label: "Bao cao ngay", path: "/reports", icon: FileText, toolId: "DAILY_REPORT", minLevel: "READ" },
+  { label: "Tổng quan", path: "", icon: FolderKanban, toolId: "PROJECT", minLevel: "READ" },
+  { label: "Báo cáo ngày", path: "/reports", icon: FileText, toolId: "DAILY_REPORT", minLevel: "READ" },
   { label: "Task", path: "/tasks", icon: CheckSquare, toolId: "TASK", minLevel: "READ" },
-  { label: "Thanh vien", path: "/members", icon: Users, toolId: "PROJECT", minLevel: "READ" },
+  { label: "Thành viên", path: "/members", icon: Users, toolId: "PROJECT", minLevel: "READ" },
   { label: "Files", path: "/files", icon: Files, toolId: "FILE", minLevel: "READ" },
-  { label: "Tai lieu", path: "/documents", icon: Files, toolId: "DOCUMENT", minLevel: "READ" },
-  { label: "An toan", path: "/safety", icon: ShieldAlert, toolId: "SAFETY", minLevel: "READ" },
-  { label: "Chat luong", path: "/quality", icon: ClipboardCheck, toolId: "QUALITY", minLevel: "READ" },
-  { label: "Kho vat tu", path: "/warehouse", icon: Warehouse, toolId: "WAREHOUSE", minLevel: "READ" },
-  { label: "Ngan sach", path: "/budget", icon: Wallet, toolId: "BUDGET", minLevel: "READ" },
-  { label: "Cai dat", path: "/settings", icon: Settings, toolId: "PROJECT", minLevel: "ADMIN" },
+  { label: "Tài liệu", path: "/documents", icon: Files, toolId: "DOCUMENT", minLevel: "READ" },
+  { label: "An toàn", path: "/safety", icon: ShieldAlert, toolId: "SAFETY", minLevel: "READ" },
+  { label: "Chất lượng", path: "/quality", icon: ClipboardCheck, toolId: "QUALITY", minLevel: "READ" },
+  { label: "Kho vật tư", path: "/warehouse", icon: Warehouse, toolId: "WAREHOUSE", minLevel: "READ" },
+  { label: "Ngân sách", path: "/budget", icon: Wallet, toolId: "BUDGET", minLevel: "READ" },
+  { label: "Cài đặt", path: "/settings", icon: Settings, toolId: "PROJECT", minLevel: "ADMIN" },
 ];
 
 export function ProjectDetailPage() {
@@ -67,7 +67,7 @@ export function ProjectDetailPage() {
   }
 
   if (isError) {
-    return <ErrorState message="Khong tai duoc thong tin du an. Vui long thu lai." />;
+    return <ErrorState message="Không tải được thông tin dự án. Vui lòng thử lại." />;
   }
 
   const hasToolAccess = (tab: Tab) => {
@@ -96,7 +96,7 @@ export function ProjectDetailPage() {
           to="/projects"
           className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
         >
-          {"<-"} Du an
+          {"<-"} Dự án
         </Link>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-bold text-slate-900">{project?.name}</h1>
@@ -136,3 +136,5 @@ export function ProjectDetailPage() {
     </div>
   );
 }
+
+

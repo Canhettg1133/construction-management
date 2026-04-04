@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,11 +75,11 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
     mutationFn: (payload: UpdateProjectForm) => updateProject(project.id, payload),
     onSuccess: (updatedProject) => {
       queryClient.setQueryData(["project", project.id], updatedProject);
-      showToast({ type: "success", title: "Cap nhat du an thanh cong" });
+      showToast({ type: "success", title: "Cập nhật dự án thành công" });
       onSuccess();
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "Cap nhat that bai";
+      const message = error instanceof Error ? error.message : "Cập nhật that bai";
       showToast({ type: "error", title: "Loi", description: message });
     },
   });
@@ -88,7 +88,7 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
       <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Chinh sua du an</h2>
+          <h2 className="text-base font-semibold text-slate-900">Chỉnh sửa dự án</h2>
           <button onClick={onClose} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100">
             <X className="h-5 w-5" />
           </button>
@@ -96,42 +96,42 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
 
         <form onSubmit={handleSubmit((payload) => mutation.mutateAsync(payload))} className="space-y-4 p-5">
           <div>
-            <label className="form-label">Ten du an</label>
+            <label className="form-label">Tên dự án</label>
             <input {...register("name")} className="form-input" />
             {errors.name && <p className="form-error">{errors.name.message}</p>}
           </div>
 
           <div>
-            <label className="form-label">Mo ta</label>
+            <label className="form-label">Mô tả</label>
             <textarea {...register("description")} rows={3} className="form-input" />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="form-label">Dia diem</label>
+              <label className="form-label">Địa điểm</label>
               <input {...register("location")} className="form-input" />
               {errors.location && <p className="form-error">{errors.location.message}</p>}
             </div>
             <div>
-              <label className="form-label">Khach hang</label>
+              <label className="form-label">Khách hàng</label>
               <input {...register("clientName")} className="form-input" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="form-label">Ngay bat dau</label>
+              <label className="form-label">Ngày bắt đầu</label>
               <input {...register("startDate")} type="date" className="form-input" />
             </div>
             <div>
-              <label className="form-label">Ngay ket thuc</label>
+              <label className="form-label">Ngày kết thúc</label>
               <input {...register("endDate")} type="date" className="form-input" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="form-label">Trang thai</label>
+              <label className="form-label">Trạng thái</label>
               <select {...register("status")} className="form-input">
                 {PROJECT_STATUSES.map((status) => (
                   <option key={status} value={status}>
@@ -141,7 +141,7 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
               </select>
             </div>
             <div>
-              <label className="form-label">Tien do (%)</label>
+              <label className="form-label">Tiến độ (%)</label>
               <input {...register("progress")} type="number" min={0} max={100} className="form-input" />
             </div>
           </div>
@@ -155,10 +155,10 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={onClose}>
-              Huy
+              Hủy
             </Button>
             <Button type="submit" isLoading={mutation.isPending}>
-              Luu thay doi
+              Lưu thay đổi
             </Button>
           </div>
         </form>
@@ -215,7 +215,7 @@ export function ProjectOverviewTab() {
   }
 
   if (isError || !project) {
-    return <ErrorState message="Khong tai duoc thong tin du an." />;
+    return <ErrorState message="Không tải được thông tin dự án." />;
   }
 
   return (
@@ -227,14 +227,14 @@ export function ProjectOverviewTab() {
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
             <Edit2 className="h-4 w-4" />
-            Chinh sua
+            Chỉnh sửa
           </button>
         </div>
       </PermissionGate>
 
       <div className="app-card">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-700">Tien do du an</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Tiến độ dự án</h3>
           <span className="text-2xl font-bold text-brand-600">{project.progress}%</span>
         </div>
         <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
@@ -242,7 +242,7 @@ export function ProjectOverviewTab() {
         </div>
         <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
           <span className="font-medium">{PROJECT_STATUS_LABELS[project.status]}</span>
-          <span>Cap nhat: {new Date(project.updatedAt).toLocaleDateString("vi-VN")}</span>
+          <span>Cập nhật: {new Date(project.updatedAt).toLocaleDateString("vi-VN")}</span>
         </div>
       </div>
 
@@ -250,7 +250,7 @@ export function ProjectOverviewTab() {
         <div className="app-card">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
             <FolderKanban className="h-4 w-4 text-slate-400" />
-            Thong tin du an
+            Thông tin dự án
           </div>
           <div className="mt-3 space-y-2">
             <div className="flex items-start gap-2 text-sm">
@@ -258,11 +258,11 @@ export function ProjectOverviewTab() {
               <span className="font-medium text-slate-800">{project.code}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
-              <span className="w-20 shrink-0 text-slate-500">Khach hang:</span>
+              <span className="w-20 shrink-0 text-slate-500">Khách hàng:</span>
               <span className="text-slate-800">{project.clientName || "—"}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
-              <span className="w-20 shrink-0 text-slate-500">Bat dau:</span>
+              <span className="w-20 shrink-0 text-slate-500">Bat đầu:</span>
               <span className="text-slate-800">{new Date(project.startDate).toLocaleDateString("vi-VN")}</span>
             </div>
             {project.endDate && (
@@ -277,7 +277,7 @@ export function ProjectOverviewTab() {
         <div className="app-card">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
             <MapPin className="h-4 w-4 text-slate-400" />
-            Dia diem
+            Địa điểm
           </div>
           <p className="mt-3 text-sm text-slate-700">{project.location}</p>
           {project.description && <p className="mt-2 text-xs text-slate-500">{project.description}</p>}
@@ -291,7 +291,7 @@ export function ProjectOverviewTab() {
               <Users className="h-4 w-4 text-violet-600" />
             </div>
             <div>
-              <p className="text-xs text-slate-500">Thanh vien</p>
+              <p className="text-xs text-slate-500">Thành viên</p>
               <p className="text-xl font-bold text-slate-900">{members?.length ?? 0}</p>
             </div>
           </button>
@@ -302,7 +302,7 @@ export function ProjectOverviewTab() {
             <FileText className="h-4 w-4 text-brand-600" />
           </div>
           <div>
-            <p className="text-xs text-slate-500">Bao cao</p>
+            <p className="text-xs text-slate-500">Báo cáo</p>
             <p className="text-xl font-bold text-slate-900">{reportsData?.reports?.length ?? 0}</p>
           </div>
         </button>
@@ -333,9 +333,9 @@ export function ProjectOverviewTab() {
       {recentReports.length > 0 && (
         <div className="app-card">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700">Bao cao gan day</h3>
+            <h3 className="text-sm font-semibold text-slate-700">Báo cáo gan day</h3>
             <button onClick={() => navigate(`/projects/${projectId}/reports`)} className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700">
-              Xem tat ca <ChevronRight className="h-3 w-3" />
+              Xem tất cả <ChevronRight className="h-3 w-3" />
             </button>
           </div>
           <div className="space-y-2">
@@ -370,3 +370,5 @@ export function ProjectOverviewTab() {
     </div>
   );
 }
+
+

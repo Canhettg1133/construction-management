@@ -1,29 +1,36 @@
-import type { Request, Response } from "express";
-import { notificationService } from "./notification.service";
-import { sendSuccess } from "../../shared/utils";
+import type { Request, Response } from 'express'
+import { sendSuccess } from '../../shared/utils'
+import { notificationService } from './notification.service'
 
 export const notificationController = {
   async list(req: Request, res: Response) {
-    const { page = 1, pageSize = 20 } = req.query;
-    const p = Number(page);
-    const ps = Number(pageSize);
+    const result = await notificationService.list(String(req.user!.id), {
+      page: req.query.page,
+      limit: req.query.limit ?? req.query.pageSize ?? req.query.page_size,
+      type: req.query.type,
+      isRead: req.query.isRead,
+    })
 
-    const { notifications, total } = await notificationService.list(String(req.user!.id), p, ps);
-    return sendSuccess(res, notifications, notificationService.buildPaginationMeta(total, p, ps));
+    return sendSuccess(res, {
+      data: result.data,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    })
   },
 
   async getUnreadCount(req: Request, res: Response) {
-    const count = await notificationService.getUnreadCount(String(req.user!.id));
-    return sendSuccess(res, { unreadCount: count });
+    const count = await notificationService.getUnreadCount(String(req.user!.id))
+    return sendSuccess(res, { count })
   },
 
   async markAsRead(req: Request, res: Response) {
-    await notificationService.markAsRead(String(req.params.id), String(req.user!.id));
-    return sendSuccess(res, null);
+    await notificationService.markAsRead(String(req.params.id), String(req.user!.id))
+    return sendSuccess(res, { success: true })
   },
 
   async markAllAsRead(req: Request, res: Response) {
-    await notificationService.markAllAsRead(String(req.user!.id));
-    return sendSuccess(res, null);
+    const count = await notificationService.markAllAsRead(String(req.user!.id))
+    return sendSuccess(res, { count })
   },
-};
+}

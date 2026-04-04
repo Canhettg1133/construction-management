@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+﻿import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { warehouseApi } from "../api/warehouseApi";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
@@ -25,7 +25,7 @@ export function WarehouseInventoryPage() {
 
   if (isError || !data) {
     return (
-      <ErrorState message="Khong tai duoc chi tiet vat tu. Co the ban khong duoc phep xem ton kho." />
+      <ErrorState message="Không tải được chi tiết vật tư. Có thể bạn không được phép xem tồn kho." />
     );
   }
 
@@ -40,13 +40,13 @@ export function WarehouseInventoryPage() {
         </Link>
         <h2 className="mt-1">{data.materialName}</h2>
         <p className="page-subtitle">
-          Ton kho: {Number(data.quantity).toLocaleString("vi-VN")} {data.unit}
+          Tồn kho: {Number(data.quantity).toLocaleString("vi-VN")} {data.unit}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="app-card">
-          <p className="text-xs text-slate-500">Ton hien tai</p>
+          <p className="text-xs text-slate-500">Ton hiện tai</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">
             {Number(data.quantity).toLocaleString("vi-VN")}
           </p>
@@ -68,15 +68,15 @@ export function WarehouseInventoryPage() {
       <div className="app-card">
         <div className="mb-2 grid grid-cols-1 gap-2 text-sm text-slate-600 sm:grid-cols-2">
           <div>
-            <span className="font-medium text-slate-700">Vi tri kho:</span> {data.location ?? "Chua cap nhat"}
+            <span className="font-medium text-slate-700">Vị trí kho:</span> {data.location ?? "Chưa cập nhật"}
           </div>
           <div>
-            <span className="font-medium text-slate-700">Cap nhat:</span>{" "}
+            <span className="font-medium text-slate-700">Cập nhật:</span>{" "}
             {new Date(data.updatedAt).toLocaleString("vi-VN")}
           </div>
         </div>
 
-        <h3 className="mb-2">Lich su giao dich</h3>
+        <h3 className="mb-2">Lịch sử giao dịch</h3>
         {data.transactions && data.transactions.length > 0 ? (
           <div className="space-y-2">
             {data.transactions.map((tx) => (
@@ -90,7 +90,7 @@ export function WarehouseInventoryPage() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Trang thai: {tx.status}
+                  Trạng thái: {tx.status}
                   {tx.requester?.name ? ` · ${tx.requester.name}` : ""}
                 </p>
                 {tx.note && <p className="mt-1 text-xs text-slate-600">{tx.note}</p>}
@@ -98,9 +98,12 @@ export function WarehouseInventoryPage() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-slate-500">Chua co giao dich nao cho vat tu nay.</p>
+          <p className="text-sm text-slate-500">Chưa có giao dịch nào cho vật tư này.</p>
         )}
       </div>
     </div>
   );
 }
+
+
+

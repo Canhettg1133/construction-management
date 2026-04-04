@@ -1,4 +1,4 @@
-import {
+﻿import {
   SPECIAL_PRIVILEGES,
   SPECIAL_PRIVILEGE_LABELS,
   type SpecialPrivilege,
@@ -39,13 +39,13 @@ export function PrivilegesTab({ projectId, matrix, onRefresh }: PrivilegesTabPro
       await onRefresh();
       showToast({
         type: "success",
-        title: existing ? "Da thu hoi special privilege" : "Da cap quyen special privilege",
+        title: existing ? "Da thu hoi special privilege" : "Da cap quyền special privilege",
       });
     } catch (error) {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the cap nhat special privilege",
+        description: error instanceof Error ? error.message : "Không thể cập nhật special privilege",
       });
     }
   };
@@ -99,7 +99,7 @@ export function PrivilegesTab({ projectId, matrix, onRefresh }: PrivilegesTabPro
       <div className="app-card space-y-2">
         <h3>Audit trail</h3>
         {matrix.specialPrivilegeAssignments.length === 0 ? (
-          <p className="text-sm text-slate-500">Chua co special privilege assignment nao.</p>
+          <p className="text-sm text-slate-500">Chưa có special privilege assignment nào.</p>
         ) : (
           <div className="space-y-2">
             {matrix.specialPrivilegeAssignments.map((assignment) => (
@@ -123,3 +123,7 @@ export function PrivilegesTab({ projectId, matrix, onRefresh }: PrivilegesTabPro
     </div>
   );
 }
+
+
+
+

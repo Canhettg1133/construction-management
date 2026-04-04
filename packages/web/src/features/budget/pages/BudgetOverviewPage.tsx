@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { budgetApi } from "../api/budgetApi";
@@ -55,7 +55,7 @@ export function BudgetOverviewPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budget-overview", projectId] });
       queryClient.invalidateQueries({ queryKey: ["budget-items", projectId] });
-      showToast({ type: "success", title: "Da tao hang muc ngan sach" });
+      showToast({ type: "success", title: "Đã tạo hạng mục ngân sách" });
       setItemForm({ category: "", description: "", estimatedCost: "", approvedCost: "" });
       setShowItemForm(false);
     },
@@ -63,7 +63,7 @@ export function BudgetOverviewPage() {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the tao hang muc",
+        description: error instanceof Error ? error.message : "Không thể tạo hạng mục",
       });
     },
   });
@@ -78,7 +78,7 @@ export function BudgetOverviewPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budget-overview", projectId] });
       queryClient.invalidateQueries({ queryKey: ["budget-items", projectId] });
-      showToast({ type: "success", title: "Da tao phieu giai ngan" });
+      showToast({ type: "success", title: "Đã tạo phiếu giải ngân" });
       setDisbursementForm({ budgetItemId: "", amount: "", note: "" });
       setShowDisbursementForm(false);
     },
@@ -86,7 +86,7 @@ export function BudgetOverviewPage() {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the tao giai ngan",
+        description: error instanceof Error ? error.message : "Không thể tạo giải ngân",
       });
     },
   });
@@ -108,15 +108,15 @@ export function BudgetOverviewPage() {
   }
 
   if (overviewError || itemsError || !overview || !itemsData) {
-    return <ErrorState message="Khong tai duoc du lieu ngan sach." />;
+    return <ErrorState message="Không tải được dữ liệu ngân sách." />;
   }
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <div className="page-header">
         <div>
-          <h2>Ngan sach du an</h2>
-          <p className="page-subtitle">Tong quan du toan, chi tieu va quan ly giai ngan.</p>
+          <h2>Ngân sách dự án</h2>
+          <p className="page-subtitle">Tổng quan du toan, chi tieu va quan ly giải ngân.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PermissionGate projectId={projectId} toolId="BUDGET" minLevel="ADMIN">
@@ -133,7 +133,7 @@ export function BudgetOverviewPage() {
               onClick={() => setShowDisbursementForm((value) => !value)}
               className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
             >
-              Tao giai ngan
+              Tạo giải ngân
             </button>
           </PermissionGate>
 
@@ -142,7 +142,7 @@ export function BudgetOverviewPage() {
               to={`/projects/${projectId}/budget/approvals`}
               className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 shadow-sm hover:bg-emerald-100"
             >
-              Duyet giai ngan
+              Duyệt giải ngân
             </Link>
           </SpecialPrivilegeGate>
         </div>
@@ -150,11 +150,11 @@ export function BudgetOverviewPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div className="app-card">
-          <p className="text-xs text-slate-500">Tong du toan</p>
+          <p className="text-xs text-slate-500">Tổng du toan</p>
           <p className="mt-1 text-xl font-bold text-slate-900">{money(overview.summary.estimated)} VND</p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Ngan sach phe duyet</p>
+          <p className="text-xs text-slate-500">Ngân sách phê duyệt</p>
           <p className="mt-1 text-xl font-bold text-brand-700">{money(overview.summary.approved)} VND</p>
         </div>
         <div className="app-card">
@@ -170,17 +170,17 @@ export function BudgetOverviewPage() {
       {showItemForm && (
         <PermissionGate projectId={projectId} toolId="BUDGET" minLevel="ADMIN">
           <div className="app-card space-y-3">
-            <h3>Them hang muc ngan sach</h3>
+            <h3>Them hang muc ngân sách</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="form-label">Danh muc</label>
+                <label className="form-label">Danh mục</label>
                 <input
                   className="form-input"
                   value={itemForm.category}
                   onChange={(event) =>
                     setItemForm((prev) => ({ ...prev, category: event.target.value }))
                   }
-                  placeholder="Vat tu / Nhan cong / Thiet bi"
+                  placeholder="Vật tư / Nhan cong / Thiet bi"
                 />
               </div>
               <div>
@@ -197,7 +197,7 @@ export function BudgetOverviewPage() {
               </div>
             </div>
             <div>
-              <label className="form-label">Mo ta</label>
+              <label className="form-label">Mô tả</label>
               <input
                 className="form-input"
                 value={itemForm.description}
@@ -207,7 +207,7 @@ export function BudgetOverviewPage() {
               />
             </div>
             <div>
-              <label className="form-label">Muc phe duyet (tu chon)</label>
+              <label className="form-label">Muc phê duyệt (tu chon)</label>
               <input
                 type="number"
                 min={0}
@@ -223,14 +223,14 @@ export function BudgetOverviewPage() {
                 onClick={() => setShowItemForm(false)}
                 className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                Huy
+                Hủy
               </button>
               <button
                 onClick={() => createItemMutation.mutate()}
                 disabled={createItemMutation.isPending}
                 className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Luu hang muc
+                Lưu hang muc
               </button>
             </div>
           </div>
@@ -240,7 +240,7 @@ export function BudgetOverviewPage() {
       {showDisbursementForm && (
         <PermissionGate projectId={projectId} toolId="BUDGET" minLevel="ADMIN">
           <div className="app-card space-y-3">
-            <h3>Tao phieu giai ngan</h3>
+            <h3>Tạo phiếu giải ngân</h3>
             <div>
               <label className="form-label">Hang muc</label>
               <select
@@ -259,7 +259,7 @@ export function BudgetOverviewPage() {
               </select>
             </div>
             <div>
-              <label className="form-label">So tien giai ngan (VND)</label>
+              <label className="form-label">So tien giải ngân (VND)</label>
               <input
                 type="number"
                 min={0}
@@ -286,14 +286,14 @@ export function BudgetOverviewPage() {
                 onClick={() => setShowDisbursementForm(false)}
                 className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                Huy
+                Hủy
               </button>
               <button
                 onClick={() => createDisbursementMutation.mutate()}
                 disabled={createDisbursementMutation.isPending}
                 className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Tao phieu
+                Tạo phiếu
               </button>
             </div>
           </div>
@@ -301,15 +301,15 @@ export function BudgetOverviewPage() {
       )}
 
       <div className="app-card space-y-3">
-        <h3>Ngan sach theo danh muc</h3>
+        <h3>Ngân sách theo danh mục</h3>
         {overview.byCategory.length === 0 ? (
-          <p className="text-sm text-slate-500">Chua co du lieu danh muc.</p>
+          <p className="text-sm text-slate-500">Chưa có dữ liệu danh mục.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-2 py-2">Danh muc</th>
+                  <th className="px-2 py-2">Danh mục</th>
                   <th className="px-2 py-2">Du toan</th>
                   <th className="px-2 py-2">Da chi</th>
                   <th className="px-2 py-2">Con lai</th>
@@ -332,14 +332,14 @@ export function BudgetOverviewPage() {
 
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3>Danh sach hang muc</h3>
+          <h3>Danh sách hang muc</h3>
           <span className="text-xs text-slate-500">
-            {itemsData.items.length} hang muc · {pendingDisbursementCount} giai ngan cho duyet
+            {itemsData.items.length} hang muc · {pendingDisbursementCount} giải ngân chờ duyệt
           </span>
         </div>
 
         {itemsData.items.length === 0 ? (
-          <p className="text-sm text-slate-500">Chua co hang muc ngan sach nao.</p>
+          <p className="text-sm text-slate-500">Chưa có hạng mục ngân sách nào.</p>
         ) : (
           <div className="space-y-2">
             {itemsData.items.map((item) => (
@@ -364,7 +364,7 @@ export function BudgetOverviewPage() {
 
                 <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-slate-500 sm:grid-cols-3">
                   <span>Du toan: {money(item.estimatedCost)} VND</span>
-                  <span>Phe duyet: {money(item.approvedCost ?? item.estimatedCost)} VND</span>
+                  <span>Phê duyệt: {money(item.approvedCost ?? item.estimatedCost)} VND</span>
                   <span>Da chi: {money(item.spentCost)} VND</span>
                 </div>
               </div>
@@ -375,3 +375,6 @@ export function BudgetOverviewPage() {
     </div>
   );
 }
+
+
+

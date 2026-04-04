@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+﻿import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ClipboardCheck, PenSquare } from "lucide-react";
@@ -45,13 +45,13 @@ export function SafetyDashboardPage() {
     mutationFn: (reportId: string) => safetyApi.sign(projectId, reportId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["safety-reports", projectId] });
-      showToast({ type: "success", title: "Da ky duyet bao cao an toan" });
+      showToast({ type: "success", title: "Đã ký duyệt báo cáo an toàn" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the ky duyet bao cao",
+        description: error instanceof Error ? error.message : "Không thể ký duyệt báo cáo",
       });
     },
   });
@@ -71,15 +71,15 @@ export function SafetyDashboardPage() {
   }
 
   if (isError || !data) {
-    return <ErrorState message="Khong tai duoc du lieu an toan lao dong." />;
+    return <ErrorState message="Không tải được dữ liệu an toàn lao động." />;
   }
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <div className="page-header">
         <div>
-          <h2>An toan lao dong</h2>
-          <p className="page-subtitle">Tong hop bao cao vi pham va tinh trang ky duyet an toan.</p>
+          <h2>An toàn lao động</h2>
+          <p className="page-subtitle">Tổng hợp báo cáo vi phạm và tình trạng ký duyệt an toàn.</p>
         </div>
         <div className="flex items-center gap-2">
           <PermissionGate projectId={projectId} toolId="SAFETY" minLevel="STANDARD">
@@ -87,7 +87,7 @@ export function SafetyDashboardPage() {
               to={`/projects/${projectId}/safety/new`}
               className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700"
             >
-              Tao bao cao
+              Tạo báo cáo
             </Link>
           </PermissionGate>
           <SpecialPrivilegeGate projectId={projectId} privilege="SAFETY_SIGNER">
@@ -99,7 +99,7 @@ export function SafetyDashboardPage() {
               }}
               className="rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-medium text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Ky duyet nhanh
+              Ký duyệt nhanh
             </button>
           </SpecialPrivilegeGate>
         </div>
@@ -107,28 +107,28 @@ export function SafetyDashboardPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="app-card">
-          <p className="text-xs text-slate-500">Tong bao cao</p>
+          <p className="text-xs text-slate-500">Tổng báo cáo</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{data.summary.total}</p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Tong vi pham</p>
+          <p className="text-xs text-slate-500">Tổng vi phạm</p>
           <p className="mt-1 text-2xl font-bold text-red-600">{data.summary.violations}</p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Cho ky duyet</p>
+          <p className="text-xs text-slate-500">Cho ký duyệt</p>
           <p className="mt-1 text-2xl font-bold text-amber-600">{data.summary.pending}</p>
         </div>
       </div>
 
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3>Bao cao gan day</h3>
-          <span className="text-xs text-slate-500">{data.reports.length} bao cao</span>
+          <h3>Báo cáo gan day</h3>
+          <span className="text-xs text-slate-500">{data.reports.length} báo cáo</span>
         </div>
 
         {data.reports.length === 0 ? (
           <p className="text-sm text-slate-500">
-            {canCreateReport ? "Chua co bao cao nao. Hay tao bao cao dau tien." : "Chua co bao cao nao."}
+            {canCreateReport ? "Chưa có báo cáo nào. Hãy tạo báo cáo đầu tiên." : "Chưa có báo cáo nào."}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -136,10 +136,10 @@ export function SafetyDashboardPage() {
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-2 py-2">Ngay</th>
-                  <th className="px-2 py-2">Vi tri</th>
-                  <th className="px-2 py-2">Nguoi kiem tra</th>
+                  <th className="px-2 py-2">Vị trí</th>
+                  <th className="px-2 py-2">Người kiem tra</th>
                   <th className="px-2 py-2">Vi pham</th>
-                  <th className="px-2 py-2">Trang thai</th>
+                  <th className="px-2 py-2">Trạng thái</th>
                   <th className="px-2 py-2 text-right">Tac vu</th>
                 </tr>
               </thead>
@@ -173,7 +173,7 @@ export function SafetyDashboardPage() {
                           to={`/projects/${projectId}/safety/${report.id}`}
                           className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
                         >
-                          Chi tiet
+                          Chi tiết
                         </Link>
                         {report.status === "PENDING" && (
                           <SpecialPrivilegeGate projectId={projectId} privilege="SAFETY_SIGNER">
@@ -208,7 +208,7 @@ export function SafetyDashboardPage() {
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 <PenSquare className="h-4 w-4 text-brand-600" />
-                Tao bao cao an toan
+                Tạo báo cáo an toàn
               </Link>
             </PermissionGate>
 
@@ -222,7 +222,7 @@ export function SafetyDashboardPage() {
                 className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ClipboardCheck className="h-4 w-4" />
-                Ky duyet bao cao cho
+                Ký duyệt báo cáo cho
               </button>
             </SpecialPrivilegeGate>
           </div>
@@ -231,3 +231,7 @@ export function SafetyDashboardPage() {
     </div>
   );
 }
+
+
+
+

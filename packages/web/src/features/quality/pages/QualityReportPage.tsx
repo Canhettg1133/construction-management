@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Save } from "lucide-react";
@@ -84,7 +84,7 @@ export function QualityReportPage() {
       queryClient.invalidateQueries({ queryKey: ["quality-report", projectId, reportId] });
       showToast({
         type: "success",
-        title: isEditing ? "Da cap nhat bao cao QC" : "Da tao bao cao QC",
+        title: isEditing ? "Đã cập nhật báo cáo QC" : "Đã tạo báo cáo QC",
       });
 
       if (!isEditing) {
@@ -95,7 +95,7 @@ export function QualityReportPage() {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the luu bao cao",
+        description: error instanceof Error ? error.message : "Không thể lưu báo cáo",
       });
     },
   });
@@ -105,19 +105,19 @@ export function QualityReportPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quality-reports", projectId] });
       queryClient.invalidateQueries({ queryKey: ["quality-report", projectId, reportId] });
-      showToast({ type: "success", title: "Da ky nghiem thu bao cao QC" });
+      showToast({ type: "success", title: "Da ký nghiệm thu báo cáo QC" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the ky nghiem thu",
+        description: error instanceof Error ? error.message : "Không thể ký nghiệm thu",
       });
     },
   });
 
   if (!projectId) {
-    return <ErrorState message="Khong tim thay thong tin du an." />;
+    return <ErrorState message="Không tìm thấy thông tin dự án." />;
   }
 
   if (isEditing && isLoading) {
@@ -130,11 +130,11 @@ export function QualityReportPage() {
   }
 
   if (isEditing && (isError || !report)) {
-    return <ErrorState message="Khong tai duoc chi tiet bao cao QC." />;
+    return <ErrorState message="Không tải được chi tiết báo cáo QC." />;
   }
 
   if (!canUseQualityStandard && !isEditing) {
-    return <ErrorState message="Ban khong co quyen tao bao cao QC." />;
+    return <ErrorState message="Bạn không có quyền tạo báo cáo QC." />;
   }
 
   return (
@@ -147,10 +147,10 @@ export function QualityReportPage() {
           >
             ← Quality dashboard
           </Link>
-          <h2 className="mt-1">{isEditing ? "Chi tiet bao cao QC" : "Tao bao cao QC"}</h2>
+          <h2 className="mt-1">{isEditing ? "Chi tiết báo cáo QC" : "Tạo báo cáo QC"}</h2>
           {report && (
             <p className="page-subtitle">
-              Nguoi lap: {report.inspector?.name ?? report.inspectorId} · Trang thai: {report.status}
+              Người lap: {report.inspector?.name ?? report.inspectorId} · Trạng thái: {report.status}
             </p>
           )}
         </div>
@@ -163,7 +163,7 @@ export function QualityReportPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <CheckCircle2 className="h-4 w-4" />
-              Ky nghiem thu
+              Ky nghiệm thu
             </button>
           </SpecialPrivilegeGate>
         )}
@@ -171,7 +171,7 @@ export function QualityReportPage() {
 
       <div className="app-card space-y-4">
         <div>
-          <label className="form-label">Ngay bao cao</label>
+          <label className="form-label">Ngay báo cáo</label>
           <input
             type="date"
             value={reportDate}
@@ -182,7 +182,7 @@ export function QualityReportPage() {
         </div>
 
         <div>
-          <label className="form-label">Vi tri</label>
+          <label className="form-label">Vị trí</label>
           <input
             value={location}
             onChange={(event) => setLocation(event.target.value)}
@@ -193,13 +193,13 @@ export function QualityReportPage() {
         </div>
 
         <div>
-          <label className="form-label">Noi dung QC</label>
+          <label className="form-label">Nội dung QC</label>
           <textarea
             rows={6}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             className="form-input"
-            placeholder="Mo ta ket qua kiem tra chat luong..."
+            placeholder="Mô tả ket qua kiem tra chat luong..."
             disabled={!canEditReport}
           />
         </div>
@@ -210,7 +210,7 @@ export function QualityReportPage() {
               to={`/projects/${projectId}/quality`}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Huy
+              Hủy
             </Link>
             <button
               onClick={() => saveMutation.mutate()}
@@ -218,15 +218,19 @@ export function QualityReportPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Save className="h-4 w-4" />
-              {isEditing ? "Luu thay doi" : "Tao bao cao"}
+              {isEditing ? "Lưu thay đổi" : "Tạo báo cáo"}
             </button>
           </div>
         ) : (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-            Ban khong co quyen sua bao cao nay.
+            Bạn không có quyền sửa báo cáo này.
           </div>
         )}
       </div>
     </div>
   );
 }
+
+
+
+

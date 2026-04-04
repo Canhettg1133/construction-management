@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+﻿import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownCircle, ArrowUpCircle, ClipboardList, PackageSearch } from "lucide-react";
 import { warehouseApi } from "../api/warehouseApi";
@@ -48,13 +48,13 @@ export function WarehouseDashboardPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["warehouse-transactions", projectId] });
       queryClient.invalidateQueries({ queryKey: ["warehouse-inventory", projectId] });
-      showToast({ type: "success", title: "Da cap nhat yeu cau vat tu" });
+      showToast({ type: "success", title: "Đã cập nhật yêu cầu vật tư" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the cap nhat yeu cau",
+        description: error instanceof Error ? error.message : "Không thể cập nhật yêu cầu",
       });
     },
   });
@@ -69,7 +69,7 @@ export function WarehouseDashboardPage() {
   }
 
   if (inventoryError || transactionError || !inventoryData || !transactionData) {
-    return <ErrorState message="Khong tai duoc du lieu kho vat tu." />;
+    return <ErrorState message="Không tải được dữ liệu kho vật tư." />;
   }
 
   const recentTransactions = transactionData.transactions.slice(0, 10);
@@ -78,8 +78,8 @@ export function WarehouseDashboardPage() {
     <div className="space-y-4 sm:space-y-5">
       <div className="page-header">
         <div>
-          <h2>Kho vat tu</h2>
-          <p className="page-subtitle">Quan ly ton kho, lich su nhap xuat va xu ly yeu cau vat tu.</p>
+          <h2>Kho vật tư</h2>
+          <p className="page-subtitle">Quản lý tồn kho, lịch sử nhập xuất và xử lý yêu cầu vật tư.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PermissionGate projectId={projectId} toolId="WAREHOUSE" minLevel="READ">
@@ -87,7 +87,7 @@ export function WarehouseDashboardPage() {
               to={`/projects/${projectId}/warehouse/transactions/new?type=REQUEST`}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
-              Yeu cau vat tu
+              Yêu cầu vật tư
             </Link>
           </PermissionGate>
 
@@ -99,14 +99,14 @@ export function WarehouseDashboardPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700"
                 >
                   <ArrowDownCircle className="h-4 w-4" />
-                  Nhap vat tu
+                  Nhập vật tư
                 </Link>
                 <Link
                   to={`/projects/${projectId}/warehouse/transactions/new?type=OUT`}
                   className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700"
                 >
                   <ArrowUpCircle className="h-4 w-4" />
-                  Xuat vat tu
+                  Xuất vật tư
                 </Link>
               </>
             )}
@@ -116,41 +116,41 @@ export function WarehouseDashboardPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="app-card">
-          <p className="text-xs text-slate-500">Tong vat tu</p>
+          <p className="text-xs text-slate-500">Tổng vật tư</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{inventoryData.summary.totalItems}</p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Canh bao ton thap</p>
+          <p className="text-xs text-slate-500">Cảnh báo tồn thấp</p>
           <p className="mt-1 text-2xl font-bold text-red-600">{inventoryData.summary.lowStockItems}</p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Yeu cau cho duyet</p>
+          <p className="text-xs text-slate-500">Yêu cầu chờ duyệt</p>
           <p className="mt-1 text-2xl font-bold text-amber-600">{transactionData.summary.pending}</p>
         </div>
       </div>
 
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3>Ton kho</h3>
+          <h3>Tồn kho</h3>
           {inventoryData.restricted ? (
-            <span className="text-xs text-slate-500">Chi hien danh muc vat tu</span>
+            <span className="text-xs text-slate-500">Chỉ hiển thị danh mục vật tư</span>
           ) : (
-            <span className="text-xs text-slate-500">{inventoryData.inventory.length} vat tu</span>
+            <span className="text-xs text-slate-500">{inventoryData.inventory.length} vật tư</span>
           )}
         </div>
 
         {inventoryData.inventory.length === 0 ? (
-          <p className="text-sm text-slate-500">Chua co du lieu ton kho.</p>
+          <p className="text-sm text-slate-500">Chưa có dữ liệu tồn kho.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-2 py-2">Vat tu</th>
-                  <th className="px-2 py-2">Don vi</th>
-                  {!inventoryData.restricted && <th className="px-2 py-2">Ton kho</th>}
-                  <th className="px-2 py-2">Vi tri</th>
-                  {!inventoryData.restricted && <th className="px-2 py-2 text-right">Canh bao</th>}
+                  <th className="px-2 py-2">Vật tư</th>
+                  <th className="px-2 py-2">Đơn vị</th>
+                  {!inventoryData.restricted && <th className="px-2 py-2">Tồn kho</th>}
+                  <th className="px-2 py-2">Vị trí</th>
+                  {!inventoryData.restricted && <th className="px-2 py-2 text-right">Cảnh báo</th>}
                 </tr>
               </thead>
               <tbody>
@@ -185,7 +185,7 @@ export function WarehouseDashboardPage() {
                               Ton thap
                             </span>
                           ) : (
-                            <span className="text-xs text-slate-400">On dinh</span>
+                            <span className="text-xs text-slate-400">Ổn định</span>
                           )}
                         </td>
                       )}
@@ -200,12 +200,12 @@ export function WarehouseDashboardPage() {
 
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3>Lich su giao dich</h3>
-          <span className="text-xs text-slate-500">{recentTransactions.length} giao dich gan nhat</span>
+          <h3>Lịch sử giao dịch</h3>
+          <span className="text-xs text-slate-500">{recentTransactions.length} giao dịch gan nhat</span>
         </div>
 
         {recentTransactions.length === 0 ? (
-          <p className="text-sm text-slate-500">Chua co giao dich nao.</p>
+          <p className="text-sm text-slate-500">Chưa có giao dịch nào.</p>
         ) : (
           <div className="space-y-2">
             {recentTransactions.map((tx) => (
@@ -240,7 +240,7 @@ export function WarehouseDashboardPage() {
                 <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                   <span>
                     {new Date(tx.createdAt).toLocaleString("vi-VN")} ·{" "}
-                    {tx.requester?.name ?? tx.requestedBy ?? "He thong"}
+                    {tx.requester?.name ?? tx.requestedBy ?? "Hệ thống"}
                   </span>
                   {tx.note && <span className="line-clamp-1 max-w-[60%]">{tx.note}</span>}
                 </div>
@@ -259,7 +259,7 @@ export function WarehouseDashboardPage() {
                       disabled={approveMutation.isPending}
                       className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
                     >
-                      Duyet
+                      Duyệt
                     </button>
                   </div>
                 )}
@@ -277,7 +277,7 @@ export function WarehouseDashboardPage() {
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             <ClipboardList className="h-4 w-4 text-brand-600" />
-            Tao yeu cau vat tu
+            Tạo yêu cầu vật tư
           </Link>
 
           {canManageStock && (
@@ -287,14 +287,14 @@ export function WarehouseDashboardPage() {
                 className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
               >
                 <ArrowDownCircle className="h-4 w-4" />
-                Nhap kho
+                Nhập kho
               </Link>
               <Link
                 to={`/projects/${projectId}/warehouse/transactions/new?type=OUT`}
                 className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100"
               >
                 <ArrowUpCircle className="h-4 w-4" />
-                Xuat kho
+                Xuất kho
               </Link>
             </>
           )}
@@ -302,7 +302,7 @@ export function WarehouseDashboardPage() {
           {!canManageStock && (
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
               <PackageSearch className="h-4 w-4 text-slate-500" />
-              Ban chi co quyen tao yeu cau vat tu
+              Bạn chỉ có quyền tạo yêu cầu vật tư
             </div>
           )}
         </div>
@@ -310,3 +310,6 @@ export function WarehouseDashboardPage() {
     </div>
   );
 }
+
+
+

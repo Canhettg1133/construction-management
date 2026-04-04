@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { projectSettingsApi } from "../api/projectSettingsApi";
@@ -42,7 +42,7 @@ export function ProjectSettingsPage() {
   }
 
   if (settingsQuery.isError || matrixQuery.isError || !settingsQuery.data || !matrixQuery.data) {
-    return <ErrorState message="Khong tai duoc project settings." />;
+    return <ErrorState message="Không tải được project settings." />;
   }
 
   const settings = settingsQuery.data;
@@ -58,7 +58,7 @@ export function ProjectSettingsPage() {
           ← Project detail
         </Link>
         <h2 className="mt-1">Project Settings</h2>
-        <p className="page-subtitle">Quan ly permission matrix va special privileges cho du an.</p>
+        <p className="page-subtitle">Quản lý permission matrix va special privileges cho dự án.</p>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
@@ -84,23 +84,23 @@ export function ProjectSettingsPage() {
           <h3>General</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Ten du an</p>
+              <p className="text-xs text-slate-500">Tên dự án</p>
               <p className="text-sm font-medium text-slate-900">{settings.name}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Ma du an</p>
+              <p className="text-xs text-slate-500">Ma dự án</p>
               <p className="text-sm font-medium text-slate-900">{settings.code}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Trang thai</p>
+              <p className="text-xs text-slate-500">Trạng thái</p>
               <p className="text-sm font-medium text-slate-900">{settings.status}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Tien do</p>
+              <p className="text-xs text-slate-500">Tiến độ</p>
               <p className="text-sm font-medium text-slate-900">{Number(settings.progress)}%</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Bat dau</p>
+              <p className="text-xs text-slate-500">Bat đầu</p>
               <p className="text-sm font-medium text-slate-900">
                 {new Date(settings.startDate).toLocaleDateString("vi-VN")}
               </p>
@@ -108,7 +108,7 @@ export function ProjectSettingsPage() {
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
               <p className="text-xs text-slate-500">Ket thuc</p>
               <p className="text-sm font-medium text-slate-900">
-                {settings.endDate ? new Date(settings.endDate).toLocaleDateString("vi-VN") : "Chua xac dinh"}
+                {settings.endDate ? new Date(settings.endDate).toLocaleDateString("vi-VN") : "Chưa xac dinh"}
               </p>
             </div>
           </div>
@@ -154,3 +154,5 @@ export function ProjectSettingsPage() {
     </div>
   );
 }
+
+

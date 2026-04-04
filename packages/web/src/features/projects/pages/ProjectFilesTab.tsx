@@ -1,4 +1,4 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, File, FileSpreadsheet, FileText, Image, Trash2, Upload } from "lucide-react";
@@ -46,13 +46,13 @@ export function ProjectFilesTab() {
     mutationFn: (file: File) => uploadProjectFile(currentProjectId, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-files", currentProjectId] });
-      showToast({ type: "success", title: "Tai file len thanh cong" });
+      showToast({ type: "success", title: "Tai file len thành công" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the tai file",
+        description: error instanceof Error ? error.message : "Không thể tai file",
       });
     },
   });
@@ -61,13 +61,13 @@ export function ProjectFilesTab() {
     mutationFn: (fileId: string) => deleteProjectFile(currentProjectId, fileId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-files", currentProjectId] });
-      showToast({ type: "success", title: "Da xoa file" });
+      showToast({ type: "success", title: "Da xóa file" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the xoa file",
+        description: error instanceof Error ? error.message : "Không thể xóa file",
       });
     },
   });
@@ -94,15 +94,15 @@ export function ProjectFilesTab() {
   }
 
   if (isError) {
-    return <ErrorState message="Khong tai duoc danh sach file." />;
+    return <ErrorState message="Không tải được danh sach file." />;
   }
 
   return (
     <div className="space-y-4">
       <div className="page-header">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Files du an</h2>
-          <p className="page-subtitle">{files.length} file duoc luu tru.</p>
+          <h2 className="text-lg font-semibold text-slate-900">Files dự án</h2>
+          <p className="page-subtitle">{files.length} file được lưu tru.</p>
         </div>
         <PermissionGate projectId={currentProjectId} toolId="FILE" minLevel="STANDARD">
           <div>
@@ -113,7 +113,7 @@ export function ProjectFilesTab() {
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-50 sm:w-auto"
             >
               <Upload className="h-4 w-4" />
-              Tai len
+              Tải lên
             </button>
           </div>
         </PermissionGate>
@@ -121,8 +121,8 @@ export function ProjectFilesTab() {
 
       {files.length === 0 ? (
         <EmptyState
-          title="Chua co file nao"
-          description={canUpload ? "Tai file len de luu tru tai lieu du an." : "Chua co file nao duoc tai len."}
+          title="Chưa có file nào"
+          description={canUpload ? "Tải file lên để lưu trữ tài liệu dự án." : "Chưa có file nào được tai len."}
         />
       ) : (
         <div className="space-y-2">
@@ -149,13 +149,13 @@ export function ProjectFilesTab() {
                 <PermissionGate projectId={currentProjectId} toolId="FILE" minLevel="ADMIN">
                   <button
                     onClick={() => {
-                      if (confirm(`Xoa file "${file.originalName}"?`)) {
+                      if (confirm(`Xóa file "${file.originalName}"?`)) {
                         deleteMutation.mutate(file.id);
                       }
                     }}
                     disabled={deleteMutation.isPending}
                     className="rounded-lg p-1.5 text-red-500 hover:bg-red-50"
-                    title="Xoa file"
+                    title="Xóa file"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -168,3 +168,7 @@ export function ProjectFilesTab() {
     </div>
   );
 }
+
+
+
+

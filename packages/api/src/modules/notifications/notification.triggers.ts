@@ -1,221 +1,249 @@
-import { NotificationType } from "@prisma/client";
-import { emitNotification } from "../../socket/emitter";
-import { notificationRepository } from "./notification.repository";
+import { notificationService } from './notification.service'
 
-export type NotificationPayload = {
-  id: string;
-  title: string;
-  message?: string | null;
-  type: NotificationType;
-  isRead: boolean;
-  link?: string | null;
-  createdAt: Date;
-};
+function taskLink(projectId: string, taskId: string): string {
+  return `/projects/${projectId}/tasks/${taskId}`
+}
+
+function reportLink(projectId: string, reportId: string): string {
+  return `/projects/${projectId}/reports/${reportId}`
+}
+
+function qualityLink(projectId: string, reportId: string): string {
+  return `/projects/${projectId}/quality/${reportId}`
+}
+
+function safetyLink(projectId: string, reportId: string): string {
+  return `/projects/${projectId}/safety/${reportId}`
+}
+
+function warehouseLink(projectId: string): string {
+  return `/projects/${projectId}/warehouse`
+}
 
 export const notificationTriggers = {
   async taskAssigned(params: { assigneeId: string; taskId: string; taskTitle: string; projectId: string }) {
-    const { assigneeId, taskId, taskTitle, projectId } = params;
-
-    const notification = await notificationRepository.create({
-      userId: assigneeId,
-      title: "Bạn được giao task mới",
-      message: taskTitle,
-      type: "INFO",
-      link: `/projects/${projectId}/tasks/${taskId}`,
-    });
-
-    emitNotification(assigneeId, {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      isRead: notification.isRead,
-      link: notification.link,
-      createdAt: notification.createdAt.toISOString(),
-    });
+    await notificationService.create({
+      userId: params.assigneeId,
+      type: 'TASK_ASSIGNED',
+      title: 'Ban duoc giao task moi',
+      message: params.taskTitle,
+      data: {
+        taskId: params.taskId,
+        projectId: params.projectId,
+        link: taskLink(params.projectId, params.taskId),
+      },
+    })
   },
 
   async reportSubmitted(params: { pmIds: string[]; reportId: string; reportDate: Date; projectId: string }) {
-    const { pmIds, reportId, reportDate, projectId } = params;
-    const dateStr = reportDate.toLocaleDateString("vi-VN");
-
-    for (const pmId of pmIds) {
-      const notification = await notificationRepository.create({
-        userId: pmId,
-        title: "Có báo cáo ngày mới cần duyệt",
-        message: `Báo cáo ngày ${dateStr} đang chờ bạn duyệt`,
-        type: "INFO",
-        link: `/projects/${projectId}/reports/${reportId}`,
-      });
-
-      emitNotification(pmId, {
-        id: notification.id,
-        title: notification.title,
-        message: notification.message,
-        type: notification.type,
-        isRead: notification.isRead,
-        link: notification.link,
-        createdAt: notification.createdAt.toISOString(),
-      });
-    }
+    const dateStr = params.reportDate.toLocaleDateString('vi-VN')
+    await notificationService.createMany(params.pmIds, {
+      type: 'REPORT_PENDING_APPROVAL',
+      title: 'Co bao cao ngay can duyet',
+      message: `Bao cao ngay ${dateStr} dang cho duyet`,
+      data: {
+        reportId: params.reportId,
+        projectId: params.projectId,
+        link: reportLink(params.projectId, params.reportId),
+      },
+    })
   },
 
   async taskSubmitted(params: { pmIds: string[]; taskId: string; taskTitle: string; projectId: string }) {
-    const { pmIds, taskId, taskTitle, projectId } = params;
-
-    for (const pmId of pmIds) {
-      const notification = await notificationRepository.create({
-        userId: pmId,
-        title: "Có task cần duyệt",
-        message: taskTitle,
-        type: "INFO",
-        link: `/projects/${projectId}/tasks/${taskId}`,
-      });
-
-      emitNotification(pmId, {
-        id: notification.id,
-        title: notification.title,
-        message: notification.message,
-        type: notification.type,
-        isRead: notification.isRead,
-        link: notification.link,
-        createdAt: notification.createdAt.toISOString(),
-      });
-    }
+    await notificationService.createMany(params.pmIds, {
+      type: 'REPORT_PENDING_APPROVAL',
+      title: 'Co task can duyet',
+      message: params.taskTitle,
+      data: {
+        taskId: params.taskId,
+        projectId: params.projectId,
+        link: taskLink(params.projectId, params.taskId),
+      },
+    })
   },
 
   async reportApproved(params: { creatorId: string; reportId: string; reportDate: Date; projectId: string }) {
-    const { creatorId, reportId, reportDate, projectId } = params;
-    const dateStr = reportDate.toLocaleDateString("vi-VN");
-
-    const notification = await notificationRepository.create({
-      userId: creatorId,
-      title: "Báo cáo đã được duyệt",
-      message: `Báo cáo ngày ${dateStr} đã được duyệt`,
-      type: "SUCCESS",
-      link: `/projects/${projectId}/reports/${reportId}`,
-    });
-
-    emitNotification(creatorId, {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      isRead: notification.isRead,
-      link: notification.link,
-      createdAt: notification.createdAt.toISOString(),
-    });
+    const dateStr = params.reportDate.toLocaleDateString('vi-VN')
+    await notificationService.create({
+      userId: params.creatorId,
+      type: 'PROJECT_PROGRESS_UPDATE',
+      title: 'Bao cao da duoc duyet',
+      message: `Bao cao ngay ${dateStr} da duoc duyet`,
+      data: {
+        reportId: params.reportId,
+        projectId: params.projectId,
+        link: reportLink(params.projectId, params.reportId),
+      },
+    })
   },
 
-  async reportRejected(params: { creatorId: string; reportId: string; reportDate: Date; reason: string; projectId: string }) {
-    const { creatorId, reportId, reportDate, reason, projectId } = params;
-    const dateStr = reportDate.toLocaleDateString("vi-VN");
-
-    const notification = await notificationRepository.create({
-      userId: creatorId,
-      title: "Báo cáo bị từ chối",
-      message: `Báo cáo ngày ${dateStr} bị từ chối: ${reason}`,
-      type: "WARNING",
-      link: `/projects/${projectId}/reports/${reportId}`,
-    });
-
-    emitNotification(creatorId, {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      isRead: notification.isRead,
-      link: notification.link,
-      createdAt: notification.createdAt.toISOString(),
-    });
+  async reportRejected(params: {
+    creatorId: string
+    reportId: string
+    reportDate: Date
+    reason: string
+    projectId: string
+  }) {
+    const dateStr = params.reportDate.toLocaleDateString('vi-VN')
+    await notificationService.create({
+      userId: params.creatorId,
+      type: 'PROJECT_PROGRESS_UPDATE',
+      title: 'Bao cao bi tu choi',
+      message: `Bao cao ngay ${dateStr} bi tu choi: ${params.reason}`,
+      data: {
+        reportId: params.reportId,
+        projectId: params.projectId,
+        link: reportLink(params.projectId, params.reportId),
+      },
+    })
   },
 
   async taskApproved(params: { creatorId: string; taskId: string; taskTitle: string; projectId: string }) {
-    const { creatorId, taskId, taskTitle, projectId } = params;
-
-    const notification = await notificationRepository.create({
-      userId: creatorId,
-      title: "Task đã được duyệt",
-      message: taskTitle,
-      type: "SUCCESS",
-      link: `/projects/${projectId}/tasks/${taskId}`,
-    });
-
-    emitNotification(creatorId, {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      isRead: notification.isRead,
-      link: notification.link,
-      createdAt: notification.createdAt.toISOString(),
-    });
+    await notificationService.create({
+      userId: params.creatorId,
+      type: 'PROJECT_PROGRESS_UPDATE',
+      title: 'Task da duoc duyet',
+      message: params.taskTitle,
+      data: {
+        taskId: params.taskId,
+        projectId: params.projectId,
+        link: taskLink(params.projectId, params.taskId),
+      },
+    })
   },
 
-  async taskRejected(params: { creatorId: string; taskId: string; taskTitle: string; reason: string; projectId: string }) {
-    const { creatorId, taskId, taskTitle, reason, projectId } = params;
-
-    const notification = await notificationRepository.create({
-      userId: creatorId,
-      title: "Task bị từ chối",
-      message: `${taskTitle} — Lý do: ${reason}`,
-      type: "WARNING",
-      link: `/projects/${projectId}/tasks/${taskId}`,
-    });
-
-    emitNotification(creatorId, {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      isRead: notification.isRead,
-      link: notification.link,
-      createdAt: notification.createdAt.toISOString(),
-    });
+  async taskRejected(params: {
+    creatorId: string
+    taskId: string
+    taskTitle: string
+    reason: string
+    projectId: string
+  }) {
+    await notificationService.create({
+      userId: params.creatorId,
+      type: 'PROJECT_PROGRESS_UPDATE',
+      title: 'Task bi tu choi',
+      message: `${params.taskTitle} - Ly do: ${params.reason}`,
+      data: {
+        taskId: params.taskId,
+        projectId: params.projectId,
+        link: taskLink(params.projectId, params.taskId),
+      },
+    })
   },
 
-  async taskDueSoon(params: { assigneeId: string; taskId: string; taskTitle: string; projectId: string; dueDate: Date }) {
-    const { assigneeId, taskId, taskTitle, projectId, dueDate } = params;
-    const dateStr = dueDate.toLocaleDateString("vi-VN");
-
-    const notification = await notificationRepository.create({
-      userId: assigneeId,
-      title: "Task sắp quá hạn",
-      message: `"${taskTitle}" cần hoàn thành trước ngày ${dateStr}`,
-      type: "WARNING",
-      link: `/projects/${projectId}/tasks/${taskId}`,
-    });
-
-    emitNotification(assigneeId, {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      isRead: notification.isRead,
-      link: notification.link,
-      createdAt: notification.createdAt.toISOString(),
-    });
+  async taskDueSoon(params: {
+    assigneeId: string
+    taskId: string
+    taskTitle: string
+    projectId: string
+    dueDate: Date
+  }) {
+    const dateStr = params.dueDate.toLocaleDateString('vi-VN')
+    await notificationService.create({
+      userId: params.assigneeId,
+      type: 'TASK_DEADLINE_SOON',
+      title: 'Task sap qua han',
+      message: `"${params.taskTitle}" can hoan thanh truoc ngay ${dateStr}`,
+      data: {
+        taskId: params.taskId,
+        projectId: params.projectId,
+        dueDate: params.dueDate.toISOString(),
+        link: taskLink(params.projectId, params.taskId),
+      },
+    })
   },
 
   async taskOverdue(params: { assigneeId: string; taskId: string; taskTitle: string; projectId: string }) {
-    const { assigneeId, taskId, taskTitle, projectId } = params;
-
-    const notification = await notificationRepository.create({
-      userId: assigneeId,
-      title: "Task đã quá hạn",
-      message: `"${taskTitle}" đã quá hạn`,
-      type: "ERROR",
-      link: `/projects/${projectId}/tasks/${taskId}`,
-    });
-
-    emitNotification(assigneeId, {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      isRead: notification.isRead,
-      link: notification.link,
-      createdAt: notification.createdAt.toISOString(),
-    });
+    await notificationService.create({
+      userId: params.assigneeId,
+      type: 'TASK_OVERDUE',
+      title: 'Task da qua han',
+      message: `"${params.taskTitle}" da qua han`,
+      data: {
+        taskId: params.taskId,
+        projectId: params.projectId,
+        link: taskLink(params.projectId, params.taskId),
+      },
+    })
   },
-};
+
+  async safetyReportPending(params: { projectId: string; reportId: string; location: string }) {
+    await notificationService.notifyProjectRolesAndAdmins(params.projectId, ['SAFETY_OFFICER'], {
+      type: 'SAFETY_REPORT_PENDING',
+      title: 'Bao cao an toan cho duyet',
+      message: `Bao cao an toan tai ${params.location} dang cho duyet`,
+      data: {
+        reportId: params.reportId,
+        projectId: params.projectId,
+        link: safetyLink(params.projectId, params.reportId),
+      },
+    })
+  },
+
+  async safetyViolationCreated(params: { projectId: string; reportId: string; location: string; violations: number }) {
+    await notificationService.notifyProjectRolesAndAdmins(params.projectId, ['SAFETY_OFFICER', 'PROJECT_MANAGER'], {
+      type: 'SAFETY_VIOLATION',
+      title: 'Canh bao vi pham an toan',
+      message: `${params.violations} vi pham an toan tai ${params.location}`,
+      data: {
+        reportId: params.reportId,
+        projectId: params.projectId,
+        violations: params.violations,
+        link: safetyLink(params.projectId, params.reportId),
+      },
+    })
+  },
+
+  async qualityReportPending(params: { projectId: string; reportId: string; location: string }) {
+    await notificationService.notifyProjectRolesAndAdmins(params.projectId, ['QUALITY_MANAGER'], {
+      type: 'QUALITY_REPORT_PENDING',
+      title: 'Bao cao chat luong cho duyet',
+      message: `Bao cao QC tai ${params.location} dang cho duyet`,
+      data: {
+        reportId: params.reportId,
+        projectId: params.projectId,
+        link: qualityLink(params.projectId, params.reportId),
+      },
+    })
+  },
+
+  async lowStockAlert(params: {
+    projectId: string
+    inventoryId: string
+    materialName: string
+    quantity: number
+    minQuantity: number
+  }) {
+    await notificationService.notifyProjectRoles(params.projectId, ['WAREHOUSE_KEEPER', 'PROJECT_MANAGER'], {
+      type: 'LOW_STOCK_ALERT',
+      title: 'Canh bao ton kho thap',
+      message: `${params.materialName}: ${params.quantity} < ${params.minQuantity}`,
+      data: {
+        inventoryId: params.inventoryId,
+        projectId: params.projectId,
+        quantity: params.quantity,
+        minQuantity: params.minQuantity,
+        link: warehouseLink(params.projectId),
+      },
+    })
+  },
+
+  async transactionPending(params: {
+    projectId: string
+    transactionId: string
+    materialName: string
+    quantity: number
+  }) {
+    await notificationService.notifyProjectRoles(params.projectId, ['WAREHOUSE_KEEPER'], {
+      type: 'TRANSACTION_PENDING',
+      title: 'Yeu cau vat tu cho xu ly',
+      message: `${params.materialName}: ${params.quantity}`,
+      data: {
+        transactionId: params.transactionId,
+        projectId: params.projectId,
+        link: warehouseLink(params.projectId),
+      },
+    })
+  },
+}

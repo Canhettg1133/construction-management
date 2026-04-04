@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+﻿import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BadgeCheck, ClipboardCheck, PenSquare } from "lucide-react";
@@ -19,7 +19,7 @@ function QualityStatusBadge({ status }: { status: "PENDING" | "APPROVED" | "REJE
         ? "bg-red-50 text-red-700"
         : "bg-amber-50 text-amber-700";
   const label =
-    status === "APPROVED" ? "Da nghiem thu" : status === "REJECTED" ? "Tu choi" : "Cho nghiem thu";
+    status === "APPROVED" ? "Da nghiệm thu" : status === "REJECTED" ? "Tu choi" : "Cho nghiệm thu";
 
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>{label}</span>;
 }
@@ -45,13 +45,13 @@ export function QualityDashboardPage() {
     mutationFn: (reportId: string) => qualityApi.sign(projectId, reportId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quality-reports", projectId] });
-      showToast({ type: "success", title: "Da ky nghiem thu bao cao QC" });
+      showToast({ type: "success", title: "Da ký nghiệm thu báo cáo QC" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the ky nghiem thu",
+        description: error instanceof Error ? error.message : "Không thể ký nghiệm thu",
       });
     },
   });
@@ -71,15 +71,15 @@ export function QualityDashboardPage() {
   }
 
   if (isError || !data) {
-    return <ErrorState message="Khong tai duoc du lieu chat luong." />;
+    return <ErrorState message="Không tải được dữ liệu chat luong." />;
   }
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <div className="page-header">
         <div>
-          <h2>Quan ly chat luong</h2>
-          <p className="page-subtitle">Tong hop bao cao QC, pass rate va nghiem thu.</p>
+          <h2>Quản lý chat luong</h2>
+          <p className="page-subtitle">Tổng hợp báo cáo QC, pass rate va nghiệm thu.</p>
         </div>
         <div className="flex items-center gap-2">
           <PermissionGate projectId={projectId} toolId="QUALITY" minLevel="STANDARD">
@@ -87,7 +87,7 @@ export function QualityDashboardPage() {
               to={`/projects/${projectId}/quality/new`}
               className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700"
             >
-              Tao bao cao QC
+              Tạo báo cáo QC
             </Link>
           </PermissionGate>
           <SpecialPrivilegeGate projectId={projectId} privilege="QUALITY_SIGNER">
@@ -99,7 +99,7 @@ export function QualityDashboardPage() {
               }}
               className="rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-medium text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Ky nghiem thu nhanh
+              Ky nghiệm thu nhanh
             </button>
           </SpecialPrivilegeGate>
         </div>
@@ -107,7 +107,7 @@ export function QualityDashboardPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="app-card">
-          <p className="text-xs text-slate-500">Tong bao cao QC</p>
+          <p className="text-xs text-slate-500">Tổng báo cáo QC</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{data.summary.total}</p>
         </div>
         <div className="app-card">
@@ -115,20 +115,20 @@ export function QualityDashboardPage() {
           <p className="mt-1 text-2xl font-bold text-emerald-600">{data.summary.passRate}%</p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Cho nghiem thu</p>
+          <p className="text-xs text-slate-500">Cho nghiệm thu</p>
           <p className="mt-1 text-2xl font-bold text-amber-600">{data.summary.pending}</p>
         </div>
       </div>
 
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3>Bao cao gan day</h3>
-          <span className="text-xs text-slate-500">{data.reports.length} bao cao</span>
+          <h3>Báo cáo gan day</h3>
+          <span className="text-xs text-slate-500">{data.reports.length} báo cáo</span>
         </div>
 
         {data.reports.length === 0 ? (
           <p className="text-sm text-slate-500">
-            {canCreateReport ? "Chua co bao cao QC. Hay tao bao cao dau tien." : "Chua co bao cao QC nao."}
+            {canCreateReport ? "Chưa có báo cáo QC. Hãy tạo báo cáo đầu tiên." : "Chưa có báo cáo QC nào."}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -136,9 +136,9 @@ export function QualityDashboardPage() {
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-2 py-2">Ngay</th>
-                  <th className="px-2 py-2">Vi tri</th>
-                  <th className="px-2 py-2">Nguoi lap</th>
-                  <th className="px-2 py-2">Trang thai</th>
+                  <th className="px-2 py-2">Vị trí</th>
+                  <th className="px-2 py-2">Người lap</th>
+                  <th className="px-2 py-2">Trạng thái</th>
                   <th className="px-2 py-2 text-right">Tac vu</th>
                 </tr>
               </thead>
@@ -166,7 +166,7 @@ export function QualityDashboardPage() {
                           to={`/projects/${projectId}/quality/${report.id}`}
                           className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
                         >
-                          Chi tiet
+                          Chi tiết
                         </Link>
                         {report.status === "PENDING" && (
                           <SpecialPrivilegeGate projectId={projectId} privilege="QUALITY_SIGNER">
@@ -201,7 +201,7 @@ export function QualityDashboardPage() {
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 <PenSquare className="h-4 w-4 text-brand-600" />
-                Tao bao cao QC
+                Tạo báo cáo QC
               </Link>
             </PermissionGate>
 
@@ -215,7 +215,7 @@ export function QualityDashboardPage() {
                 className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ClipboardCheck className="h-4 w-4" />
-                Ky nghiem thu bao cao cho
+                Ky nghiệm thu báo cáo cho
               </button>
             </SpecialPrivilegeGate>
 
@@ -225,7 +225,7 @@ export function QualityDashboardPage() {
                 Quy tac QC
               </span>
               <p className="mt-1 text-xs text-slate-500">
-                Bao cao chi duoc nghiem thu khi day du thong tin va trang thai PENDING.
+                Báo cáo chi được nghiệm thu khi day du thông tin va trang thai PENDING.
               </p>
             </div>
           </div>
@@ -234,3 +234,7 @@ export function QualityDashboardPage() {
     </div>
   );
 }
+
+
+
+

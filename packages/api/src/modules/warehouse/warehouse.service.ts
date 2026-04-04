@@ -1,80 +1,85 @@
-import { prisma } from "../../config/database";
-import { Prisma } from "@prisma/client";
-import type { ProjectRole, SystemRole } from "@construction/shared";
-import { BadRequestError, ForbiddenError, NotFoundError } from "../../shared/errors";
+import { prisma } from '../../config/database'
+import { Prisma } from '@prisma/client'
+import type { ProjectRole, SystemRole } from '@construction/shared'
+import { BadRequestError, ForbiddenError, NotFoundError } from '../../shared/errors'
+import { notificationTriggers } from '../notifications/notification.triggers'
 
 interface WarehouseActorContext {
-  userId: string;
-  systemRole: SystemRole;
-  projectRole: ProjectRole | null;
+  userId: string
+  systemRole: SystemRole
+  projectRole: ProjectRole | null
+}
+
+function decimalToNumber(value: Prisma.Decimal | number | string): number {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') return Number(value)
+  return value.toNumber()
 }
 
 function parseQuantity(value: unknown): Prisma.Decimal {
-  let quantity: Prisma.Decimal;
+  let quantity: Prisma.Decimal
   try {
-    quantity = new Prisma.Decimal(String(value ?? "0"));
+    quantity = new Prisma.Decimal(String(value ?? '0'))
   } catch {
-    throw new BadRequestError("So luong khong hop le");
+    throw new BadRequestError('So luong khong hop le')
   }
 
   if (quantity.lte(0)) {
-    throw new BadRequestError("So luong phai lon hon 0");
+    throw new BadRequestError('So luong phai lon hon 0')
   }
-  return quantity;
+  return quantity
 }
 
 function parseNonEmpty(value: unknown, fieldName: string, maxLength = 2000): string {
-  const text = String(value ?? "").trim();
+  const text = String(value ?? '').trim()
   if (!text) {
-    throw new BadRequestError(`${fieldName} khong duoc de trong`);
+    throw new BadRequestError(`${fieldName} khong duoc de trong`)
   }
   if (text.length > maxLength) {
-    throw new BadRequestError(`${fieldName} vuot qua ${maxLength} ky tu`);
+    throw new BadRequestError(`${fieldName} vuot qua ${maxLength} ky tu`)
   }
-  return text;
+  return text
 }
 
 function parseOptionalText(value: unknown, maxLength = 2000): string | null {
   if (value === undefined || value === null) {
-    return null;
+    return null
   }
-  const text = String(value).trim();
+  const text = String(value).trim()
   if (!text) {
-    return null;
+    return null
   }
   if (text.length > maxLength) {
-    throw new BadRequestError(`Ghi chu vuot qua ${maxLength} ky tu`);
+    throw new BadRequestError(`Ghi chu vuot qua ${maxLength} ky tu`)
   }
-  return text;
+  return text
 }
 
 function canManageStock(actor: WarehouseActorContext): boolean {
   return (
-    actor.systemRole === "ADMIN" ||
-    actor.projectRole === "PROJECT_MANAGER" ||
-    actor.projectRole === "WAREHOUSE_KEEPER"
-  );
+    actor.systemRole === 'ADMIN' || actor.projectRole === 'PROJECT_MANAGER' || actor.projectRole === 'WAREHOUSE_KEEPER'
+  )
 }
 
 function canApproveRequest(actor: WarehouseActorContext): boolean {
-  return canManageStock(actor) || actor.projectRole === "QUALITY_MANAGER";
+  return canManageStock(actor) || actor.projectRole === 'QUALITY_MANAGER'
 }
 
 function isEngineerReadOnly(actor: WarehouseActorContext): boolean {
-  return actor.systemRole !== "ADMIN" && actor.projectRole === "ENGINEER";
+  return actor.systemRole !== 'ADMIN' && actor.projectRole === 'ENGINEER'
 }
 
 async function ensureProjectExists(projectId: string) {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     select: { id: true, name: true },
-  });
+  })
 
   if (!project) {
-    throw new NotFoundError("Khong tim thay du an");
+    throw new NotFoundError('Khong tim thay du an')
   }
 
-  return project;
+  return project
 }
 
 async function ensureInventoryInProject(projectId: string, inventoryId: string) {
@@ -92,18 +97,18 @@ async function ensureInventoryInProject(projectId: string, inventoryId: string) 
       createdAt: true,
       updatedAt: true,
     },
-  });
+  })
 
   if (!inventory) {
-    throw new NotFoundError("Khong tim thay vat tu trong kho du an");
+    throw new NotFoundError('Khong tim thay vat tu trong kho du an')
   }
 
-  return inventory;
+  return inventory
 }
 
 export const warehouseService = {
   async getInventory(projectId: string, actor: WarehouseActorContext) {
-    await ensureProjectExists(projectId);
+    await ensureProjectExists(projectId)
 
     if (isEngineerReadOnly(actor)) {
       const lightweightInventory = await prisma.warehouseInventory.findMany({
@@ -117,8 +122,8 @@ export const warehouseService = {
           createdAt: true,
           updatedAt: true,
         },
-        orderBy: [{ materialName: "asc" }],
-      });
+        orderBy: [{ materialName: 'asc' }],
+      })
 
       return {
         projectId,
@@ -129,44 +134,44 @@ export const warehouseService = {
         },
         inventory: lightweightInventory,
         restricted: true,
-        message: "Engineer chi xem danh muc vat tu de tao yeu cau",
-      };
+        message: 'Engineer chi xem danh muc vat tu de tao yeu cau',
+      }
     }
 
     const inventory = await prisma.warehouseInventory.findMany({
       where: { projectId },
-      orderBy: [{ materialName: "asc" }],
+      orderBy: [{ materialName: 'asc' }],
       include: {
         _count: {
           select: { transactions: true },
         },
       },
-    });
+    })
 
     const summary = inventory.reduce(
       (acc, item) => {
-        acc.totalItems += 1;
-        acc.totalQuantity += Number(item.quantity);
+        acc.totalItems += 1
+        acc.totalQuantity += Number(item.quantity)
         if (item.quantity.lte(item.minQuantity)) {
-          acc.lowStockItems += 1;
+          acc.lowStockItems += 1
         }
-        return acc;
+        return acc
       },
-      { totalItems: 0, lowStockItems: 0, totalQuantity: 0 }
-    );
+      { totalItems: 0, lowStockItems: 0, totalQuantity: 0 },
+    )
 
     return {
       projectId,
       summary,
       inventory,
-    };
+    }
   },
 
   async getInventoryItem(projectId: string, inventoryId: string, actor: WarehouseActorContext) {
-    await ensureProjectExists(projectId);
+    await ensureProjectExists(projectId)
 
     if (isEngineerReadOnly(actor)) {
-      throw new ForbiddenError("Engineer khong duoc xem chi tiet ton kho");
+      throw new ForbiddenError('Engineer khong duoc xem chi tiet ton kho')
     }
 
     const inventory = await prisma.warehouseInventory.findFirst({
@@ -178,28 +183,28 @@ export const warehouseService = {
               select: { id: true, name: true, email: true },
             },
           },
-          orderBy: [{ createdAt: "desc" }],
+          orderBy: [{ createdAt: 'desc' }],
           take: 50,
         },
       },
-    });
+    })
 
     if (!inventory) {
-      throw new NotFoundError("Khong tim thay vat tu trong kho du an");
+      throw new NotFoundError('Khong tim thay vat tu trong kho du an')
     }
 
-    return inventory;
+    return inventory
   },
 
   async listTransactions(projectId: string, actor: WarehouseActorContext) {
-    await ensureProjectExists(projectId);
+    await ensureProjectExists(projectId)
 
     const where: Prisma.WarehouseTransactionWhereInput = {
       inventory: { projectId },
-    };
+    }
 
     if (isEngineerReadOnly(actor)) {
-      where.requestedBy = actor.userId;
+      where.requestedBy = actor.userId
     }
 
     const transactions = await prisma.warehouseTransaction.findMany({
@@ -217,54 +222,52 @@ export const warehouseService = {
           select: { id: true, name: true, email: true },
         },
       },
-      orderBy: [{ createdAt: "desc" }],
+      orderBy: [{ createdAt: 'desc' }],
       take: 100,
-    });
+    })
 
     const summary = transactions.reduce(
       (acc, item) => {
-        acc.total += 1;
-        if (item.status === "PENDING") acc.pending += 1;
-        if (item.type === "REQUEST") acc.requests += 1;
-        return acc;
+        acc.total += 1
+        if (item.status === 'PENDING') acc.pending += 1
+        if (item.type === 'REQUEST') acc.requests += 1
+        return acc
       },
-      { total: 0, pending: 0, requests: 0 }
-    );
+      { total: 0, pending: 0, requests: 0 },
+    )
 
     return {
       projectId,
       summary,
       transactions,
-    };
+    }
   },
 
   async createTransaction(projectId: string, actor: WarehouseActorContext, payload: Record<string, unknown>) {
-    await ensureProjectExists(projectId);
+    await ensureProjectExists(projectId)
 
     if (!canManageStock(actor)) {
-      throw new ForbiddenError("Chi PM hoac thu kho moi duoc nhap/xuat vat tu");
+      throw new ForbiddenError('Chi PM hoac thu kho moi duoc nhap/xuat vat tu')
     }
 
-    const inventoryId = parseNonEmpty(payload.inventoryId, "InventoryId", 64);
-    const type = String(payload.type ?? "").toUpperCase();
-    if (type !== "IN" && type !== "OUT") {
-      throw new BadRequestError("Loai giao dich phai la IN hoac OUT");
+    const inventoryId = parseNonEmpty(payload.inventoryId, 'InventoryId', 64)
+    const type = String(payload.type ?? '').toUpperCase()
+    if (type !== 'IN' && type !== 'OUT') {
+      throw new BadRequestError('Loai giao dich phai la IN hoac OUT')
     }
 
-    const quantity = parseQuantity(payload.quantity);
-    const note = parseOptionalText(payload.note);
-    const inventory = await ensureInventoryInProject(projectId, inventoryId);
+    const quantity = parseQuantity(payload.quantity)
+    const note = parseOptionalText(payload.note)
+    const inventory = await ensureInventoryInProject(projectId, inventoryId)
 
-    return prisma.$transaction(async (tx) => {
-      const currentQuantity = new Prisma.Decimal(inventory.quantity);
+    const transaction = await prisma.$transaction(async (tx) => {
+      const currentQuantity = new Prisma.Decimal(inventory.quantity)
 
-      if (type === "OUT" && currentQuantity.lt(quantity)) {
-        throw new BadRequestError(
-          `Ton kho khong du de xuat (${currentQuantity.toString()} ${inventory.unit})`
-        );
+      if (type === 'OUT' && currentQuantity.lt(quantity)) {
+        throw new BadRequestError(`Ton kho khong du de xuat (${currentQuantity.toString()} ${inventory.unit})`)
       }
 
-      const nextQuantity = type === "IN" ? currentQuantity.plus(quantity) : currentQuantity.minus(quantity);
+      const nextQuantity = type === 'IN' ? currentQuantity.plus(quantity) : currentQuantity.minus(quantity)
 
       const transaction = await tx.warehouseTransaction.create({
         data: {
@@ -274,36 +277,53 @@ export const warehouseService = {
           note,
           requestedBy: actor.userId,
           approvedBy: actor.userId,
-          status: "APPROVED",
+          status: 'APPROVED',
         },
-      });
+      })
 
       await tx.warehouseInventory.update({
         where: { id: inventoryId },
         data: { quantity: nextQuantity },
-      });
+      })
 
-      return transaction;
-    });
+      return transaction
+    })
+
+    try {
+      const updatedInventory = await ensureInventoryInProject(projectId, inventoryId)
+      if (new Prisma.Decimal(updatedInventory.quantity).lte(updatedInventory.minQuantity)) {
+        await notificationTriggers.lowStockAlert({
+          projectId,
+          inventoryId: updatedInventory.id,
+          materialName: updatedInventory.materialName,
+          quantity: decimalToNumber(updatedInventory.quantity),
+          minQuantity: decimalToNumber(updatedInventory.minQuantity),
+        })
+      }
+    } catch {
+      // Non-blocking notification
+    }
+
+    return transaction
   },
 
   async createRequest(projectId: string, actor: WarehouseActorContext, payload: Record<string, unknown>) {
-    await ensureProjectExists(projectId);
+    await ensureProjectExists(projectId)
 
-    const inventoryId = parseNonEmpty(payload.inventoryId, "InventoryId", 64);
-    const quantity = parseQuantity(payload.quantity);
-    const note = parseOptionalText(payload.note);
+    const inventoryId = parseNonEmpty(payload.inventoryId, 'InventoryId', 64)
+    const quantity = parseQuantity(payload.quantity)
+    const note = parseOptionalText(payload.note)
 
-    await ensureInventoryInProject(projectId, inventoryId);
+    await ensureInventoryInProject(projectId, inventoryId)
 
-    return prisma.warehouseTransaction.create({
+    const request = await prisma.warehouseTransaction.create({
       data: {
         inventoryId,
-        type: "REQUEST",
+        type: 'REQUEST',
         quantity,
         note,
         requestedBy: actor.userId,
-        status: "PENDING",
+        status: 'PENDING',
       },
       include: {
         inventory: {
@@ -313,27 +333,40 @@ export const warehouseService = {
           select: { id: true, name: true, email: true },
         },
       },
-    });
+    })
+
+    try {
+      await notificationTriggers.transactionPending({
+        projectId,
+        transactionId: request.id,
+        materialName: request.inventory.materialName,
+        quantity: decimalToNumber(request.quantity),
+      })
+    } catch {
+      // Non-blocking notification
+    }
+
+    return request
   },
 
   async updateRequest(
     projectId: string,
     requestId: string,
     actor: WarehouseActorContext,
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
   ) {
-    await ensureProjectExists(projectId);
+    await ensureProjectExists(projectId)
 
     if (!canApproveRequest(actor)) {
-      throw new ForbiddenError("Ban khong co quyen duyet yeu cau vat tu");
+      throw new ForbiddenError('Ban khong co quyen duyet yeu cau vat tu')
     }
 
-    const nextStatus = String(payload.status ?? "").toUpperCase();
-    if (nextStatus !== "APPROVED" && nextStatus !== "REJECTED") {
-      throw new BadRequestError("Trang thai phai la APPROVED hoac REJECTED");
+    const nextStatus = String(payload.status ?? '').toUpperCase()
+    if (nextStatus !== 'APPROVED' && nextStatus !== 'REJECTED') {
+      throw new BadRequestError('Trang thai phai la APPROVED hoac REJECTED')
     }
 
-    const note = parseOptionalText(payload.note);
+    const note = parseOptionalText(payload.note)
 
     const request = await prisma.warehouseTransaction.findFirst({
       where: {
@@ -345,27 +378,27 @@ export const warehouseService = {
           select: { id: true, quantity: true, unit: true },
         },
       },
-    });
+    })
 
     if (!request) {
-      throw new NotFoundError("Khong tim thay yeu cau vat tu");
+      throw new NotFoundError('Khong tim thay yeu cau vat tu')
     }
 
-    if (request.type !== "REQUEST") {
-      throw new BadRequestError("Chi duoc cap nhat giao dich REQUEST");
+    if (request.type !== 'REQUEST') {
+      throw new BadRequestError('Chi duoc cap nhat giao dich REQUEST')
     }
 
-    if (request.status !== "PENDING") {
-      throw new BadRequestError("Yeu cau da duoc xu ly truoc do");
+    if (request.status !== 'PENDING') {
+      throw new BadRequestError('Yeu cau da duoc xu ly truoc do')
     }
 
-    return prisma.$transaction(async (tx) => {
-      if (nextStatus === "APPROVED") {
-        const currentQuantity = new Prisma.Decimal(request.inventory.quantity);
+    const updatedRequest = await prisma.$transaction(async (tx) => {
+      if (nextStatus === 'APPROVED') {
+        const currentQuantity = new Prisma.Decimal(request.inventory.quantity)
         if (currentQuantity.lt(request.quantity)) {
           throw new BadRequestError(
-            `Ton kho khong du de duyet (${currentQuantity.toString()} ${request.inventory.unit})`
-          );
+            `Ton kho khong du de duyet (${currentQuantity.toString()} ${request.inventory.unit})`,
+          )
         }
 
         await tx.warehouseInventory.update({
@@ -373,7 +406,7 @@ export const warehouseService = {
           data: {
             quantity: currentQuantity.minus(request.quantity),
           },
-        });
+        })
       }
 
       return tx.warehouseTransaction.update({
@@ -391,7 +424,26 @@ export const warehouseService = {
             select: { id: true, name: true, email: true },
           },
         },
-      });
-    });
+      })
+    })
+
+    if (nextStatus === 'APPROVED') {
+      try {
+        const updatedInventory = await ensureInventoryInProject(projectId, request.inventoryId)
+        if (new Prisma.Decimal(updatedInventory.quantity).lte(updatedInventory.minQuantity)) {
+          await notificationTriggers.lowStockAlert({
+            projectId,
+            inventoryId: updatedInventory.id,
+            materialName: updatedInventory.materialName,
+            quantity: decimalToNumber(updatedInventory.quantity),
+            minQuantity: decimalToNumber(updatedInventory.minQuantity),
+          })
+        }
+      } catch {
+        // Non-blocking notification
+      }
+    }
+
+    return updatedRequest
   },
-};
+}

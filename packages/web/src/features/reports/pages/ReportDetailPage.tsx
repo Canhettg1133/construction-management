@@ -348,7 +348,7 @@ export function ReportDetailPage() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className="form-label">Thoi tiet</label>
+              <label className="form-label">Thời tiết</label>
               <select {...register("weather")} className="form-input">
                 {WEATHER_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -356,18 +356,18 @@ export function ReportDetailPage() {
               </select>
             </div>
             <div>
-              <label className="form-label">So cong nhan</label>
+              <label className="form-label">Số công nhân</label>
               <input {...register("workerCount")} type="number" min={0} className="form-input" />
             </div>
             <div>
-              <label className="form-label">Tien do (%)</label>
+              <label className="form-label">Tiến độ (%)</label>
               <input {...register("progress")} type="number" min={0} max={100} className="form-input" />
-              <p className="form-help">Tien do luy ke, khong giam so voi cac bao cao truoc.</p>
+              <p className="form-help">Tiến độ lũy kế, không giảm so với các báo cáo trước.</p>
             </div>
           </div>
 
           <div>
-            <label className="form-label">Cong viec da lam</label>
+            <label className="form-label">Công việc đã làm</label>
             <textarea {...register("workDescription")} rows={4} className="form-input" />
             {errors.workDescription && <p className="form-error">{errors.workDescription.message}</p>}
           </div>

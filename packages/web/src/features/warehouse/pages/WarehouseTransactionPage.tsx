@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { warehouseApi } from "../api/warehouseApi";
@@ -49,7 +49,7 @@ export function WarehouseTransactionPage() {
   const submitMutation = useMutation({
     mutationFn: async () => {
       if (!inventoryId) {
-        throw new Error("Vui long chon vat tu");
+        throw new Error("Vui lòng chon vật tư");
       }
 
       if (mode === "REQUEST") {
@@ -72,7 +72,7 @@ export function WarehouseTransactionPage() {
       queryClient.invalidateQueries({ queryKey: ["warehouse-transactions", projectId] });
       showToast({
         type: "success",
-        title: mode === "REQUEST" ? "Da tao yeu cau vat tu" : "Da tao giao dich kho",
+        title: mode === "REQUEST" ? "Đã tạo yêu cầu vật tư" : "Đã tạo giao dịch kho",
       });
       navigate(`/projects/${projectId}/warehouse`);
     },
@@ -80,7 +80,7 @@ export function WarehouseTransactionPage() {
       showToast({
         type: "error",
         title: "Loi",
-        description: error instanceof Error ? error.message : "Khong the tao giao dich",
+        description: error instanceof Error ? error.message : "Không thể tạo giao dịch",
       });
     },
   });
@@ -94,11 +94,11 @@ export function WarehouseTransactionPage() {
   }
 
   if (isError || !inventoryData) {
-    return <ErrorState message="Khong tai duoc danh muc vat tu." />;
+    return <ErrorState message="Không tải được danh mục vật tư." />;
   }
 
   if ((mode === "IN" || mode === "OUT") && !canManageStock) {
-    return <ErrorState message="Ban khong co quyen tao giao dich nhap/xuat kho." />;
+    return <ErrorState message="Bạn không có quyền tạo giao dịch nhập/xuất kho." />;
   }
 
   return (
@@ -111,13 +111,13 @@ export function WarehouseTransactionPage() {
           ← Warehouse dashboard
         </Link>
         <h2 className="mt-1">
-          {mode === "REQUEST" ? "Tao yeu cau vat tu" : mode === "IN" ? "Nhap vat tu" : "Xuat vat tu"}
+          {mode === "REQUEST" ? "Tạo yêu cầu vật tư" : mode === "IN" ? "Nhập vật tư" : "Xuất vật tư"}
         </h2>
-        <p className="page-subtitle">Nhap thong tin giao dich theo quy trinh kho vat tu.</p>
+        <p className="page-subtitle">Nhập thông tin giao dịch theo quy trinh kho vật tư.</p>
       </div>
 
       <div className="app-card space-y-3">
-        <h3>Loai giao dich</h3>
+        <h3>Loai giao dịch</h3>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSearchParams({ type: "REQUEST" })}
@@ -158,13 +158,13 @@ export function WarehouseTransactionPage() {
 
       <div className="app-card space-y-4">
         <div>
-          <label className="form-label">Vat tu</label>
+          <label className="form-label">Vật tư</label>
           <select
             className="form-input"
             value={inventoryId}
             onChange={(event) => setInventoryId(event.target.value)}
           >
-            <option value="">Chon vat tu</option>
+            <option value="">Chon vật tư</option>
             {inventoryOptions.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.materialName} ({item.unit})
@@ -192,7 +192,7 @@ export function WarehouseTransactionPage() {
             value={note}
             onChange={(event) => setNote(event.target.value)}
             className="form-input"
-            placeholder="Ghi ro muc dich giao dich/yeu cau..."
+            placeholder="Ghi rõ mục đích giao dịch/yêu cầu..."
           />
         </div>
 
@@ -201,17 +201,21 @@ export function WarehouseTransactionPage() {
             to={`/projects/${projectId}/warehouse`}
             className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            Huy
+            Hủy
           </Link>
           <button
             onClick={() => submitMutation.mutate()}
             disabled={submitMutation.isPending}
             className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {mode === "REQUEST" ? "Tao yeu cau" : "Tao giao dich"}
+            {mode === "REQUEST" ? "Tạo yêu cầu" : "Tạo giao dịch"}
           </button>
         </div>
       </div>
     </div>
   );
 }
+
+
+
+

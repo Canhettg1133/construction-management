@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 
 const DEFAULT_ITEMS = [
-  "Vat lieu dau vao dat tieu chuan",
+  "Vat lieu đầu vao dat tieu chưan",
   "Kich thuoc va cao do dung ban ve",
-  "Cong tac bao duong be tong dung quy trinh",
+  "Cong tac bao duong be tổng dung quy trinh",
   "Nghiem thu noi bo theo hang muc",
-  "Ho so QC da cap nhat day du",
+  "Hồ sơ QC da cập nhật day du",
 ];
 
 export function QualityChecklist() {
@@ -45,3 +45,5 @@ export function QualityChecklist() {
     </div>
   );
 }
+
+
