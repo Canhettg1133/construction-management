@@ -8,6 +8,12 @@ function severityTone(level: "LOW" | "MEDIUM" | "HIGH"): string {
   return "text-sky-700 bg-sky-50";
 }
 
+function severityLabel(level: "LOW" | "MEDIUM" | "HIGH"): string {
+  if (level === "HIGH") return "Cao";
+  if (level === "MEDIUM") return "Trung bình";
+  return "Thấp";
+}
+
 export function SafetyViolationsWidget() {
   const role = useDashboardRole();
   const { data } = useDashboard();
@@ -22,11 +28,11 @@ export function SafetyViolationsWidget() {
     <div className="app-card">
       <div className="mb-3 flex items-center gap-2">
         <ShieldAlert className="h-4 w-4 text-red-600" />
-        <h3 className="text-sm font-semibold text-slate-700">Vi pham an toan gan day</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Vi phạm an toàn gần đây</h3>
       </div>
 
       {violations.length === 0 ? (
-        <p className="py-5 text-center text-sm text-slate-500">Khong co vi pham nao trong ky hien tai.</p>
+        <p className="py-5 text-center text-sm text-slate-500">Không có vi phạm nào trong kỳ hiện tại.</p>
       ) : (
         <div className="max-h-72 space-y-2 overflow-y-auto">
           {violations.slice(0, 8).map((violation) => (
@@ -41,13 +47,13 @@ export function SafetyViolationsWidget() {
                     violation.severity
                   )}`}
                 >
-                  {violation.severity}
+                  {severityLabel(violation.severity)}
                 </span>
               </div>
               <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
                 <span>{new Date(violation.date).toLocaleDateString("vi-VN")}</span>
                 <span className={violation.resolved ? "text-emerald-600" : "text-red-600"}>
-                  {violation.resolved ? "Da xu ly" : "Chua xu ly"}
+                  {violation.resolved ? "Đã xử lý" : "Chưa xử lý"}
                 </span>
               </div>
             </div>
@@ -57,4 +63,3 @@ export function SafetyViolationsWidget() {
     </div>
   );
 }
-

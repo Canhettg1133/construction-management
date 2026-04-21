@@ -53,7 +53,7 @@ export function WarehouseDashboardPage() {
     onError: (error: unknown) => {
       showToast({
         type: "error",
-        title: "Loi",
+        title: "Lỗi",
         description: error instanceof Error ? error.message : "Không thể cập nhật yêu cầu",
       });
     },
@@ -182,7 +182,7 @@ export function WarehouseDashboardPage() {
                         <td className="px-2 py-2 text-right">
                           {isLowStock ? (
                             <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-                              Ton thap
+                              Tồn thấp
                             </span>
                           ) : (
                             <span className="text-xs text-slate-400">Ổn định</span>
@@ -201,7 +201,7 @@ export function WarehouseDashboardPage() {
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
           <h3>Lịch sử giao dịch</h3>
-          <span className="text-xs text-slate-500">{recentTransactions.length} giao dịch gan nhat</span>
+          <span className="text-xs text-slate-500">{recentTransactions.length} giao dịch gần nhất</span>
         </div>
 
         {recentTransactions.length === 0 ? (
@@ -252,7 +252,7 @@ export function WarehouseDashboardPage() {
                       disabled={approveMutation.isPending}
                       className="rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
                     >
-                      Tu choi
+                      Từ chối
                     </button>
                     <button
                       onClick={() => approveMutation.mutate({ id: tx.id, status: "APPROVED" })}

@@ -1,35 +1,52 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
+import { buildAuthCookie } from "../../test/request-test-helpers";
 
 process.env.DATABASE_URL = process.env.DATABASE_URL ?? "mysql://test:test@localhost:3306/test";
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-jwt-secret-test-jwt-secret-123";
 process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? "test-refresh-secret-test-refresh-secret-123";
 process.env.NODE_ENV = "test";
 
-const { default: app } = await import("../../app");
+vi.mock("../../shared/services/permission.service", async () => {
+  const { createPermissionServiceMock } = await import("../../test/request-test-helpers");
+  return { permissionService: createPermissionServiceMock() };
+});
 
-function signToken(role = "ADMIN") {
-  const jwt = require("jsonwebtoken") as typeof import("jsonwebtoken");
-  return jwt.sign(
-    { id: "u-test", email: "test@example.com", role },
-    process.env.JWT_SECRET as string,
-    { expiresIn: "1h" }
-  );
-}
+vi.mock("./task.service", () => ({
+  taskService: {
+    list: vi.fn().mockResolvedValue({ tasks: [], total: 0 }),
+    getById: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    updateStatus: vi.fn(),
+    delete: vi.fn().mockResolvedValue(undefined),
+    submitForApproval: vi.fn(),
+  },
+}));
+
+vi.mock("./task-comment.service", () => ({
+  taskCommentService: {
+    list: vi.fn().mockResolvedValue([]),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+const { default: app } = await import("../../app");
 
 const PROJECT_ID = "11111111-1111-1111-1111-111111111111";
 
-describe("Tasks — A4 Tasks (UAT)", () => {
+describe("Tasks - request contract", () => {
   it("GET /projects/:projectId/tasks requires authentication", async () => {
     const res = await request(app).get(`/api/v1/projects/${PROJECT_ID}/tasks`);
     expect(res.status).toBe(401);
   });
 
   it("GET /projects/:projectId/tasks returns task list", async () => {
-    const token = signToken("VIEWER");
     const res = await request(app)
       .get(`/api/v1/projects/${PROJECT_ID}/tasks`)
-      .set("Cookie", [`access_token=${token}`]);
+      .set("Cookie", buildAuthCookie("VIEWER"));
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -38,19 +55,17 @@ describe("Tasks — A4 Tasks (UAT)", () => {
   });
 
   it("GET /projects/:projectId/tasks accepts status filter", async () => {
-    const token = signToken("SITE_ENGINEER");
     const res = await request(app)
       .get(`/api/v1/projects/${PROJECT_ID}/tasks?status=IN_PROGRESS`)
-      .set("Cookie", [`access_token=${token}`]);
+      .set("Cookie", buildAuthCookie("ENGINEER"));
 
     expect(res.status).toBe(200);
   });
 
-  it("POST /projects/:projectId/tasks requires proper role", async () => {
-    const token = signToken("VIEWER");
+  it("VIEWER cannot create tasks", async () => {
     const res = await request(app)
       .post(`/api/v1/projects/${PROJECT_ID}/tasks`)
-      .set("Cookie", [`access_token=${token}`])
+      .set("Cookie", buildAuthCookie("VIEWER"))
       .send({
         title: "New Task",
         description: "Description",
@@ -61,10 +76,9 @@ describe("Tasks — A4 Tasks (UAT)", () => {
   });
 
   it("POST /projects/:projectId/tasks validates required fields", async () => {
-    const token = signToken("SITE_ENGINEER");
     const res = await request(app)
       .post(`/api/v1/projects/${PROJECT_ID}/tasks`)
-      .set("Cookie", [`access_token=${token}`])
+      .set("Cookie", buildAuthCookie("ENGINEER"))
       .send({});
 
     expect(res.status).toBe(400);
@@ -72,10 +86,9 @@ describe("Tasks — A4 Tasks (UAT)", () => {
   });
 
   it("POST /projects/:projectId/tasks validates priority enum", async () => {
-    const token = signToken("SITE_ENGINEER");
     const res = await request(app)
       .post(`/api/v1/projects/${PROJECT_ID}/tasks`)
-      .set("Cookie", [`access_token=${token}`])
+      .set("Cookie", buildAuthCookie("ENGINEER"))
       .send({
         title: "Task",
         priority: "INVALID_PRIORITY",
@@ -86,57 +99,50 @@ describe("Tasks — A4 Tasks (UAT)", () => {
   });
 
   it("PATCH /projects/:projectId/tasks/:taskId validates status enum", async () => {
-    const token = signToken("SITE_ENGINEER");
     const res = await request(app)
       .patch(`/api/v1/projects/${PROJECT_ID}/tasks/00000000-0000-0000-0000-000000000001/status`)
-      .set("Cookie", [`access_token=${token}`])
+      .set("Cookie", buildAuthCookie("ENGINEER"))
       .send({ status: "INVALID_STATUS" });
 
     expect(res.status).toBe(400);
   });
 
-  it("PATCH /projects/:projectId/tasks/:taskId requires proper role", async () => {
-    const token = signToken("VIEWER");
+  it("VIEWER cannot update tasks", async () => {
     const res = await request(app)
       .patch(`/api/v1/projects/${PROJECT_ID}/tasks/00000000-0000-0000-0000-000000000001`)
-      .set("Cookie", [`access_token=${token}`])
+      .set("Cookie", buildAuthCookie("VIEWER"))
       .send({ title: "Updated Task" });
 
     expect(res.status).toBe(403);
   });
 
-  it("DELETE /projects/:projectId/tasks/:taskId requires ADMIN or PM", async () => {
-    const token = signToken("SITE_ENGINEER");
+  it("DELETE /projects/:projectId/tasks/:taskId requires TASK ADMIN permission", async () => {
     const res = await request(app)
       .delete(`/api/v1/projects/${PROJECT_ID}/tasks/00000000-0000-0000-0000-000000000001`)
-      .set("Cookie", [`access_token=${token}`]);
+      .set("Cookie", buildAuthCookie("ENGINEER"));
 
     expect(res.status).toBe(403);
   });
 
-  // Task Comments
   it("GET /projects/:projectId/tasks/:taskId/comments requires auth", async () => {
-    const res = await request(app)
-      .get(`/api/v1/projects/${PROJECT_ID}/tasks/00000000-0000-0000-0000-000000000001/comments`);
+    const res = await request(app).get(`/api/v1/projects/${PROJECT_ID}/tasks/00000000-0000-0000-0000-000000000001/comments`);
 
     expect(res.status).toBe(401);
   });
 
-  it("POST /projects/:projectId/tasks/:taskId/comments requires auth", async () => {
-    const token = signToken("VIEWER");
+  it("VIEWER cannot create comments", async () => {
     const res = await request(app)
       .post(`/api/v1/projects/${PROJECT_ID}/tasks/00000000-0000-0000-0000-000000000001/comments`)
-      .set("Cookie", [`access_token=${token}`])
+      .set("Cookie", buildAuthCookie("VIEWER"))
       .send({ content: "A comment" });
 
     expect(res.status).toBe(403);
   });
 
   it("POST /projects/:projectId/tasks/:taskId/comments validates content", async () => {
-    const token = signToken("ADMIN");
     const res = await request(app)
       .post(`/api/v1/projects/${PROJECT_ID}/tasks/00000000-0000-0000-0000-000000000001/comments`)
-      .set("Cookie", [`access_token=${token}`])
+      .set("Cookie", buildAuthCookie("ADMIN"))
       .send({ content: "" });
 
     expect(res.status).toBe(400);

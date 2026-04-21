@@ -12,16 +12,16 @@ export function RecentActivity() {
   return (
     <div className="app-card">
       <div className="mb-2 flex items-center justify-between">
-        <h3>Hoat dong gan day</h3>
+        <h3>Hoạt động gần đây</h3>
         {data?.updatedAt ? (
           <span className="text-xs text-slate-500">
-            Cap nhat: {new Date(data.updatedAt).toLocaleTimeString("vi-VN")}
+            Cập nhật: {new Date(data.updatedAt).toLocaleTimeString("vi-VN")}
           </span>
         ) : null}
       </div>
       <div className="mt-3 space-y-2">
         {visibleItems.length === 0 ? (
-          <p className="text-sm text-slate-500">Chua co hoat dong gan day.</p>
+          <p className="text-sm text-slate-500">Chưa có hoạt động gần đây.</p>
         ) : (
           visibleItems.map((item) => (
             <div
@@ -39,4 +39,3 @@ export function RecentActivity() {
     </div>
   );
 }
-

@@ -1,11 +1,11 @@
 ﻿import { useMemo, useState } from "react";
 
 const DEFAULT_ITEMS = [
-  "Vat lieu đầu vao dat tieu chưan",
-  "Kich thuoc va cao do dung ban ve",
-  "Cong tac bao duong be tổng dung quy trinh",
-  "Nghiem thu noi bo theo hang muc",
-  "Hồ sơ QC da cập nhật day du",
+  "Vật liệu đầu vào đạt tiêu chuẩn",
+  "Kích thước và cao độ đúng bản vẽ",
+  "Công tác bảo dưỡng bê tông đúng quy trình",
+  "Nghiệm thu nội bộ theo hạng mục",
+  "Hồ sơ QC đã cập nhật đầy đủ",
 ];
 
 export function QualityChecklist() {

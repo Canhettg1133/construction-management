@@ -1,33 +1,43 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
+import { buildAuthCookie } from "../../test/request-test-helpers";
 
 process.env.DATABASE_URL = process.env.DATABASE_URL ?? "mysql://test:test@localhost:3306/test";
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-jwt-secret-test-jwt-secret-123";
 process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? "test-refresh-secret-test-refresh-secret-123";
 process.env.NODE_ENV = "test";
 
+vi.mock("./dashboard.service", () => ({
+  dashboardService: {
+    getStats: vi.fn().mockResolvedValue({
+      projectCount: 1,
+      activeProjectCount: 1,
+      openTaskCount: 2,
+      overdueTaskCount: 0,
+      todayReportCount: 1,
+      memberCount: 5,
+      tasksByStatus: {
+        TO_DO: 1,
+        IN_PROGRESS: 1,
+        DONE: 0,
+        CANCELLED: 0,
+      },
+      recentActivity: [],
+      updatedAt: "2026-04-14T00:00:00.000Z",
+    }),
+  },
+}));
+
 const { default: app } = await import("../../app");
 
-function signToken(role = "ADMIN") {
-  const jwt = require("jsonwebtoken") as typeof import("jsonwebtoken");
-  return jwt.sign(
-    { id: "u-test", email: "test@example.com", role },
-    process.env.JWT_SECRET as string,
-    { expiresIn: "1h" }
-  );
-}
-
-describe("Dashboard — Regression", () => {
+describe("Dashboard - request contract", () => {
   it("GET /dashboard/stats requires authentication", async () => {
     const res = await request(app).get("/api/v1/dashboard/stats");
     expect(res.status).toBe(401);
   });
 
   it("GET /dashboard/stats returns stats for authenticated user", async () => {
-    const token = signToken("VIEWER");
-    const res = await request(app)
-      .get("/api/v1/dashboard/stats")
-      .set("Cookie", [`access_token=${token}`]);
+    const res = await request(app).get("/api/v1/dashboard/stats").set("Cookie", buildAuthCookie("STAFF"));
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -44,12 +54,9 @@ describe("Dashboard — Regression", () => {
     });
   });
 
-  it("Dashboard stats format is consistent between roles", async () => {
-    for (const role of ["ADMIN", "PROJECT_MANAGER", "SITE_ENGINEER", "VIEWER"]) {
-      const token = signToken(role);
-      const res = await request(app)
-        .get("/api/v1/dashboard/stats")
-        .set("Cookie", [`access_token=${token}`]);
+  it("Dashboard stats shape is consistent for ADMIN and STAFF", async () => {
+    for (const profile of ["ADMIN", "STAFF"] as const) {
+      const res = await request(app).get("/api/v1/dashboard/stats").set("Cookie", buildAuthCookie(profile));
 
       expect(res.status).toBe(200);
       expect(res.body.data.tasksByStatus).toHaveProperty("TO_DO");
@@ -60,7 +67,7 @@ describe("Dashboard — Regression", () => {
   });
 });
 
-describe("Health — Regression (AC-6.2)", () => {
+describe("Health - regression", () => {
   it("GET /health is publicly accessible", async () => {
     const res = await request(app).get("/api/v1/health");
 
@@ -72,7 +79,7 @@ describe("Health — Regression (AC-6.2)", () => {
   });
 });
 
-describe("404 Handler — Regression", () => {
+describe("404 handler - regression", () => {
   it("Unknown routes return 404 with NOT_FOUND code", async () => {
     const res = await request(app).get("/api/v1/nonexistent-endpoint");
 

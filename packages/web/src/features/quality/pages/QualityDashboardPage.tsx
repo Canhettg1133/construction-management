@@ -19,7 +19,7 @@ function QualityStatusBadge({ status }: { status: "PENDING" | "APPROVED" | "REJE
         ? "bg-red-50 text-red-700"
         : "bg-amber-50 text-amber-700";
   const label =
-    status === "APPROVED" ? "Da nghiệm thu" : status === "REJECTED" ? "Tu choi" : "Cho nghiệm thu";
+    status === "APPROVED" ? "Đã nghiệm thu" : status === "REJECTED" ? "Từ chối" : "Chờ nghiệm thu";
 
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>{label}</span>;
 }
@@ -45,7 +45,7 @@ export function QualityDashboardPage() {
     mutationFn: (reportId: string) => qualityApi.sign(projectId, reportId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quality-reports", projectId] });
-      showToast({ type: "success", title: "Da ký nghiệm thu báo cáo QC" });
+      showToast({ type: "success", title: "Đã ký nghiệm thu báo cáo QC" });
     },
     onError: (error: unknown) => {
       showToast({
@@ -71,14 +71,14 @@ export function QualityDashboardPage() {
   }
 
   if (isError || !data) {
-    return <ErrorState message="Không tải được dữ liệu chat luong." />;
+    return <ErrorState message="Không tải được dữ liệu chất lượng." />;
   }
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <div className="page-header">
         <div>
-          <h2>Quản lý chat luong</h2>
+          <h2>Quản lý chất lượng</h2>
           <p className="page-subtitle">Tổng hợp báo cáo QC, pass rate va nghiệm thu.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export function QualityDashboardPage() {
               }}
               className="rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-medium text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Ky nghiệm thu nhanh
+              Ký nghiệm thu nhanh
             </button>
           </SpecialPrivilegeGate>
         </div>
@@ -122,7 +122,7 @@ export function QualityDashboardPage() {
 
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3>Báo cáo gan day</h3>
+          <h3>Báo cáo gần đây</h3>
           <span className="text-xs text-slate-500">{data.reports.length} báo cáo</span>
         </div>
 
@@ -137,9 +137,9 @@ export function QualityDashboardPage() {
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-2 py-2">Ngay</th>
                   <th className="px-2 py-2">Vị trí</th>
-                  <th className="px-2 py-2">Người lap</th>
+                  <th className="px-2 py-2">Người lập</th>
                   <th className="px-2 py-2">Trạng thái</th>
-                  <th className="px-2 py-2 text-right">Tac vu</th>
+                  <th className="px-2 py-2 text-right">Tác vụ</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,7 +175,7 @@ export function QualityDashboardPage() {
                               disabled={signMutation.isPending}
                               className="rounded-lg bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
                             >
-                              Ky
+                              Ký
                             </button>
                           </SpecialPrivilegeGate>
                         )}
@@ -215,7 +215,7 @@ export function QualityDashboardPage() {
                 className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ClipboardCheck className="h-4 w-4" />
-                Ky nghiệm thu báo cáo cho
+                Ký nghiệm thu báo cáo cho
               </button>
             </SpecialPrivilegeGate>
 

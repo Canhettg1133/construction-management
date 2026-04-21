@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 
 const DEFAULT_ITEMS = [
-  "Trang bi day du bao ho lao dong",
-  "Kiem tra day dan dien va aptomat",
-  "Khu vuc lam viec co bien bao canh bao",
-  "Loi thoat hiem thong thoang",
-  "Thiet bi PCCC san sang su dung",
+  "Trang bị đầy đủ bảo hộ lao động",
+  "Kiểm tra dây điện và aptomat",
+  "Khu vực làm việc có biển báo cảnh báo",
+  "Lối thoát hiểm thông thoáng",
+  "Thiết bị PCCC sẵn sàng sử dụng",
 ];
 
 export function SafetyChecklist() {

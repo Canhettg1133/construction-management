@@ -9,7 +9,7 @@ export function ActiveMembersWidget({ members }: ActiveMembersWidgetProps) {
   const avatarFallback = (name: string) =>
     name
       .split(" ")
-      .map((w) => w[0])
+      .map((word) => word[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
@@ -21,7 +21,7 @@ export function ActiveMembersWidget({ members }: ActiveMembersWidgetProps) {
           <Trophy className="h-4 w-4 text-slate-500" />
           <h3 className="text-sm font-semibold text-slate-700">Thành viên tích cực</h3>
         </div>
-        <p className="py-4 text-center text-sm text-slate-500">Chưa có hoạt động tuần này.</p>
+        <p className="py-4 text-center text-sm text-slate-500">Chưa có hoạt động nổi bật trong tuần này.</p>
       </div>
     );
   }
@@ -49,22 +49,22 @@ export function ActiveMembersWidget({ members }: ActiveMembersWidgetProps) {
                   {avatarFallback(member.name)}
                 </div>
               )}
-              {index === 0 && (
-                <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px]">
-                  ⭐
+              {index === 0 ? (
+                <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px]">
+                  *
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-slate-800">
                 {member.name}
-                {index === 0 && <span className="ml-1 text-xs text-amber-500">(Top)</span>}
+                {index === 0 ? <span className="ml-1 text-xs text-amber-500">(Nổi bật)</span> : null}
               </p>
             </div>
 
             <span className="shrink-0 rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-              {member.actionCount} hành động
+              {member.actionCount} hoạt động
             </span>
           </div>
         ))}

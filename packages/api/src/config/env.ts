@@ -1,4 +1,21 @@
+import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { config as loadEnv } from "dotenv";
 import { z } from "zod";
+
+const currentFile = fileURLToPath(import.meta.url);
+const configDir = dirname(currentFile);
+const packageRoot = resolve(configDir, "../..");
+const workspaceRoot = resolve(packageRoot, "../..");
+
+// Load package-local defaults first, then let the workspace root remain the
+// single source of truth for local development overrides.
+for (const envPath of [resolve(packageRoot, ".env"), resolve(workspaceRoot, ".env")]) {
+  if (existsSync(envPath)) {
+    loadEnv({ path: envPath, override: true });
+  }
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

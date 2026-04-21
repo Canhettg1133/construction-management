@@ -16,9 +16,9 @@ interface WeeklyProgressChartProps {
 }
 
 export function WeeklyProgressChart({ data }: WeeklyProgressChartProps) {
-  const formatted = data.map((d) => ({
-    ...d,
-    date: new Date(d.date).toLocaleDateString("vi-VN", {
+  const formatted = data.map((item) => ({
+    ...item,
+    date: new Date(item.date).toLocaleDateString("vi-VN", {
       weekday: "short",
       day: "2-digit",
       month: "2-digit",
@@ -26,7 +26,7 @@ export function WeeklyProgressChart({ data }: WeeklyProgressChartProps) {
   }));
 
   const maxValue = Math.max(
-    ...data.map((d) => Math.max(d.totalTasks, d.completedTasks, d.newTasks)),
+    ...data.map((item) => Math.max(item.totalTasks, item.completedTasks, item.newTasks)),
     1
   );
 
@@ -39,11 +39,7 @@ export function WeeklyProgressChart({ data }: WeeklyProgressChartProps) {
       </div>
 
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart
-          data={formatted}
-          margin={{ top: 5, right: 5, left: -20, bottom: 0 }}
-          barGap={2}
-        >
+        <BarChart data={formatted} margin={{ top: 5, right: 5, left: -20, bottom: 0 }} barGap={2}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
           <XAxis
             dataKey="date"
@@ -65,23 +61,9 @@ export function WeeklyProgressChart({ data }: WeeklyProgressChartProps) {
             }}
             labelStyle={{ fontWeight: 600, color: "#334155" }}
           />
-          <Legend
-            wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-            iconType="circle"
-            iconSize={8}
-          />
-          <Bar
-            dataKey="newTasks"
-            name="Task mới"
-            fill="#f59e0b"
-            radius={[3, 3, 0, 0]}
-          />
-          <Bar
-            dataKey="completedTasks"
-            name="Đã hoàn thành"
-            fill="#10b981"
-            radius={[3, 3, 0, 0]}
-          />
+          <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" iconSize={8} />
+          <Bar dataKey="newTasks" name="Công việc mới" fill="#f59e0b" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="completedTasks" name="Đã hoàn thành" fill="#10b981" radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

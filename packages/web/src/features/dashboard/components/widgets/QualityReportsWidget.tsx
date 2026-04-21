@@ -10,6 +10,13 @@ function statusTone(status: string): string {
   return "text-slate-700 bg-slate-100";
 }
 
+function statusLabel(status: string): string {
+  if (status === "APPROVED") return "Đã duyệt";
+  if (status === "REJECTED") return "Từ chối";
+  if (status === "PENDING") return "Chờ duyệt";
+  return status;
+}
+
 export function QualityReportsWidget() {
   const role = useDashboardRole();
   const { data } = useDashboard();
@@ -25,13 +32,13 @@ export function QualityReportsWidget() {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileCheck2 className="h-4 w-4 text-brand-600" />
-          <h3 className="text-sm font-semibold text-slate-700">Bao cao QC gan day</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Báo cáo QC gần đây</h3>
         </div>
-        <span className="text-xs text-slate-500">{reports.length} bao cao</span>
+        <span className="text-xs text-slate-500">{reports.length} báo cáo</span>
       </div>
 
       {reports.length === 0 ? (
-        <p className="py-5 text-center text-sm text-slate-500">Chua co bao cao QC nao.</p>
+        <p className="py-5 text-center text-sm text-slate-500">Chưa có báo cáo QC nào.</p>
       ) : (
         <div className="max-h-72 space-y-2 overflow-y-auto">
           {reports.slice(0, 8).map((report) => (
@@ -39,11 +46,11 @@ export function QualityReportsWidget() {
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-medium text-slate-900">{report.location}</p>
                 <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${statusTone(report.status)}`}>
-                  {report.status}
+                  {statusLabel(report.status)}
                 </span>
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                Ngay bao cao: {new Date(report.reportDate).toLocaleDateString("vi-VN")}
+                Ngày báo cáo: {new Date(report.reportDate).toLocaleDateString("vi-VN")}
               </div>
             </div>
           ))}
@@ -52,4 +59,3 @@ export function QualityReportsWidget() {
     </div>
   );
 }
-

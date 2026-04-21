@@ -13,6 +13,7 @@ import { DocumentsPage } from "../features/documents/pages/DocumentsPage";
 import { DocumentSearchPage } from "../features/documents/pages/DocumentSearchPage";
 import { NotificationsPage } from "../features/notifications/pages/NotificationsPage";
 import { ProfilePage } from "../features/settings/pages/ProfilePage";
+import { SettingsIndexPage } from "../features/settings/pages/SettingsIndexPage";
 import { ProjectDetailPage } from "../features/projects/pages/ProjectDetailPage";
 import { ProjectFilesTab } from "../features/projects/pages/ProjectFilesTab";
 import { ProjectListPage } from "../features/projects/pages/ProjectListPage";
@@ -200,7 +201,7 @@ export const router = createBrowserRouter([
           </PermissionGuard>
         ),
       },
-      { path: "settings", element: <Navigate to={ROUTES.SETTINGS_PROFILE} replace /> },
+      { path: "settings", element: <SettingsIndexPage /> },
       { path: "settings/profile", element: <ProfilePage /> },
       { path: "settings/change-password", element: <ChangePasswordPage /> },
       { path: "access-denied", element: <AccessDeniedPage /> },

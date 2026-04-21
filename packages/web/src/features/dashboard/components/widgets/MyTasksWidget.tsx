@@ -30,13 +30,13 @@ export function MyTasksWidget() {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CheckSquare className="h-4 w-4 text-brand-600" />
-          <h3 className="text-sm font-semibold text-slate-700">Task cua toi</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Công việc của tôi</h3>
         </div>
-        <span className="text-xs text-slate-500">{tasks.length} task</span>
+        <span className="text-xs text-slate-500">{tasks.length} công việc</span>
       </div>
 
       {tasks.length === 0 ? (
-        <p className="py-5 text-center text-sm text-slate-500">Ban chua co task duoc giao.</p>
+        <p className="py-5 text-center text-sm text-slate-500">Bạn chưa có công việc được giao.</p>
       ) : (
         <div className="max-h-72 space-y-2 overflow-y-auto">
           {tasks.slice(0, 8).map((task) => (
@@ -44,7 +44,7 @@ export function MyTasksWidget() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-slate-900">{task.title}</p>
-                  <p className="mt-0.5 truncate text-xs text-slate-500">{task.project?.name ?? "Du an"}</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">{task.project?.name ?? "Dự án"}</p>
                 </div>
                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">
                   {TASK_PRIORITY_LABELS[task.priority] ?? task.priority}
@@ -58,7 +58,7 @@ export function MyTasksWidget() {
                     {new Date(task.dueDate).toLocaleDateString("vi-VN")}
                   </span>
                 ) : (
-                  <span className="text-slate-400">Khong co han</span>
+                  <span className="text-slate-400">Không có hạn</span>
                 )}
               </div>
             </div>
@@ -68,12 +68,14 @@ export function MyTasksWidget() {
 
       {tasks[0]?.projectId ? (
         <div className="mt-3 border-t border-slate-100 pt-3 text-right">
-          <Link to={`/projects/${tasks[0].projectId}/tasks`} className="text-xs font-medium text-brand-600 hover:text-brand-700">
-            Xem danh sach task
+          <Link
+            to={`/projects/${tasks[0].projectId}/tasks`}
+            className="text-xs font-medium text-brand-600 hover:text-brand-700"
+          >
+            Xem danh sách công việc
           </Link>
         </div>
       ) : null}
     </div>
   );
 }
-

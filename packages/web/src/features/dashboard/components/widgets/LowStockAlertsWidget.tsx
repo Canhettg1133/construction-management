@@ -21,7 +21,7 @@ export function LowStockAlertsWidget() {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
-          <h3 className="text-sm font-semibold text-slate-700">Canh bao ton kho thap</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Cảnh báo tồn kho thấp</h3>
         </div>
         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
           {items.length}
@@ -29,7 +29,7 @@ export function LowStockAlertsWidget() {
       </div>
 
       {items.length === 0 ? (
-        <p className="py-5 text-center text-sm text-slate-500">Khong co vat tu duoi nguong ton.</p>
+        <p className="py-5 text-center text-sm text-slate-500">Không có vật tư nào dưới ngưỡng tồn kho.</p>
       ) : (
         <div className="max-h-72 space-y-2 overflow-y-auto">
           {items.slice(0, 8).map((item) => {
@@ -42,7 +42,7 @@ export function LowStockAlertsWidget() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-slate-900">{item.materialName}</p>
-                    <p className="truncate text-xs text-slate-500">{item.location ?? "Kho chinh"}</p>
+                    <p className="truncate text-xs text-slate-500">{item.location ?? "Kho chính"}</p>
                   </div>
                   <span className="rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-semibold text-red-700">
                     {quantity} / {min} {item.unit}
@@ -59,4 +59,3 @@ export function LowStockAlertsWidget() {
     </div>
   );
 }
-

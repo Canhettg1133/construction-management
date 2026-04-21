@@ -10,10 +10,17 @@ function statusTone(status: string): string {
   return "text-slate-700 bg-slate-100";
 }
 
+function statusLabel(status: string): string {
+  if (status === "APPROVED") return "Đã duyệt";
+  if (status === "REJECTED") return "Từ chối";
+  if (status === "PENDING") return "Chờ duyệt";
+  return status;
+}
+
 function typeLabel(type: string): string {
-  if (type === "IN") return "Nhap";
-  if (type === "OUT") return "Xuat";
-  if (type === "REQUEST") return "Request";
+  if (type === "IN") return "Nhập";
+  if (type === "OUT") return "Xuất";
+  if (type === "REQUEST") return "Yêu cầu";
   return type;
 }
 
@@ -36,21 +43,21 @@ export function RecentTransactionsWidget() {
     <div className="app-card">
       <div className="mb-3 flex items-center gap-2">
         <ArrowDownUp className="h-4 w-4 text-indigo-600" />
-        <h3 className="text-sm font-semibold text-slate-700">Giao dich gan day</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Giao dịch gần đây</h3>
       </div>
 
       {transactions.length === 0 ? (
-        <p className="py-5 text-center text-sm text-slate-500">Chua co giao dich nao gan day.</p>
+        <p className="py-5 text-center text-sm text-slate-500">Chưa có giao dịch nào gần đây.</p>
       ) : (
         <div className="max-h-72 space-y-2 overflow-y-auto">
           {transactions.slice(0, 8).map((transaction) => (
             <div key={transaction.id} className="rounded-xl border border-slate-200 p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-medium text-slate-900">
-                  {transaction.inventory?.materialName ?? "Vat tu"}
+                  {transaction.inventory?.materialName ?? "Vật tư"}
                 </p>
                 <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${statusTone(transaction.status)}`}>
-                  {transaction.status}
+                  {statusLabel(transaction.status)}
                 </span>
               </div>
               <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
@@ -67,4 +74,3 @@ export function RecentTransactionsWidget() {
     </div>
   );
 }
-

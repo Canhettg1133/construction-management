@@ -17,14 +17,14 @@ export function WarehouseOverviewWidget() {
     <div className="app-card">
       <div className="mb-3 flex items-center gap-2">
         <Warehouse className="h-4 w-4 text-indigo-600" />
-        <h3 className="text-sm font-semibold text-slate-700">Tong quan kho phuc vu QC</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Tổng quan kho phục vụ QC</h3>
       </div>
 
       <div className="space-y-2">
-        <Row label="Vat tu ton kho" value={formatNumber(stats?.totalItems)} icon={Warehouse} />
-        <Row label="Canh bao ton thap" value={formatNumber(stats?.lowStockCount)} icon={AlertTriangle} />
-        <Row label="Nhap kho thang nay" value={formatNumber(stats?.thisMonthIn)} icon={TrendingUp} />
-        <Row label="Xuat kho thang nay" value={formatNumber(stats?.thisMonthOut)} icon={TrendingUp} />
+        <Row label="Vật tư tồn kho" value={formatNumber(stats?.totalItems)} icon={Warehouse} />
+        <Row label="Cảnh báo tồn thấp" value={formatNumber(stats?.lowStockCount)} icon={AlertTriangle} />
+        <Row label="Nhập kho tháng này" value={formatNumber(stats?.thisMonthIn)} icon={TrendingUp} />
+        <Row label="Xuất kho tháng này" value={formatNumber(stats?.thisMonthOut)} icon={TrendingUp} />
       </div>
     </div>
   );
@@ -49,4 +49,3 @@ function Row({
     </div>
   );
 }
-

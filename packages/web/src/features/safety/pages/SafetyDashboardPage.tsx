@@ -19,7 +19,7 @@ function SafetyStatusBadge({ status }: { status: "PENDING" | "APPROVED" | "REJEC
         ? "bg-red-50 text-red-700"
         : "bg-amber-50 text-amber-700";
   const label =
-    status === "APPROVED" ? "Da ky" : status === "REJECTED" ? "Tu choi" : "Cho ky";
+    status === "APPROVED" ? "Đã ký" : status === "REJECTED" ? "Từ chối" : "Chờ ký";
 
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>{label}</span>;
 }
@@ -50,7 +50,7 @@ export function SafetyDashboardPage() {
     onError: (error: unknown) => {
       showToast({
         type: "error",
-        title: "Loi",
+        title: "Lỗi",
         description: error instanceof Error ? error.message : "Không thể ký duyệt báo cáo",
       });
     },
@@ -122,7 +122,7 @@ export function SafetyDashboardPage() {
 
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3>Báo cáo gan day</h3>
+          <h3>Báo cáo gần đây</h3>
           <span className="text-xs text-slate-500">{data.reports.length} báo cáo</span>
         </div>
 
@@ -135,12 +135,12 @@ export function SafetyDashboardPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-2 py-2">Ngay</th>
+                  <th className="px-2 py-2">Ngày</th>
                   <th className="px-2 py-2">Vị trí</th>
-                  <th className="px-2 py-2">Người kiem tra</th>
-                  <th className="px-2 py-2">Vi pham</th>
+                  <th className="px-2 py-2">Người kiểm tra</th>
+                  <th className="px-2 py-2">Vi phạm</th>
                   <th className="px-2 py-2">Trạng thái</th>
-                  <th className="px-2 py-2 text-right">Tac vu</th>
+                  <th className="px-2 py-2 text-right">Tác vụ</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,7 +182,7 @@ export function SafetyDashboardPage() {
                               disabled={signMutation.isPending}
                               className="rounded-lg bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
                             >
-                              Ky
+                              Ký
                             </button>
                           </SpecialPrivilegeGate>
                         )}

@@ -46,13 +46,13 @@ export function ProjectFilesTab() {
     mutationFn: (file: File) => uploadProjectFile(currentProjectId, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-files", currentProjectId] });
-      showToast({ type: "success", title: "Tai file len thành công" });
+      showToast({ type: "success", title: "Tải tệp lên thành công" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể tai file",
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể tải tệp",
       });
     },
   });
@@ -61,13 +61,13 @@ export function ProjectFilesTab() {
     mutationFn: (fileId: string) => deleteProjectFile(currentProjectId, fileId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-files", currentProjectId] });
-      showToast({ type: "success", title: "Da xóa file" });
+      showToast({ type: "success", title: "Đã xóa tệp" });
     },
     onError: (error: unknown) => {
       showToast({
         type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể xóa file",
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể xóa tệp",
       });
     },
   });
@@ -94,15 +94,15 @@ export function ProjectFilesTab() {
   }
 
   if (isError) {
-    return <ErrorState message="Không tải được danh sach file." />;
+    return <ErrorState message="Không tải được danh sách tệp." />;
   }
 
   return (
     <div className="space-y-4">
       <div className="page-header">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Files dự án</h2>
-          <p className="page-subtitle">{files.length} file được lưu tru.</p>
+          <h2 className="text-lg font-semibold text-slate-900">Tệp đính kèm dự án</h2>
+          <p className="page-subtitle">{files.length} tệp đang được lưu trữ.</p>
         </div>
         <PermissionGate projectId={currentProjectId} toolId="FILE" minLevel="STANDARD">
           <div>
@@ -122,7 +122,7 @@ export function ProjectFilesTab() {
       {files.length === 0 ? (
         <EmptyState
           title="Chưa có file nào"
-          description={canUpload ? "Tải file lên để lưu trữ tài liệu dự án." : "Chưa có file nào được tai len."}
+          description={canUpload ? "Tải tệp lên để lưu trữ tài liệu dự án." : "Chưa có tệp nào được tải lên."}
         />
       ) : (
         <div className="space-y-2">
@@ -142,7 +142,7 @@ export function ProjectFilesTab() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
-                  title="Tai xuong"
+                  title="Tải xuống"
                 >
                   <Download className="h-4 w-4" />
                 </a>

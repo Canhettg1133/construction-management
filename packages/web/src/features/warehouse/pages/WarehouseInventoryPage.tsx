@@ -46,19 +46,19 @@ export function WarehouseInventoryPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="app-card">
-          <p className="text-xs text-slate-500">Ton hiện tai</p>
+          <p className="text-xs text-slate-500">Tồn hiện tại</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">
             {Number(data.quantity).toLocaleString("vi-VN")}
           </p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Nguong toi thieu</p>
+          <p className="text-xs text-slate-500">Ngưỡng tối thiểu</p>
           <p className="mt-1 text-2xl font-bold text-amber-600">
             {Number(data.minQuantity).toLocaleString("vi-VN")}
           </p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Nguong toi da</p>
+          <p className="text-xs text-slate-500">Ngưỡng tối đa</p>
           <p className="mt-1 text-2xl font-bold text-brand-700">
             {Number(data.maxQuantity).toLocaleString("vi-VN")}
           </p>

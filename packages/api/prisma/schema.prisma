@@ -164,9 +164,12 @@ model User {
   grantedPrivileges   SpecialPrivilegeAssignment[] @relation("PrivilegeGranter")
   toolPermissions     ProjectToolPermission[]
   specialPrivileges   SpecialPrivilegeAssignment[]
-  safetyInspections   SafetyReport[]               @relation("SafetyInspectorReports")
-  qualityInspections  QualityReport[]              @relation("QualityInspectorReports")
-  warehouseRequests   WarehouseTransaction[]       @relation("WarehouseRequester")
+  safetyInspections      SafetyReport[]            @relation("SafetyInspectorReports")
+  correctiveActions      SafetyCorrectiveAction[]  @relation("CorrectiveActionCreator")
+  assignedCorrectiveActions SafetyCorrectiveAction[] @relation("CorrectiveActionAssignee")
+  qualityInspections     QualityReport[]          @relation("QualityInspectorReports")
+  warehouseRequests      WarehouseTransaction[]   @relation("WarehouseRequester")
+  reportedNearMisses  SafetyNearMiss[]          @relation("SafetyNearMissReporter")
 
   @@index([systemRole])
   @@index([isActive])
@@ -453,8 +456,11 @@ model SafetyReport {
   signedAt    DateTime?      @map("signed_at")
   createdAt   DateTime       @default(now()) @map("created_at")
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  inspector User    @relation("SafetyInspectorReports", fields: [inspectorId], references: [id], onDelete: Restrict)
+  project           Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inspector         User                   @relation("SafetyInspectorReports", fields: [inspectorId], references: [id], onDelete: Restrict)
+  checklistItems    SafetyChecklistItem[]
+  incident          SafetyIncident?
+  nearMiss          SafetyNearMiss?
 
   @@index([projectId])
   @@index([reportDate])
@@ -462,25 +468,158 @@ model SafetyReport {
   @@map("safety_reports")
 }
 
-model QualityReport {
-  id          String         @id @default(uuid())
-  projectId   String         @map("project_id")
-  reportDate  DateTime       @map("report_date") @db.Date
-  inspectorId String         @map("inspector_id")
-  location    String         @db.VarChar(500)
-  description String         @db.Text
-  status      ApprovalStatus @default(PENDING)
-  signedBy    String?        @map("signed_by")
-  signedAt    DateTime?      @map("signed_at")
-  createdAt   DateTime       @default(now()) @map("created_at")
+// ============================================================
+// Safety Checklist Items — checklist theo từng báo cáo AT
+// ============================================================
+model SafetyChecklistItem {
+  id        String   @id @default(uuid())
+  reportId  String   @map("report_id")
+  label     String   @db.VarChar(255)
+  checked   Boolean  @default(false)
+  note      String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  inspector User    @relation("QualityInspectorReports", fields: [inspectorId], references: [id], onDelete: Restrict)
+  report SafetyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@map("safety_checklist_items")
+}
+
+// ============================================================
+// Safety Incident — sự cố an toàn (nghiêm trọng hơn vi phạm thường)
+// ============================================================
+model SafetyIncident {
+  id              String         @id @default(uuid())
+  reportId        String         @unique @map("report_id")
+  severity        String         @default("MEDIUM") @db.VarChar(20) // LOW | MEDIUM | HIGH | CRITICAL
+  involvedPersons String?        @map("involved_persons") @db.Text
+  immediateAction String?        @map("immediate_action") @db.Text
+  damages         String?        @db.Text
+  status          String         @default("OPEN") @db.VarChar(20) // OPEN | UNDER_REVIEW | CLOSED
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  report           SafetyReport          @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  correctiveActions SafetyCorrectiveAction[]
+
+  @@index([reportId])
+  @@map("safety_incidents")
+}
+
+// ============================================================
+// Safety Near Miss — sự kiện suýt xảy ra sự cố
+// ============================================================
+model SafetyNearMiss {
+  id             String         @id @default(uuid())
+  reportId       String         @unique @map("report_id")
+  reporterId     String         @map("reporter_id")
+  description    String         @db.Text
+  potentialHarm  String?        @map("potential_harm") @db.Text
+  witnesses      String?        @db.Text
+  rootCause      String?        @map("root_cause") @db.Text
+  likelihood     String         @default("MEDIUM") @db.VarChar(20) // LOW | MEDIUM | HIGH
+  severity       String         @default("MEDIUM") @db.VarChar(20) // LOW | MEDIUM | HIGH | CRITICAL
+  status         String         @default("REPORTED") @db.VarChar(20) // REPORTED | INVESTIGATING | RESOLVED
+  resolvedAt     DateTime?      @map("resolved_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  report    SafetyReport    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reporter  User            @relation("SafetyNearMissReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+
+  @@index([reportId])
+  @@map("safety_near_misses")
+}
+
+// ============================================================
+// Safety Corrective Action — hành động khắc phục sau sự cố
+// ============================================================
+model SafetyCorrectiveAction {
+  id                String    @id @default(uuid())
+  incidentId        String    @map("incident_id")
+  title             String    @db.VarChar(255)
+  description       String    @db.Text
+  assignedTo        String?   @map("assigned_to")
+  dueDate           DateTime? @map("due_date") @db.Date
+  status            String    @default("PENDING") @db.VarChar(20) // PENDING | IN_PROGRESS | DONE | OVERDUE
+  completedAt       DateTime? @map("completed_at")
+  completedNote     String?   @map("completed_note") @db.Text
+  createdBy         String    @map("created_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  incident    SafetyIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  assignee    User?           @relation("CorrectiveActionAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator     User            @relation("CorrectiveActionCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([incidentId])
+  @@index([assignedTo])
+  @@map("safety_corrective_actions")
+}
+
+model QualityReport {
+  id           String         @id @default(uuid())
+  projectId    String         @map("project_id")
+  reportDate   DateTime       @map("report_date") @db.Date
+  inspectorId  String         @map("inspector_id")
+  location     String         @db.VarChar(500)
+  description  String         @db.Text
+  status       ApprovalStatus @default(PENDING)
+  result       String?        @db.VarChar(20) // PASS | FAIL | CONDITIONAL — kết quả QC
+  notes        String?        @db.Text
+  signedBy     String?        @map("signed_by")
+  signedAt     DateTime?      @map("signed_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  project        Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inspector      User                 @relation("QualityInspectorReports", fields: [inspectorId], references: [id], onDelete: Restrict)
+  punchListItems QualityPunchListItem[]
+  photos         QualityReportPhoto[]
 
   @@index([projectId])
   @@index([reportDate])
   @@index([inspectorId])
   @@map("quality_reports")
+}
+
+// ============================================================
+// Quality Punch List Item — danh sách lỗi/điểm cần sửa trong QC
+// ============================================================
+model QualityPunchListItem {
+  id          String   @id @default(uuid())
+  reportId    String   @map("report_id")
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  severity    String   @default("MEDIUM") @db.VarChar(20) // LOW | MEDIUM | HIGH | CRITICAL
+  location    String?  @db.VarChar(200)
+  status      String   @default("OPEN") @db.VarChar(20) // OPEN | FIXED | ACCEPTED | REJECTED
+  fixedAt     DateTime? @map("fixed_at")
+  note        String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  report QualityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@map("quality_punch_list_items")
+}
+
+// ============================================================
+// Quality Report Photos — ảnh trước/sau của báo cáo QC
+// ============================================================
+model QualityReportPhoto {
+  id        String   @id @default(uuid())
+  reportId  String   @map("report_id")
+  type      String   @db.VarChar(20) // BEFORE | AFTER
+  photoUrl  String   @db.VarChar(500)
+  caption   String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  report QualityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([type])
+  @@map("quality_report_photos")
 }
 
 model WarehouseInventory {

@@ -1,0 +1,39 @@
+PHẦN KẾT LUẬN
+
+Trong bối cảnh chuyển đổi số ngày càng được quan tâm trong lĩnh vực xây dựng, việc ứng dụng công nghệ thông tin vào công tác quản lý thi công không chỉ mang ý nghĩa hỗ trợ vận hành mà còn góp phần nâng cao hiệu quả kiểm soát tiến độ, chất lượng, an toàn, vật tư và chi phí dự án. Xuất phát từ yêu cầu thực tế đó, đề tài “Xây dựng hệ thống quản lý thi công xây dựng trên nền tảng web” đã được thực hiện với mục tiêu xây dựng một hệ thống phần mềm hỗ trợ doanh nghiệp quản lý tập trung các hoạt động phát sinh trong quá trình triển khai công trình.
+
+Qua quá trình khảo sát, phân tích, thiết kế, xây dựng và kiểm thử, đề tài đã hiện thực hóa được một hệ thống web có cấu trúc tương đối rõ ràng, gồm frontend, backend và cơ sở dữ liệu được tổ chức theo hướng dễ mở rộng. Hệ thống đã xây dựng được nhiều phân hệ nghiệp vụ quan trọng như quản lý người dùng, quản lý dự án, quản lý thành viên, phân quyền, công việc, báo cáo ngày, tài liệu và tệp tin, an toàn lao động, chất lượng công trình, kho vật tư, ngân sách, phê duyệt, thông báo và nhật ký hoạt động. Đây là những thành phần cốt lõi phản ánh khá sát bài toán quản lý thi công xây dựng trong môi trường thực tế.
+
+Về mặt kỹ thuật, đề tài đã vận dụng các công nghệ phù hợp với định hướng phát triển ứng dụng web hiện nay như React, Vite, TypeScript, Express, Prisma và MySQL. Việc áp dụng xác thực bằng JWT kết hợp cookie, cơ chế phân quyền hai cấp, tổ chức module rõ ràng và xây dựng hệ thống kiểm thử cho các luồng chính cho thấy hệ thống không chỉ dừng ở mức giao diện mô phỏng mà đã được triển khai theo hướng có thể vận hành thử nghiệm. Kết quả kiểm thử hiện có cũng cho thấy các nhóm chức năng chính của hệ thống hoạt động ổn định trong phạm vi đã xây dựng.
+
+Bên cạnh những kết quả đạt được, đề tài vẫn còn một số giới hạn nhất định. Một số chức năng mới dừng ở mức đáp ứng nghiệp vụ cốt lõi, chưa mở rộng sang các nội dung chuyên sâu như phân tích dữ liệu nâng cao, tích hợp với hệ thống ngoài doanh nghiệp, tối ưu chuyên biệt cho thiết bị di động tại công trường hoặc kết nối với các giải pháp quản lý xây dựng quy mô lớn hơn. Ngoài ra, dữ liệu sử dụng trong quá trình thử nghiệm vẫn chủ yếu ở mức mô phỏng và dữ liệu mẫu, chưa phản ánh đầy đủ mọi tình huống có thể phát sinh trong môi trường triển khai thực tế.
+
+Tuy nhiên, xét trong phạm vi của một đồ án tốt nghiệp, hệ thống đạt được là tương đối đầy đủ và có tính thực tiễn. Đề tài không chỉ giúp em củng cố kiến thức về phân tích thiết kế hệ thống, lập trình web, quản lý cơ sở dữ liệu và kiểm thử phần mềm, mà còn giúp em hiểu rõ hơn cách công nghệ thông tin có thể hỗ trợ doanh nghiệp xây dựng trong công tác quản lý thi công. Đây là nền tảng quan trọng để em tiếp tục phát triển năng lực chuyên môn và định hướng bản thân trong quá trình học tập cũng như công việc sau này.
+
+DANH MỤC TÀI LIỆU THAM KHẢO
+
+[1] Express.js, “Express - Node.js web application framework”, Available: https://expressjs.com/
+
+[2] MySQL, “MySQL 8.0 Reference Manual”, Available: https://dev.mysql.com/doc/
+
+[3] Prisma, “Prisma Documentation”, Available: https://www.prisma.io/docs/
+
+[4] React, “React Documentation”, Available: https://react.dev/
+
+[5] TypeScript, “TypeScript Documentation”, Available: https://www.typescriptlang.org/docs/
+
+[6] Vite, “Vite Guide”, Available: https://vite.dev/guide/
+
+[7] Vitest, “Vitest Documentation”, Available: https://vitest.dev/
+
+[8] Bộ Xây dựng, “QCVN 18:2021/BXD - Quy chuẩn kỹ thuật quốc gia về an toàn trong thi công xây dựng”, Hà Nội, 2021.
+
+[9] Chính phủ, “Nghị định số 06/2021/NĐ-CP ngày 26/01/2021 về quản lý chất lượng, thi công xây dựng và bảo trì công trình xây dựng”, Hà Nội, 2021.
+
+[10] Dự án Construction Management System, “docs/API.md”, tài liệu mô tả các nhóm API chính của hệ thống trong thư mục dự án.
+
+[11] Dự án Construction Management System, “docs/ARCHITECTURE.md”, tài liệu mô tả kiến trúc tổng thể của hệ thống trong thư mục dự án.
+
+[12] Dự án Construction Management System, “docs/DATABASE.md”, tài liệu mô tả cơ sở dữ liệu và các nhóm bảng chính của hệ thống trong thư mục dự án.
+
+[13] Dự án Construction Management System, “README.md”, tài liệu mô tả tổng quan hệ thống trong thư mục dự án.

@@ -1,279 +1,136 @@
-# Construction Management System — Phase 1
+# Construction Management System
 
-Hệ thống quản lý công trình xây dựng. Phase 1 tập trung vào: quản lý dự án, báo cáo ngày (daily reports), task, file, và dashboard.
+Monorepo quan ly cong trinh xay dung gom:
+- `packages/web`: frontend React + Vite
+- `packages/api`: backend Express + Prisma
+- `packages/shared`: shared types, constants, utils
 
-## Prerequisites
+Tai lieu chinh:
+- `README.md`
+- `docs/DATABASE.md`
+- `docs/API.md`
+- `docs/ARCHITECTURE.md`
 
-| Tool | Version | Notes |
-|------|---------|-------|
-| Node.js | ≥ 20 | Khuyên dùng Node 22 |
-| pnpm | ≥ 9 | `npm i -g pnpm` |
-| MySQL | 8.0 | Hoặc dùng Docker |
-| Docker + Docker Compose | Latest | Tùy chọn |
+## Overview
 
-## Quick Start (Local — không Docker)
+He thong hien co cac nhom chuc nang:
+- Auth, user profile, password reset
+- User management va audit logs
+- Project, member, permission matrix, special privileges
+- Daily reports, tasks, files, documents
+- Dashboard, notifications, approvals
+- Safety, quality, warehouse, budget
 
-### 1. Clone & install
+`equipment/workforce` da duoc go khoi branch nay vi slice chua hoan thien va khong nam trong feature surface dang support.
+
+## Local Setup
+
+Yeu cau:
+- Node.js `>=20`
+- pnpm `>=9`
+- MySQL 8 dang chay
+
+`.env` o root repo la source of truth cho local runtime va Prisma commands.
+
+1. Cai dependency
 
 ```bash
 pnpm install
 ```
 
-### 2. Setup environment
+2. Tao file env
 
 ```bash
-# Copy và điền thông tin thật
-cp .env.example packages/api/.env
-
-# MySQL: tạo database
-mysql -u root -p -e "CREATE DATABASE construction_mgmt CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+cp .env.example .env
 ```
 
-### 3. Database setup
+Gia tri local khuyen dung tren Windows:
+
+```env
+DATABASE_URL="mysql://root:@127.0.0.1:3306/construction_mgmt"
+```
+
+3. Tao database
+
+```sql
+CREATE DATABASE construction_mgmt CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+4. Setup local dev
 
 ```bash
-pnpm db:migrate
-pnpm db:seed
+pnpm setup:dev
 ```
 
-Admin mặc định: `admin@construction.local` / `Admin@123`
+Lenh nay se:
+- build `@construction/shared`
+- chay Prisma migrate
+- seed tai khoan mac dinh
 
-### 4. Dev server
+5. Chay ung dung
 
 ```bash
 pnpm dev
 ```
 
-- **Web:** http://localhost:5173
-- **API:** http://localhost:3001
-
-## Docker Development
-
-### 1. Clone & install
+Hoac chay rieng:
 
 ```bash
-pnpm install
+pnpm dev:api
+pnpm dev:web
 ```
 
-### 2. Start infrastructure (MySQL)
+Local URLs:
+- Web: `http://localhost:5173`
+- API: `http://localhost:3001/api/v1`
+
+Seed account:
+- Email: `admin@construction.local`
+- Password: `Admin@123`
+
+## Daily Commands
 
 ```bash
-docker compose up -d mysql
-```
-
-### 3. Setup DB
-
-```bash
-# Chạy migration
-docker compose run --rm api pnpm db:migrate
-
-# Seed data
-docker compose run --rm api pnpm db:seed
-```
-
-### 4. Start services
-
-```bash
-# Dev mode (hot-reload)
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up
-
-# Production mode
-docker compose up -d
-```
-
-### 5. Smoke test
-
-```bash
-# macOS/Linux
-pnpm smoke-test
-
-# Windows
-pnpm smoke-test:win
-```
-
-## Scripts
-
-```bash
-# Development
-pnpm dev              # Build shared → chạy cả api + web
-pnpm dev:api          # Chỉ API
-pnpm dev:web          # Chỉ Web
-
-# Code quality
-pnpm lint             # ESLint toàn workspace
-pnpm format           # Format tất cả file (Prettier)
-pnpm format:check     # Check format (không sửa)
-pnpm typecheck        # TypeScript check toàn workspace
-
-# Build
-pnpm build            # Build tất cả packages
-
-# Database
-pnpm db:migrate       # Tạo migration
-pnpm db:seed          # Seed data
-pnpm db:studio        # Mở Prisma Studio
-
-# Verification
-pnpm smoke-test       # Smoke test skeleton E2E
-pnpm verify:quality    # lint + typecheck + test + build
-pnpm verify:security   # Security baseline check
-pnpm verify:audit      # Audit log coverage check
-pnpm verify:migrations # Migration files check
-
-# Tests
-pnpm test             # Chạy test tất cả packages
-```
-
-## Project Structure
-
-```
-construction-mgmt/
-├── packages/
-│   ├── shared/          # Shared types, constants, utils (built trước)
-│   │   ├── src/
-│   │   │   ├── types/      # TypeScript interfaces
-│   │   │   ├── constants/   # Enums, labels
-│   │   │   └── utils/       # Date, cn helpers
-│   │   └── dist/            # Build output
-│   │
-│   ├── api/             # Backend — Express + Prisma
-│   │   ├── src/
-│   │   │   ├── config/      # env, logger, database
-│   │   │   ├── modules/      # Feature modules (auth, projects, reports...)
-│   │   │   ├── routes/      # Route mounting
-│   │   │   ├── security/     # Auth middleware, JWT
-│   │   │   ├── shared/       # Middleware, errors, utils
-│   │   │   ├── app.ts        # Express app
-│   │   │   └── server.ts     # Entry point
-│   │   ├── prisma/
-│   │   │   ├── schema.prisma
-│   │   │   └── migrations/
-│   │   └── Dockerfile
-│   │
-│   └── web/              # Frontend — React + Vite
-│       ├── src/
-│       │   ├── config/      # Axios, API config
-│       │   ├── features/     # Feature-based pages/components
-│       │   ├── shared/       # Reusable components, hooks, utils
-│       │   ├── store/        # Zustand stores
-│       │   └── router/       # React Router config
-│       └── Dockerfile
-│
-├── docs/                  # Thiết kế, quy trình, checklist
-├── scripts/               # Automation scripts
-├── docker-compose.yml      # MySQL + API (production mode)
-├── docker-compose.dev.yml  # Dev overlay (hot-reload)
-└── .env.example
-```
-
-## API Base URL
-
-```
-Development: http://localhost:3001/api/v1
-Production:  https://api.yourdomain.com/api/v1
-```
-
-### Main Endpoints
-
-| Module | Endpoint | Auth |
-|--------|----------|------|
-| Auth | `/auth/login`, `/auth/logout`, `/auth/refresh` | Public / Required |
-| Users | `/users` | Admin |
-| Projects | `/projects` | Required |
-| Members | `/projects/:id/members` | Member |
-| Reports | `/projects/:id/reports` | Member |
-| Tasks | `/projects/:id/tasks` | Member |
-| Files | `/projects/:id/files` | Member |
-| Dashboard | `/dashboard` | Required |
-| Audit Logs | `/audit-logs` | Admin, PM |
-
-## Environment Variables
-
-### API (`packages/api/.env`)
-
-| Variable | Default | Required |
-|----------|---------|----------|
-| `DATABASE_URL` | — | Yes |
-| `JWT_SECRET` | — | Yes (≥32 chars) |
-| `JWT_REFRESH_SECRET` | — | Yes (≥32 chars) |
-| `PORT` | `3001` | No |
-| `UPLOAD_DIR` | `./uploads` | No |
-| `MAX_FILE_SIZE` | `10485760` | No |
-| `SMTP_*` | — | For password reset email |
-| `APP_URL` | `http://localhost:5173` | No |
-| `FRONTEND_URL` | `http://localhost:5173` | No |
-
-### Web (`packages/web/.env`)
-
-| Variable | Default | Required |
-|----------|---------|----------|
-| `VITE_API_URL` | `http://localhost:3001/api/v1` | No |
-
-## Roles
-
-| Role | Mô tả |
-|------|--------|
-| `ADMIN` | Quản trị toàn hệ thống |
-| `PROJECT_MANAGER` | Quản lý dự án được giao |
-| `SITE_ENGINEER` | Tạo báo cáo ngày, upload file, cập nhật task |
-| `VIEWER` | Chỉ xem |
-
-## Contributing
-
-### Trước khi commit
-
-```bash
-pnpm format
-pnpm lint
+pnpm setup:dev
+pnpm dev
+pnpm dev:api
+pnpm dev:web
+pnpm db:migrate
+pnpm db:migrate:dev
+pnpm db:seed
+pnpm db:studio
 pnpm typecheck
 pnpm test
-```
-
-### Commit message format
-
-```
-<type>(<module>): <mô tả ngắn>
-
-Types: feat | fix | refactor | docs | test | chore
-```
-
-### Vertical Slice Checklist
-
-Mỗi tính năng mới phải bao gồm:
-- [ ] Frontend (UI + validation)
-- [ ] Backend (API route + controller + service + repository)
-- [ ] Database (migration nếu cần)
-- [ ] Permission theo role
-- [ ] Audit log cho mutations
-- [ ] Test (unit hoặc integration)
-- [ ] `pnpm smoke-test` pass
-
-## Deployment
-
-### Docker (Production)
-
-```bash
-# Build production image
-docker build -t construction-api ./packages/api
-
-# Run với docker-compose (production mode)
-docker compose up -d
-```
-
-### Manual
-
-```bash
 pnpm build
-pnpm --filter @construction/api db:migrate
-pnpm --filter @construction/api start
 ```
 
-## Tech Stack
+## Common Failures
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite, Tailwind CSS, TanStack Query, Zustand |
-| Backend | Express.js, Prisma ORM, Zod |
-| Database | MySQL 8.0 |
-| Auth | JWT (access + refresh), bcrypt |
-| Infra | Docker, Docker Compose, GitHub Actions |
+`POST /api/v1/auth/login` hoac `GET /api/v1/auth/me` tren `localhost:5173` tra `500`:
+- Thuong la Vite proxy khong noi duoc API.
+- Kiem tra `pnpm dev:api` co boot thanh cong khong.
+- Neu API log `P1001`, MySQL chua reach duoc.
+
+API boot fail voi `P1012`:
+- `DATABASE_URL` sai format.
+- Chuoi bat buoc phai bat dau bang `mysql://`.
+
+API boot fail voi `P1001`:
+- MySQL chua chay hoac sai host/port.
+- Thu `127.0.0.1` thay cho `localhost` trong `.env`.
+- Sau khi DB san sang, chay lai `pnpm setup:dev`.
+
+`pnpm db:migrate` va `pnpm db:migrate:dev` khac nhau:
+- `pnpm db:migrate`: apply cac migration da commit, dung cho setup local/onboarding
+- `pnpm db:migrate:dev`: dung khi chinh schema va can tao migration moi
+
+`GET /auth/me` tra `401`:
+- Neu chua login thi day la binh thuong.
+- Neu da login ma van `401`, xoa cookie `access_token`, `refresh_token`, clear session hint trong localStorage, roi login lai.
+
+## Verification
+
+Trang thai repo sau cleanup nay duoc ky vong pass:
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build`

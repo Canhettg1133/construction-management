@@ -1,6 +1,21 @@
 import { create } from "zustand";
 import type { User, SystemRole, UserProjectPermissions } from "@construction/shared";
 
+const SESSION_HINT_KEY = "auth.session.active";
+
+function persistSessionHint(isActive: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (isActive) {
+    window.localStorage.setItem(SESSION_HINT_KEY, "1");
+    return;
+  }
+
+  window.localStorage.removeItem(SESSION_HINT_KEY);
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -14,13 +29,27 @@ interface AuthState {
   clearProjectPermissions: (projectId?: string) => void;
 }
 
+export function hasSessionHint() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.localStorage.getItem(SESSION_HINT_KEY) === "1";
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   initialized: false,
   projectPermissions: {},
-  setUser: (user) => set({ user, isAuthenticated: !!user, projectPermissions: {} }),
-  clearAuth: () => set({ user: null, isAuthenticated: false, projectPermissions: {} }),
+  setUser: (user) => {
+    persistSessionHint(!!user);
+    set({ user, isAuthenticated: !!user, projectPermissions: {} });
+  },
+  clearAuth: () => {
+    persistSessionHint(false);
+    set({ user: null, isAuthenticated: false, projectPermissions: {} });
+  },
   setInitialized: (value) => set({ initialized: value }),
   hasSystemRole: (roles) => {
     const { user } = get();

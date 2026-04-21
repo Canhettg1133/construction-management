@@ -13,6 +13,13 @@ function statusTone(status: string): string {
   return "text-slate-700 bg-slate-100";
 }
 
+function statusLabel(status: string): string {
+  if (status === "APPROVED") return "Đã duyệt";
+  if (status === "REJECTED") return "Từ chối";
+  if (status === "PENDING") return "Chờ duyệt";
+  return status;
+}
+
 export function MyReportsWidget() {
   const role = useDashboardRole();
   const { data } = useDashboard();
@@ -28,25 +35,25 @@ export function MyReportsWidget() {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-emerald-600" />
-          <h3 className="text-sm font-semibold text-slate-700">Bao cao cua toi</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Báo cáo của tôi</h3>
         </div>
-        <span className="text-xs text-slate-500">{reports.length} bao cao</span>
+        <span className="text-xs text-slate-500">{reports.length} báo cáo</span>
       </div>
 
       {reports.length === 0 ? (
-        <p className="py-5 text-center text-sm text-slate-500">Ban chua tao bao cao nao.</p>
+        <p className="py-5 text-center text-sm text-slate-500">Bạn chưa tạo báo cáo nào.</p>
       ) : (
         <div className="max-h-72 space-y-2 overflow-y-auto">
           {reports.slice(0, 8).map((report) => (
             <div key={report.id} className="rounded-xl border border-slate-200 p-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-medium text-slate-900">{report.project?.name ?? "Du an"}</p>
+                <p className="truncate text-sm font-medium text-slate-900">{report.project?.name ?? "Dự án"}</p>
                 <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${statusTone(report.approvalStatus)}`}>
-                  {report.approvalStatus}
+                  {statusLabel(report.approvalStatus)}
                 </span>
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                Ngay bao cao: {new Date(report.reportDate).toLocaleDateString("vi-VN")}
+                Ngày báo cáo: {new Date(report.reportDate).toLocaleDateString("vi-VN")}
               </div>
             </div>
           ))}
@@ -59,11 +66,10 @@ export function MyReportsWidget() {
             to={`/projects/${reports[0].projectId}/reports`}
             className="text-xs font-medium text-brand-600 hover:text-brand-700"
           >
-            Xem bao cao
+            Xem báo cáo
           </Link>
         </div>
       ) : null}
     </div>
   );
 }
-

@@ -20,19 +20,24 @@ export function SafetyStatsWidget() {
     <div className="app-card space-y-4">
       <div className="flex items-center gap-2">
         <ShieldAlert className="h-4 w-4 text-amber-600" />
-        <h3 className="text-sm font-semibold text-slate-700">Tong quan an toan</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Tổng quan an toàn</h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3">
         <StatCell
           icon={ClipboardList}
-          title="Bao cao tuan nay"
+          title="Báo cáo tuần này"
           value={formatNumber(safetyStats?.thisWeekReports)}
           hint={calculateTrend(safetyStats?.thisWeekReports, safetyStats?.lastWeekReports)}
         />
-        <StatCell icon={TrendingUp} title="Cho duyet" value={formatNumber(pending)} tone="warning" />
-        <StatCell icon={AlertTriangle} title="Vi pham" value={formatNumber(violations)} tone={violations > 0 ? "danger" : "success"} />
-        <StatCell icon={ShieldAlert} title="Ty le tuan thu" value={`${complianceRate.toFixed(1)}%`} tone="success" />
+        <StatCell icon={TrendingUp} title="Chờ duyệt" value={formatNumber(pending)} tone="warning" />
+        <StatCell
+          icon={AlertTriangle}
+          title="Vi phạm"
+          value={formatNumber(violations)}
+          tone={violations > 0 ? "danger" : "success"}
+        />
+        <StatCell icon={ShieldAlert} title="Tỷ lệ tuân thủ" value={`${complianceRate.toFixed(1)}%`} tone="success" />
       </div>
     </div>
   );
@@ -61,14 +66,15 @@ function StatCell({
       : "text-slate-700 bg-slate-50";
 
   return (
-    <div className={`rounded-xl border border-slate-200 p-3 ${toneClass}`}>
-      <div className="mb-2 flex items-center gap-2">
-        <Icon className="h-4 w-4" />
-        <span className="text-xs font-medium">{title}</span>
+    <div className={`flex min-h-32 flex-col rounded-xl border border-slate-200 p-3 ${toneClass}`}>
+      <div className="flex min-h-12 items-start gap-2">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+        <span className="text-xs font-medium leading-5">{title}</span>
       </div>
-      <p className="text-lg font-semibold">{value}</p>
-      {hint ? <p className="mt-1 text-xs opacity-80">{hint}</p> : null}
+      <div className="mt-auto">
+        <p className="text-2xl font-semibold tracking-tight">{value}</p>
+        {hint ? <p className="mt-1 text-xs opacity-80">{hint}</p> : null}
+      </div>
     </div>
   );
 }
-

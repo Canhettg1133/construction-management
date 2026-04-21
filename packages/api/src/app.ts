@@ -48,7 +48,20 @@ app.use(express.urlencoded({ extended: true }));
 // Global rate limit (applies to all routes)
 app.use(apiRateLimit);
 
-app.use(pinoHttp({ logger }));
+app.use(
+  pinoHttp({
+    logger,
+    customLogLevel: (_req, res, err) => {
+      if (err || res.statusCode >= 500) {
+        return "error";
+      }
+      if (res.statusCode >= 400) {
+        return "warn";
+      }
+      return env.NODE_ENV === "development" ? "silent" : "info";
+    },
+  })
+);
 
 app.use("/api/v1", routes);
 

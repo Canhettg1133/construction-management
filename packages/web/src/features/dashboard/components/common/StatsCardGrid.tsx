@@ -45,11 +45,10 @@ export function StatsCardGrid() {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <StatCard title="Tong du an" value={data?.projectCount ?? 0} icon={FolderKanban} tone="brand" />
-      <StatCard title="Task dang mo" value={data?.openTaskCount ?? 0} icon={CheckSquare} tone="warning" />
-      <StatCard title="Task qua han" value={data?.overdueTaskCount ?? 0} icon={AlertTriangle} tone="danger" />
-      <StatCard title="Bao cao hom nay" value={data?.todayReportCount ?? 0} icon={FileText} tone="success" />
+      <StatCard title="Tổng dự án" value={data?.projectCount ?? 0} icon={FolderKanban} tone="brand" />
+      <StatCard title="Công việc đang mở" value={data?.openTaskCount ?? 0} icon={CheckSquare} tone="warning" />
+      <StatCard title="Công việc quá hạn" value={data?.overdueTaskCount ?? 0} icon={AlertTriangle} tone="danger" />
+      <StatCard title="Báo cáo hôm nay" value={data?.todayReportCount ?? 0} icon={FileText} tone="success" />
     </div>
   );
 }
-

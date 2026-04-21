@@ -34,6 +34,31 @@ export const warehouseController = {
     return sendSuccess(res, data);
   },
 
+  async createInventoryItem(req: Request, res: Response) {
+    const data = await warehouseService.createInventoryItem(
+      readProjectId(req),
+      readActor(req),
+      req.body ?? {}
+    );
+    res.status(201);
+    return sendSuccess(res, data);
+  },
+
+  async updateInventoryItem(req: Request, res: Response) {
+    const data = await warehouseService.updateInventoryItem(
+      readProjectId(req),
+      String(req.params.id),
+      readActor(req),
+      req.body ?? {}
+    );
+    return sendSuccess(res, data);
+  },
+
+  async deleteInventoryItem(req: Request, res: Response) {
+    const data = await warehouseService.deleteInventoryItem(readProjectId(req), String(req.params.id));
+    return sendSuccess(res, data);
+  },
+
   async listTransactions(req: Request, res: Response) {
     const data = await warehouseService.listTransactions(readProjectId(req), readActor(req));
     return sendSuccess(res, data);

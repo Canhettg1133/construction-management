@@ -30,7 +30,7 @@ function toOverdueItem(task: TaskWithProject): OverdueItem | null {
     id: task.id,
     title: task.title,
     projectId: task.projectId,
-    projectName: task.project?.name ?? "Du an",
+    projectName: task.project?.name ?? "Dự án",
     priority: task.priority,
     daysOverdue,
   };
@@ -56,20 +56,18 @@ export function OverdueTasksWidget() {
     return null;
   }
 
-  let title = "Task qua han";
+  let title = "Công việc quá hạn";
   let tasks: OverdueItem[] = [];
 
   if (role.isAdmin || role.isPM) {
-    title = "Task qua han";
     tasks = (data?.overdueTasks ?? []).map(fromDashboardTask);
   } else if (role.isSafety) {
-    title = "Task an toan qua han";
-    tasks = (data?.safetyTasks ?? []).map((task) => toOverdueItem(task as TaskWithProject)).filter(Boolean) as OverdueItem[];
-  } else if (role.isEngineer) {
-    title = "Task cua toi qua han";
-    tasks = (data?.myTasks ?? []).map((task) => toOverdueItem(task as TaskWithProject)).filter(Boolean) as OverdueItem[];
+    title = "Công việc an toàn quá hạn";
+    tasks = (data?.safetyTasks ?? [])
+      .map((task) => toOverdueItem(task as TaskWithProject))
+      .filter(Boolean) as OverdueItem[];
   } else if (role.isQuality) {
-    title = "Task QC qua han";
+    title = "Công việc QC quá hạn";
     tasks = (data?.overdueTasks ?? []).map(fromDashboardTask);
   }
 
@@ -80,7 +78,7 @@ export function OverdueTasksWidget() {
           <AlertCircle className="h-4 w-4 text-slate-500" />
           <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
         </div>
-        <p className="py-4 text-center text-sm text-slate-500">Khong co task qua han nao.</p>
+        <p className="py-4 text-center text-sm text-slate-500">Không có công việc quá hạn.</p>
       </div>
     );
   }
@@ -115,7 +113,7 @@ export function OverdueTasksWidget() {
                 {TASK_PRIORITY_LABELS[task.priority as keyof typeof TASK_PRIORITY_LABELS] ?? task.priority}
               </span>
               <div className="flex items-center gap-1 text-xs text-red-500">
-                <span className="font-semibold">{task.daysOverdue}d</span>
+                <span className="font-semibold">{task.daysOverdue} ngày</span>
                 <ArrowRight className="h-3 w-3" />
               </div>
             </div>
@@ -125,4 +123,3 @@ export function OverdueTasksWidget() {
     </div>
   );
 }
-

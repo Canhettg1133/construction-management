@@ -19,11 +19,11 @@ export function ClientStatsWidget() {
       <div className="app-card">
         <div className="mb-3 flex items-center gap-2">
           <BriefcaseBusiness className="h-4 w-4 text-brand-600" />
-          <h3 className="text-sm font-semibold text-slate-700">Tien do du an</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Tiến độ dự án</h3>
         </div>
 
         {projectProgress.length === 0 ? (
-          <p className="py-5 text-center text-sm text-slate-500">Chua co du an nao trong pham vi theo doi.</p>
+          <p className="py-5 text-center text-sm text-slate-500">Chưa có dự án nào trong phạm vi theo dõi.</p>
         ) : (
           <div className="space-y-3">
             {projectProgress.map((project) => (
@@ -39,8 +39,8 @@ export function ClientStatsWidget() {
                   />
                 </div>
                 <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                  <span>Con {project.daysRemaining} ngay</span>
-                  <span>Hoan thanh {project.completionRate}%</span>
+                  <span>Còn {project.daysRemaining} ngày</span>
+                  <span>Hoàn thành {project.completionRate}%</span>
                 </div>
               </div>
             ))}
@@ -51,22 +51,22 @@ export function ClientStatsWidget() {
       <div className="app-card">
         <div className="mb-3 flex items-center gap-2">
           <CircleDollarSign className="h-4 w-4 text-emerald-600" />
-          <h3 className="text-sm font-semibold text-slate-700">Ngan sach</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Ngân sách</h3>
         </div>
 
         {budgetOverview.length === 0 ? (
-          <p className="py-5 text-center text-sm text-slate-500">Chua co du lieu ngan sach.</p>
+          <p className="py-5 text-center text-sm text-slate-500">Chưa có dữ liệu ngân sách.</p>
         ) : (
           <div className="space-y-3">
             {budgetOverview.map((budget) => (
               <div key={budget.projectId} className="rounded-xl border border-slate-200 p-3">
                 <p className="truncate text-sm font-medium text-slate-900">{budget.projectName}</p>
                 <div className="mt-2 space-y-1 text-xs text-slate-600">
-                  <p>Du toan: {formatCurrency(budget.totalEstimated)}</p>
-                  <p>Da duyet: {formatCurrency(budget.totalApproved)}</p>
-                  <p>Da chi: {formatCurrency(budget.totalSpent)}</p>
+                  <p>Dự toán: {formatCurrency(budget.totalEstimated)}</p>
+                  <p>Đã duyệt: {formatCurrency(budget.totalApproved)}</p>
+                  <p>Đã chi: {formatCurrency(budget.totalSpent)}</p>
                   <p className={budget.remaining < 0 ? "font-semibold text-red-600" : "font-semibold text-emerald-600"}>
-                    Con lai: {formatCurrency(budget.remaining)}
+                    Còn lại: {formatCurrency(budget.remaining)}
                   </p>
                 </div>
               </div>
@@ -77,4 +77,3 @@ export function ClientStatsWidget() {
     </div>
   );
 }
-

@@ -1,5 +1,5 @@
 import { TrendingUp, Users, ShieldCheck } from "lucide-react";
-import { TASK_STATUS_LABELS } from "@construction/shared";
+import { SYSTEM_ROLE_LABELS, TASK_STATUS_LABELS } from "@construction/shared";
 import type { TaskStatus } from "@construction/shared";
 import { useAuthStore } from "../../../store/authStore";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
@@ -42,7 +42,7 @@ function TaskStatusBreakdown({ tasksByStatus }: { tasksByStatus: Record<TaskStat
     <div className="app-card">
       <div className="mb-3 flex items-center gap-2">
         <TrendingUp className="h-4 w-4 text-slate-500" />
-        <h3 className="text-sm font-semibold text-slate-700">Trang thai task</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Trạng thái công việc</h3>
       </div>
       <div className="space-y-2.5">
         {(Object.entries(tasksByStatus) as [TaskStatus, number][]).map(([status, count]) => {
@@ -80,19 +80,19 @@ function TeamOverview({
     <div className="app-card">
       <div className="mb-3 flex items-center gap-2">
         <Users className="h-4 w-4 text-slate-500" />
-        <h3 className="text-sm font-semibold text-slate-700">Nhan su</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Nhân sự</h3>
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-600">Nhan su tham gia</span>
+          <span className="text-sm text-slate-600">Nhân sự tham gia</span>
           <span className="text-lg font-bold text-slate-900">{memberCount}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-600">Du an dang hoat dong</span>
+          <span className="text-sm text-slate-600">Dự án đang hoạt động</span>
           <span className="text-lg font-bold text-brand-600">{activeProjectCount}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-600">Task qua han</span>
+          <span className="text-sm text-slate-600">Công việc quá hạn</span>
           <span className="text-lg font-bold text-red-600">{overdueTaskCount}</span>
         </div>
       </div>
@@ -123,20 +123,23 @@ export function DashboardPage() {
   }
 
   if (isError || !data) {
-    return <ErrorState message="Khong the tai du lieu dashboard. Vui long thu lai sau." />;
+    return <ErrorState message="Không thể tải dữ liệu dashboard. Vui lòng thử lại sau." />;
   }
 
   return (
     <div className="space-y-5 page-enter">
       <div className="page-header">
         <div>
-          <h1>Dashboard</h1>
-          <p className="page-subtitle">Tong quan tien do va hoat dong theo role cua ban.</p>
+          <h1>Bảng điều khiển</h1>
+          <p className="page-subtitle">Tổng quan tiến độ và hoạt động theo vai trò của bạn.</p>
         </div>
         <div className="flex items-center gap-3">
           <PendingBadge />
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm">
-            Vai tro he thong: <span className="font-semibold text-slate-800">{user?.systemRole ?? "-"}</span>
+            Vai trò hệ thống:{" "}
+            <span className="font-semibold text-slate-800">
+              {user?.systemRole ? SYSTEM_ROLE_LABELS[user.systemRole] ?? user.systemRole : "-"}
+            </span>
           </div>
         </div>
       </div>
@@ -154,9 +157,9 @@ export function DashboardPage() {
           <TaskStatusBreakdown tasksByStatus={data.myTasksByStatus ?? data.tasksByStatus} />
         ) : (
           <GenericSummaryCard
-            title="Tien do chung"
+            title="Tiến độ chung"
             value={`${Math.round(data.weeklyProgress.reduce((sum, item) => sum + item.completedTasks, 0))}`}
-            description="Tong so dau muc hoan thanh trong 7 ngay."
+            description="Tổng số đầu mục đã hoàn thành trong 7 ngày gần nhất."
           />
         )}
 
@@ -173,29 +176,48 @@ export function DashboardPage() {
         )}
       </div>
 
-      {(role.isAdmin || role.isPM || role.isQuality) && !role.isWarehouse ? (
-        <WarehouseTrendChart />
-      ) : null}
+      {role.isAdmin || role.isPM || role.isQuality ? <WarehouseTrendChart /> : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <OverdueTasksWidget />
-        <RiskyProjectsWidget />
-        {(role.isAdmin || role.isPM) && <ActiveMembersWidget members={data.activeMembers} />}
+        {(role.isAdmin || role.isPM) && (
+          <>
+            <OverdueTasksWidget />
+            <RiskyProjectsWidget />
+            <ActiveMembersWidget members={data.activeMembers} />
+          </>
+        )}
 
-        <MyTasksWidget />
-        <MyReportsWidget />
+        {role.isEngineer && (
+          <>
+            <MyTasksWidget />
+            <MyReportsWidget />
+            <TaskStatusBreakdown tasksByStatus={data.myTasksByStatus ?? data.tasksByStatus} />
+          </>
+        )}
 
-        <SafetyViolationsWidget />
-        <PendingSafetyApprovalsWidget />
+        {role.isSafety && (
+          <>
+            <SafetyViolationsWidget />
+            <PendingSafetyApprovalsWidget />
+          </>
+        )}
 
-        <QualityReportsWidget />
-        <WarehouseOverviewWidget />
+        {role.isQuality && (
+          <>
+            <QualityReportsWidget />
+            <WarehouseOverviewWidget />
+          </>
+        )}
 
-        <LowStockAlertsWidget />
-        <PendingTransactionsWidget />
-        <RecentTransactionsWidget />
+        {role.isWarehouse && (
+          <>
+            <LowStockAlertsWidget />
+            <PendingTransactionsWidget />
+            <RecentTransactionsWidget />
+          </>
+        )}
 
-        <ClientStatsWidget />
+        {role.isClient && <ClientStatsWidget />}
       </div>
 
       <RecentActivity />

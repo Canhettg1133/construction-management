@@ -79,7 +79,7 @@ export function WarehouseTransactionPage() {
     onError: (error: unknown) => {
       showToast({
         type: "error",
-        title: "Loi",
+        title: "Lỗi",
         description: error instanceof Error ? error.message : "Không thể tạo giao dịch",
       });
     },
@@ -174,7 +174,7 @@ export function WarehouseTransactionPage() {
         </div>
 
         <div>
-          <label className="form-label">So luong</label>
+          <label className="form-label">Số lượng</label>
           <input
             type="number"
             min={0.001}

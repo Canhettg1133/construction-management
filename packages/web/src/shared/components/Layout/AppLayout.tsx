@@ -46,19 +46,18 @@ interface NavItem {
 const DESKTOP_SIDEBAR_STORAGE_KEY = "desktopSidebarOpen";
 
 const globalNavItems: NavItem[] = [
-  { to: ROUTES.DASHBOARD, label: "Dashboard", icon: FolderKanban },
+  { to: ROUTES.DASHBOARD, label: "Bảng điều khiển", icon: FolderKanban },
   { to: ROUTES.PROJECTS, label: "Dự án", icon: FolderKanban },
 ];
 
 const systemNavItems: NavItem[] = [
   { to: ROUTES.USERS, label: "Người dùng", icon: Users, systemRoles: ["ADMIN"] },
   { to: ROUTES.APPROVALS, label: "Duyệt", icon: ClipboardCheck, systemRoles: ["ADMIN", "STAFF"] },
-  { to: ROUTES.AUDIT_LOGS, label: "Audit logs", icon: FileText, systemRoles: ["ADMIN"] },
+  { to: ROUTES.AUDIT_LOGS, label: "Nhật ký hệ thống", icon: FileText, systemRoles: ["ADMIN"] },
 ];
 
 const accountNavItems: NavItem[] = [
   { to: ROUTES.DOCUMENT_SEARCH, label: "Tìm tài liệu", icon: Search },
-  { to: ROUTES.SETTINGS, label: "Cài đặt", icon: Settings },
   { to: ROUTES.SETTINGS_PROFILE, label: "Hồ sơ", icon: UserCircle2 },
   { to: ROUTES.SETTINGS_CHANGE_PASSWORD, label: "Đổi mật khẩu", icon: KeyRound },
 ];
@@ -114,21 +113,21 @@ export function AppLayout() {
         },
         {
           to: ROUTES.PROJECT_TASKS(currentProjectId),
-          label: "Task",
+          label: "Công việc",
           icon: CheckSquare,
           toolId: "TASK",
           minLevel: "READ",
         },
         {
           to: ROUTES.PROJECT_FILES(currentProjectId),
-          label: "Files",
+          label: "Tệp đính kèm",
           icon: Files,
           toolId: "FILE",
           minLevel: "READ",
         },
         {
           to: ROUTES.PROJECT_DOCUMENTS(currentProjectId),
-          label: "Tài liệu",
+          label: "Hồ sơ tài liệu",
           icon: FileText,
           toolId: "DOCUMENT",
           minLevel: "READ",
@@ -310,7 +309,7 @@ export function AppLayout() {
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Dự án hiện tại</p>
                 <p className="truncate text-sm font-medium text-slate-800">
-                  {currentProject?.name ?? `Project ${currentProjectId.slice(0, 8)}`}
+                  {currentProject?.name ?? `Dự án ${currentProjectId.slice(0, 8)}`}
                 </p>
               </div>
 

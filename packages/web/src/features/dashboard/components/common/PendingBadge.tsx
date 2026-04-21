@@ -17,27 +17,26 @@ export function PendingBadge() {
   if (role.isAdmin || role.isPM) {
     const total = (data.pendingApprovals?.taskCount ?? 0) + (data.pendingApprovals?.reportCount ?? 0);
     if (total === 0) return null;
-    return <Badge variant="warning">{total} can duyet</Badge>;
+    return <Badge variant="warning">{total} mục cần duyệt</Badge>;
   }
 
   if (role.isSafety) {
     const count = data.pendingSafetyApprovals ?? 0;
     if (count === 0) return null;
-    return <Badge variant="warning">{count} AT cho duyet</Badge>;
+    return <Badge variant="warning">{count} báo cáo an toàn chờ duyệt</Badge>;
   }
 
   if (role.isQuality) {
     const count = data.pendingQualityApprovals ?? 0;
     if (count === 0) return null;
-    return <Badge variant="warning">{count} QC cho duyet</Badge>;
+    return <Badge variant="warning">{count} báo cáo chất lượng chờ duyệt</Badge>;
   }
 
   if (role.isEngineer) {
     const myPending = pendingMyTasksCount(data.myTasks ?? []);
     if (myPending === 0) return null;
-    return <Badge>{myPending} task cho duyet</Badge>;
+    return <Badge>{myPending} công việc chờ duyệt</Badge>;
   }
 
   return null;
 }
-

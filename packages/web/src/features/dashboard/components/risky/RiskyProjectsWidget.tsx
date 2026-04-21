@@ -22,9 +22,9 @@ export function RiskyProjectsWidget() {
       <div className="app-card">
         <div className="mb-3 flex items-center gap-2">
           <ShieldAlert className="h-4 w-4 text-slate-500" />
-          <h3 className="text-sm font-semibold text-slate-700">Du an rui ro</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Dự án rủi ro</h3>
         </div>
-        <p className="py-4 text-center text-sm text-slate-500">Tat ca du an dang an toan.</p>
+        <p className="py-4 text-center text-sm text-slate-500">Tất cả dự án hiện đang an toàn.</p>
       </div>
     );
   }
@@ -33,7 +33,7 @@ export function RiskyProjectsWidget() {
     <div className="app-card">
       <div className="mb-3 flex items-center gap-2">
         <ShieldAlert className="h-4 w-4 text-amber-500" />
-        <h3 className="text-sm font-semibold text-slate-700">Du an rui ro</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Dự án rủi ro</h3>
       </div>
 
       <div className="space-y-3">
@@ -54,7 +54,7 @@ export function RiskyProjectsWidget() {
             </div>
 
             <div className="flex items-center justify-between text-xs text-slate-500">
-              <span>Task overdue</span>
+              <span>Công việc quá hạn</span>
               <span className="font-semibold text-red-600">{project.overdueRate}%</span>
             </div>
           </div>
@@ -63,4 +63,3 @@ export function RiskyProjectsWidget() {
     </div>
   );
 }
-

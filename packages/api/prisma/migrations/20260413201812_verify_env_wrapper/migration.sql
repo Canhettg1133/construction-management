@@ -1,0 +1,3 @@
+-- Intentionally left blank.
+-- The real schema changes that were accidentally grouped under this migration
+-- were moved into later, correctly named migrations.

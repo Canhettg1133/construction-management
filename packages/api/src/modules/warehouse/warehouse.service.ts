@@ -19,21 +19,51 @@ function decimalToNumber(value: Prisma.Decimal | number | string): number {
 function parseQuantity(value: unknown): Prisma.Decimal {
   let quantity: Prisma.Decimal
   try {
-    quantity = new Prisma.Decimal(String(value ?? '0'))
+    quantity = new Prisma.Decimal(String(value ?? "0"))
   } catch {
-    throw new BadRequestError('So luong khong hop le')
+    throw new BadRequestError("Số lượng không hợp lệ")
+  }
+
+  if (quantity.lt(0)) {
+    throw new BadRequestError("Số lượng không được âm")
+  }
+  return quantity
+}
+
+function parseTransactionQuantity(value: unknown): Prisma.Decimal {
+  let quantity: Prisma.Decimal
+  try {
+    quantity = new Prisma.Decimal(String(value ?? "0"))
+  } catch {
+    throw new BadRequestError("Số lượng không hợp lệ")
   }
 
   if (quantity.lte(0)) {
-    throw new BadRequestError('So luong phai lon hon 0')
+    throw new BadRequestError("Số lượng phải lớn hơn 0")
   }
   return quantity
+}
+
+function parseMinQuantity(value: unknown): Prisma.Decimal {
+  try {
+    return new Prisma.Decimal(String(value ?? "0"))
+  } catch {
+    throw new BadRequestError("Ngưỡng tối thiểu không hợp lệ")
+  }
+}
+
+function parseMaxQuantity(value: unknown): Prisma.Decimal {
+  try {
+    return new Prisma.Decimal(String(value ?? "0"))
+  } catch {
+    throw new BadRequestError("Ngưỡng tối đa không hợp lệ")
+  }
 }
 
 function parseNonEmpty(value: unknown, fieldName: string, maxLength = 2000): string {
   const text = String(value ?? '').trim()
   if (!text) {
-    throw new BadRequestError(`${fieldName} khong duoc de trong`)
+    throw new BadRequestError(`${fieldName} không được để trống`)
   }
   if (text.length > maxLength) {
     throw new BadRequestError(`${fieldName} vuot qua ${maxLength} ky tu`)
@@ -50,7 +80,7 @@ function parseOptionalText(value: unknown, maxLength = 2000): string | null {
     return null
   }
   if (text.length > maxLength) {
-    throw new BadRequestError(`Ghi chu vuot qua ${maxLength} ky tu`)
+    throw new BadRequestError(`Ghi chú vượt quá ${maxLength} ký tự`)
   }
   return text
 }
@@ -76,7 +106,7 @@ async function ensureProjectExists(projectId: string) {
   })
 
   if (!project) {
-    throw new NotFoundError('Khong tim thay du an')
+    throw new NotFoundError("Không tìm thấy dự án")
   }
 
   return project
@@ -100,7 +130,7 @@ async function ensureInventoryInProject(projectId: string, inventoryId: string) 
   })
 
   if (!inventory) {
-    throw new NotFoundError('Khong tim thay vat tu trong kho du an')
+    throw new NotFoundError("Không tìm thấy vật tư trong kho dự án")
   }
 
   return inventory
@@ -171,7 +201,7 @@ export const warehouseService = {
     await ensureProjectExists(projectId)
 
     if (isEngineerReadOnly(actor)) {
-      throw new ForbiddenError('Engineer khong duoc xem chi tiet ton kho')
+      throw new ForbiddenError("Engineer không được xem chi tiết tồn kho")
     }
 
     const inventory = await prisma.warehouseInventory.findFirst({
@@ -190,7 +220,7 @@ export const warehouseService = {
     })
 
     if (!inventory) {
-      throw new NotFoundError('Khong tim thay vat tu trong kho du an')
+      throw new NotFoundError("Không tìm thấy vật tư trong kho dự án")
     }
 
     return inventory
@@ -247,16 +277,16 @@ export const warehouseService = {
     await ensureProjectExists(projectId)
 
     if (!canManageStock(actor)) {
-      throw new ForbiddenError('Chi PM hoac thu kho moi duoc nhap/xuat vat tu')
+      throw new ForbiddenError("Chỉ PM hoặc thủ kho mới được nhập/xuất vật tư")
     }
 
     const inventoryId = parseNonEmpty(payload.inventoryId, 'InventoryId', 64)
     const type = String(payload.type ?? '').toUpperCase()
     if (type !== 'IN' && type !== 'OUT') {
-      throw new BadRequestError('Loai giao dich phai la IN hoac OUT')
+      throw new BadRequestError("Loại giao dịch phải là IN hoặc OUT")
     }
 
-    const quantity = parseQuantity(payload.quantity)
+    const quantity = parseTransactionQuantity(payload.quantity)
     const note = parseOptionalText(payload.note)
     const inventory = await ensureInventoryInProject(projectId, inventoryId)
 
@@ -264,7 +294,7 @@ export const warehouseService = {
       const currentQuantity = new Prisma.Decimal(inventory.quantity)
 
       if (type === 'OUT' && currentQuantity.lt(quantity)) {
-        throw new BadRequestError(`Ton kho khong du de xuat (${currentQuantity.toString()} ${inventory.unit})`)
+        throw new BadRequestError(`Tồn kho không đủ để xuất (${currentQuantity.toString()} ${inventory.unit})`)
       }
 
       const nextQuantity = type === 'IN' ? currentQuantity.plus(quantity) : currentQuantity.minus(quantity)
@@ -311,7 +341,7 @@ export const warehouseService = {
     await ensureProjectExists(projectId)
 
     const inventoryId = parseNonEmpty(payload.inventoryId, 'InventoryId', 64)
-    const quantity = parseQuantity(payload.quantity)
+    const quantity = parseTransactionQuantity(payload.quantity)
     const note = parseOptionalText(payload.note)
 
     await ensureInventoryInProject(projectId, inventoryId)
@@ -358,12 +388,12 @@ export const warehouseService = {
     await ensureProjectExists(projectId)
 
     if (!canApproveRequest(actor)) {
-      throw new ForbiddenError('Ban khong co quyen duyet yeu cau vat tu')
+      throw new ForbiddenError("Bạn không có quyền duyệt yêu cầu vật tư")
     }
 
     const nextStatus = String(payload.status ?? '').toUpperCase()
     if (nextStatus !== 'APPROVED' && nextStatus !== 'REJECTED') {
-      throw new BadRequestError('Trang thai phai la APPROVED hoac REJECTED')
+      throw new BadRequestError("Trạng thái phải là APPROVED hoặc REJECTED")
     }
 
     const note = parseOptionalText(payload.note)
@@ -381,15 +411,15 @@ export const warehouseService = {
     })
 
     if (!request) {
-      throw new NotFoundError('Khong tim thay yeu cau vat tu')
+      throw new NotFoundError("Không tìm thấy yêu cầu vật tư")
     }
 
     if (request.type !== 'REQUEST') {
-      throw new BadRequestError('Chi duoc cap nhat giao dich REQUEST')
+      throw new BadRequestError("Chỉ được cập nhật giao dịch REQUEST")
     }
 
     if (request.status !== 'PENDING') {
-      throw new BadRequestError('Yeu cau da duoc xu ly truoc do')
+      throw new BadRequestError("Yêu cầu đã được xử lý trước đó")
     }
 
     const updatedRequest = await prisma.$transaction(async (tx) => {
@@ -397,7 +427,7 @@ export const warehouseService = {
         const currentQuantity = new Prisma.Decimal(request.inventory.quantity)
         if (currentQuantity.lt(request.quantity)) {
           throw new BadRequestError(
-            `Ton kho khong du de duyet (${currentQuantity.toString()} ${request.inventory.unit})`,
+            `Tồn kho không đủ để duyệt (${currentQuantity.toString()} ${request.inventory.unit})`,
           )
         }
 
@@ -445,5 +475,130 @@ export const warehouseService = {
     }
 
     return updatedRequest
+  },
+
+  // ─── Inventory CRUD ──────────────────────────────────────────────────────────
+
+  async createInventoryItem(
+    projectId: string,
+    actor: WarehouseActorContext,
+    payload: Record<string, unknown>
+  ) {
+    await ensureProjectExists(projectId)
+
+    if (!canManageStock(actor)) {
+      throw new ForbiddenError("Chỉ PM hoặc thủ kho mới được tạo vật tư trong kho")
+    }
+
+    const materialName = parseNonEmpty(payload.materialName, "Tên vật tư", 200)
+    const unit = parseNonEmpty(payload.unit, "Đơn vị", 20)
+    const quantity = parseQuantity(payload.quantity ?? 0)
+    const minQuantity = parseMinQuantity(payload.minQuantity ?? 0)
+    const maxQuantity = parseMaxQuantity(payload.maxQuantity ?? 0)
+    const location = parseOptionalText(payload.location, 200)
+    const note = parseOptionalText(payload.note)
+
+    // Check for duplicate material name in this project
+    const existing = await prisma.warehouseInventory.findFirst({
+      where: { projectId, materialName },
+    })
+
+    if (existing) {
+      throw new BadRequestError("Vật tư đã tồn tại trong dự án này")
+    }
+
+    return prisma.warehouseInventory.create({
+      data: {
+        projectId,
+        materialName,
+        unit,
+        quantity,
+        minQuantity,
+        maxQuantity,
+        location,
+      },
+    })
+  },
+
+  async updateInventoryItem(
+    projectId: string,
+    inventoryId: string,
+    actor: WarehouseActorContext,
+    payload: Record<string, unknown>
+  ) {
+    await ensureProjectExists(projectId)
+
+    if (!canManageStock(actor)) {
+      throw new ForbiddenError("Chỉ PM hoặc thủ kho mới được cập nhật vật tư")
+    }
+
+    const inventory = await ensureInventoryInProject(projectId, inventoryId)
+
+    const data: Prisma.WarehouseInventoryUpdateInput = {}
+
+    if (payload.materialName !== undefined) {
+      const name = parseNonEmpty(payload.materialName, "Tên vật tư", 200)
+      // Check for duplicate
+      const dup = await prisma.warehouseInventory.findFirst({
+        where: { projectId, materialName: name, NOT: { id: inventoryId } },
+      })
+      if (dup) {
+        throw new BadRequestError("Tên vật tư đã tồn tại trong dự án này")
+      }
+      data.materialName = name
+    }
+
+    if (payload.unit !== undefined) {
+      data.unit = parseNonEmpty(payload.unit, "Đơn vị", 20)
+    }
+
+    if (payload.minQuantity !== undefined) {
+      data.minQuantity = parseMinQuantity(payload.minQuantity)
+    }
+
+    if (payload.maxQuantity !== undefined) {
+      data.maxQuantity = parseMaxQuantity(payload.maxQuantity)
+    }
+
+    if (payload.location !== undefined) {
+      data.location = payload.location === null ? null : parseOptionalText(payload.location, 200)
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestError("Không có trường nào để cập nhật")
+    }
+
+    return prisma.warehouseInventory.update({
+      where: { id: inventoryId },
+      data,
+      include: { _count: { select: { transactions: true } } },
+    })
+  },
+
+  async deleteInventoryItem(projectId: string, inventoryId: string) {
+    await ensureProjectExists(projectId)
+
+    const inventory = await prisma.warehouseInventory.findFirst({
+      where: { id: inventoryId, projectId },
+    })
+
+    if (!inventory) {
+      throw new NotFoundError("Không tìm thấy vật tư trong kho dự án")
+    }
+
+    // Check for existing transactions
+    const txCount = await prisma.warehouseTransaction.count({
+      where: { inventoryId },
+    })
+
+    if (txCount > 0) {
+      throw new BadRequestError(
+        `Vật tư đã có ${txCount} giao dịch. Không thể xóa. Hãy tạo giao dịch xuất hết trước.`
+      )
+    }
+
+    await prisma.warehouseInventory.delete({ where: { id: inventoryId } })
+
+    return { deleted: true, id: inventoryId }
   },
 }

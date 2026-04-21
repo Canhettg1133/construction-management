@@ -19,14 +19,19 @@ export function WarehouseStatsWidget() {
     <div className="app-card space-y-4">
       <div className="flex items-center gap-2">
         <Boxes className="h-4 w-4 text-indigo-600" />
-        <h3 className="text-sm font-semibold text-slate-700">Tong quan kho vat tu</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Tổng quan kho vật tư</h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCell icon={Boxes} title="Vat tu trong kho" value={formatNumber(stats?.totalItems)} />
-        <StatCell icon={AlertTriangle} title="Canh bao ton thap" value={formatNumber(lowStock)} tone={lowStock > 0 ? "warning" : "success"} />
-        <StatCell icon={ClipboardList} title="Cho duyet yeu cau" value={formatNumber(pendingTransactions)} tone="warning" />
-        <StatCell icon={CircleDollarSign} title="Gia tri ton kho" value={formatCurrency(stats?.totalValue)} />
+      <div className="grid grid-cols-2 gap-3">
+        <StatCell icon={Boxes} title="Vật tư trong kho" value={formatNumber(stats?.totalItems)} />
+        <StatCell
+          icon={AlertTriangle}
+          title="Cảnh báo tồn thấp"
+          value={formatNumber(lowStock)}
+          tone={lowStock > 0 ? "warning" : "success"}
+        />
+        <StatCell icon={ClipboardList} title="Yêu cầu chờ duyệt" value={formatNumber(pendingTransactions)} tone="warning" />
+        <StatCell icon={CircleDollarSign} title="Giá trị tồn kho" value={formatCurrency(stats?.totalValue)} />
       </div>
     </div>
   );
@@ -53,13 +58,12 @@ function StatCell({
       : "text-slate-700 bg-slate-50";
 
   return (
-    <div className={`rounded-xl border border-slate-200 p-3 ${toneClass}`}>
-      <div className="mb-2 flex items-center gap-2">
-        <Icon className="h-4 w-4" />
-        <span className="text-xs font-medium">{title}</span>
+    <div className={`flex min-h-32 flex-col rounded-xl border border-slate-200 p-3 ${toneClass}`}>
+      <div className="flex min-h-12 items-start gap-2">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+        <span className="text-xs font-medium leading-5">{title}</span>
       </div>
-      <p className="text-lg font-semibold">{value}</p>
+      <p className="mt-auto text-2xl font-semibold tracking-tight">{value}</p>
     </div>
   );
 }
-

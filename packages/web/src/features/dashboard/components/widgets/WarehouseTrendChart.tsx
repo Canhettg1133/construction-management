@@ -77,10 +77,10 @@ export function WarehouseTrendChart() {
     return (
       <div className="app-card">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-700">Xu huong ton kho</h3>
-          <span className="text-xs text-slate-400">7 ngay gan nhat</span>
+          <h3 className="text-sm font-semibold text-slate-700">Xu hướng tồn kho</h3>
+          <span className="text-xs text-slate-400">7 ngày gần nhất</span>
         </div>
-        <p className="py-6 text-center text-sm text-slate-500">Chua co du lieu ton kho gan day.</p>
+        <p className="py-6 text-center text-sm text-slate-500">Chưa có dữ liệu tồn kho gần đây.</p>
       </div>
     );
   }
@@ -102,8 +102,8 @@ export function WarehouseTrendChart() {
   return (
     <div className="app-card">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700">Xu huong ton kho</h3>
-        <span className="text-xs text-slate-400">Top 5 vat tu</span>
+        <h3 className="text-sm font-semibold text-slate-700">Xu hướng tồn kho</h3>
+        <span className="text-xs text-slate-400">5 vật tư nổi bật</span>
       </div>
 
       <ResponsiveContainer width="100%" height={280}>
@@ -118,7 +118,7 @@ export function WarehouseTrendChart() {
               const unit = meta?.unit ?? "";
               const min = meta?.minQuantity ?? 0;
               const max = meta?.maxQuantity ?? 0;
-              return [`${value} ${unit} (min ${min} / max ${max})`, name];
+              return [`${value} ${unit} (tối thiểu ${min} / tối đa ${max})`, name];
             }}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -150,4 +150,3 @@ export function WarehouseTrendChart() {
     </div>
   );
 }
-

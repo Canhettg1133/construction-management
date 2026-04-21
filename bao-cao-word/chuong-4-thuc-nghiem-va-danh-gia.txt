@@ -1,0 +1,201 @@
+CHƯƠNG 4: THỰC NGHIỆM VÀ ĐÁNH GIÁ
+
+4.1 Môi trường xây dựng và triển khai phần mềm
+
+Trong quá trình xây dựng và triển khai hệ thống, đề tài sử dụng mô hình ứng dụng web gồm hai phần chính là frontend và backend, kết hợp với cơ sở dữ liệu lưu trữ tập trung. Việc lựa chọn môi trường phát triển như vậy phù hợp với đặc thù của một hệ thống quản lý thi công xây dựng, nơi dữ liệu cần được cập nhật thường xuyên, nhiều người dùng cùng tham gia và các phân hệ nghiệp vụ phải có khả năng liên kết với nhau trên cùng một nền tảng.
+
+Hệ thống được tổ chức theo dạng monorepo, trong đó mã nguồn được chia thành ba gói chính gồm gói giao diện người dùng, gói xử lý nghiệp vụ phía máy chủ và gói chia sẻ kiểu dữ liệu, hằng số, tiện ích dùng chung. Cách tổ chức này giúp việc phát triển và bảo trì trở nên thuận tiện hơn, đồng thời giảm tình trạng trùng lặp kiểu dữ liệu giữa frontend và backend.
+
+Về mặt công nghệ, frontend được xây dựng bằng React kết hợp Vite và TypeScript. Đây là lựa chọn phù hợp cho giao diện web có nhiều phân hệ, hỗ trợ điều hướng linh hoạt và dễ mở rộng trong quá trình phát triển. Backend được xây dựng bằng Express và TypeScript, đảm nhiệm xử lý nghiệp vụ, xác thực, phân quyền, kiểm tra dữ liệu đầu vào và cung cấp API cho frontend. Cơ sở dữ liệu sử dụng MySQL, được kết nối thông qua Prisma ORM nhằm hỗ trợ quản lý schema, migration và thao tác dữ liệu một cách rõ ràng hơn.
+
+Ngoài các công nghệ chính, hệ thống còn sử dụng một số thư viện và thành phần hỗ trợ khác như React Query để quản lý truy vấn dữ liệu phía giao diện, Zustand để quản lý một phần state của ứng dụng, Zod để kiểm tra tính hợp lệ của dữ liệu, JWT kết hợp cookie để xác thực người dùng, cùng với các thành phần như Helmet, CORS và rate limit để tăng cường mức độ an toàn cho hệ thống.
+
+Bảng 4.1.1: Môi trường xây dựng và triển khai phần mềm
+
+Thành phần	Công nghệ / Công cụ sử dụng	Vai trò trong hệ thống
+Frontend	React, Vite, TypeScript	Xây dựng giao diện và xử lý tương tác phía người dùng
+Backend	Express, TypeScript	Xử lý nghiệp vụ, cung cấp API và quản lý xác thực
+Cơ sở dữ liệu	MySQL	Lưu trữ dữ liệu tập trung của hệ thống
+ORM	Prisma	Quản lý schema, migration và truy xuất dữ liệu
+Quản lý truy vấn	React Query	Đồng bộ dữ liệu giữa frontend và backend
+Quản lý state	Zustand	Quản lý trạng thái cục bộ trên giao diện
+Kiểm tra dữ liệu	Zod	Validate dữ liệu đầu vào ở frontend và backend
+Xác thực	JWT + Cookie	Xác thực người dùng và quản lý phiên đăng nhập
+Kiểm thử	Vitest, Supertest	Hỗ trợ kiểm thử unit và integration test
+Quản lý gói	pnpm	Quản lý workspace và phụ thuộc của dự án
+
+[Đề xuất chèn Hình 4.1.1: Giao diện chạy thực tế của hệ thống trên môi trường local]
+
+Hình 4.1.1: Giao diện chạy thực tế của hệ thống trên môi trường local
+
+4.2 Cơ sở dữ liệu vật lý
+
+Từ góc độ triển khai thực tế, cơ sở dữ liệu của hệ thống được xây dựng theo mô hình quan hệ và lưu trữ trên MySQL. Dữ liệu được tổ chức thành nhiều nhóm bảng khác nhau tương ứng với từng nhóm nghiệp vụ trong hệ thống. Việc thiết kế cơ sở dữ liệu theo hướng này giúp dữ liệu được quản lý tập trung, bảo đảm khả năng truy xuất, cập nhật và mở rộng trong tương lai.
+
+Nhóm bảng đầu tiên là nhóm dữ liệu người dùng và phân quyền. Nhóm này bao gồm các bảng phục vụ quản lý tài khoản, quản lý thành viên dự án, quyền theo phân hệ và quyền đặc biệt. Đây là nền tảng quan trọng để hệ thống kiểm soát phạm vi truy cập của từng người dùng trong từng dự án cụ thể.
+
+Nhóm bảng thứ hai là nhóm dữ liệu nghiệp vụ cốt lõi của dự án xây dựng. Nhóm này bao gồm các bảng quản lý dự án, công việc, báo cáo ngày, tệp tin, thư mục tài liệu, an toàn, chất lượng, kho vật tư và ngân sách. Các bảng trong nhóm này có mối liên hệ chặt chẽ với bảng dự án, bởi hầu hết dữ liệu nghiệp vụ đều được tổ chức xoay quanh từng công trình cụ thể.
+
+Nhóm bảng thứ ba là nhóm dữ liệu hỗ trợ vận hành hệ thống, bao gồm bảng thông báo, bảng nhật ký hoạt động và các bảng phục vụ quy trình phê duyệt hoặc kiểm soát trạng thái xử lý. Đây là nhóm dữ liệu giúp tăng khả năng theo dõi, truy vết và hỗ trợ quản lý hệ thống trong quá trình sử dụng thực tế.
+
+Trong quá trình triển khai, cơ sở dữ liệu được quản lý thông qua Prisma schema và hệ thống migration. Cách triển khai này giúp đề tài chủ động hơn trong việc xây dựng cấu trúc bảng, cập nhật thay đổi dữ liệu và đồng bộ môi trường phát triển với môi trường kiểm thử.
+
+Bảng 4.2.1: Các nhóm bảng chính trong cơ sở dữ liệu vật lý
+
+Nhóm bảng	Các bảng tiêu biểu	Ý nghĩa
+Người dùng và phân quyền	users, project_members, project_tool_permissions, special_privilege_assignments	Quản lý tài khoản, vai trò, quyền truy cập và quyền đặc biệt
+Dự án và báo cáo nghiệp vụ	projects, daily_reports, tasks, task_comments	Quản lý thông tin công trình, báo cáo ngày và công việc
+Tài liệu và tệp tin	project_files, document_folders, report_images	Lưu trữ hồ sơ, tệp đính kèm và hình ảnh liên quan
+An toàn và chất lượng	safety_reports, safety_checklist_items, safety_incidents, quality_reports, quality_punch_list_items	Quản lý kiểm tra an toàn, chất lượng và các hạng mục cần xử lý
+Kho vật tư và ngân sách	warehouse_inventory, warehouse_transactions, budget_items, budget_disbursements	Theo dõi vật tư, giao dịch kho và chi phí dự án
+Vận hành hệ thống	notifications, audit_logs, password_reset_tokens	Hỗ trợ thông báo, truy vết hoạt động và khôi phục tài khoản
+
+[Đề xuất chèn Hình 4.2.1: Một phần dữ liệu thực tế trong cơ sở dữ liệu sau khi seed và chạy thử hệ thống]
+
+Hình 4.2.1: Một phần dữ liệu thực tế trong cơ sở dữ liệu sau khi seed và chạy thử hệ thống
+
+4.3 Kết quả xây dựng các phân hệ chính
+
+Sau quá trình triển khai, hệ thống đã xây dựng được tương đối đầy đủ các phân hệ nghiệp vụ chính theo đúng định hướng ban đầu. Các phân hệ này không tồn tại rời rạc mà có sự liên kết với nhau thông qua dữ liệu dự án, người dùng và cơ chế phân quyền. Điều này giúp hệ thống phản ánh khá sát bài toán quản lý thi công xây dựng trong thực tế.
+
+- Phân hệ xác thực và người dùng
++ Hệ thống hỗ trợ đăng nhập, đổi mật khẩu, quên mật khẩu và khôi phục phiên làm việc.
++ Người dùng được xác thực thông qua JWT lưu bằng cookie, giúp tăng mức độ an toàn khi sử dụng.
++ Sau khi đăng nhập thành công, người dùng được đưa vào giao diện phù hợp với trạng thái phiên hiện tại.
+
+- Phân hệ dự án
++ Hệ thống cho phép quản lý danh sách dự án và xem chi tiết từng công trình.
++ Trong trang chi tiết dự án, các phân hệ như báo cáo ngày, công việc, tệp đính kèm, hồ sơ tài liệu, an toàn, chất lượng, kho vật tư và ngân sách được tổ chức thành các tab riêng.
++ Cách tổ chức này giúp người dùng dễ truy cập từng nhóm chức năng nhưng vẫn giữ được tính liên kết với dữ liệu dự án.
+
+- Phân hệ công việc
++ Hệ thống hỗ trợ tạo công việc, cập nhật trạng thái, bình luận, theo dõi thời hạn và quản lý các công việc cần phê duyệt.
++ Đây là phân hệ có ý nghĩa thực tế cao vì hỗ trợ điều phối công việc giữa các thành viên trong dự án.
++ Dữ liệu công việc còn được dùng lại trong dashboard để thống kê số lượng công việc mở, công việc quá hạn và tiến độ xử lý.
+
+- Phân hệ báo cáo ngày
++ Hệ thống hỗ trợ lập báo cáo ngày với các trường dữ liệu như ngày báo cáo, thời tiết, số lượng công nhân, nội dung công việc, các vấn đề phát sinh, ghi chú và hình ảnh hiện trường.
++ Giao diện nhập liệu được xây dựng theo hướng thuận tiện cho việc sử dụng tại công trường, phù hợp với nhu cầu cập nhật nhanh.
++ Đây là một trong những phân hệ quan trọng vì phản ánh trực tiếp tình hình thi công theo từng ngày.
+
+- Phân hệ tài liệu và tệp tin
++ Hệ thống hỗ trợ tải lên tệp, quản lý thư mục tài liệu, phân loại và tìm kiếm nội dung liên quan đến dự án.
++ Việc tổ chức lại hồ sơ tài liệu trên nền tảng web giúp giảm tình trạng lưu trữ rời rạc.
++ Phân hệ này có thể hỗ trợ tốt cho việc quản lý hồ sơ kỹ thuật và tệp phục vụ triển khai dự án.
+
+- Phân hệ an toàn và chất lượng
++ Hệ thống đã xây dựng được các chức năng quản lý báo cáo an toàn và báo cáo chất lượng theo từng dự án.
++ Với phân hệ an toàn, dữ liệu được tổ chức xoay quanh báo cáo an toàn, checklist, vi phạm, sự cố, near miss và hành động khắc phục.
++ Với phân hệ chất lượng, dữ liệu được tổ chức xoay quanh báo cáo chất lượng, punch list, hình ảnh và trạng thái xử lý lỗi.
++ Đây là hai phân hệ thể hiện rõ đặc thù của bài toán xây dựng so với các hệ thống quản lý thông thường.
+
+- Phân hệ kho vật tư và ngân sách
++ Hệ thống cho phép quản lý vật tư theo dự án, theo dõi số lượng tồn, lịch sử giao dịch và cảnh báo tồn kho.
++ Đồng thời, hệ thống cũng hỗ trợ quản lý khoản mục ngân sách, chi phí dự toán, chi phí đã duyệt, chi phí đã sử dụng và các lần giải ngân.
++ Hai phân hệ này góp phần hỗ trợ doanh nghiệp kiểm soát tốt hơn nguồn lực vật tư và chi phí trong quá trình thi công.
+
+- Phân hệ dashboard, thông báo và nhật ký hệ thống
++ Dashboard được xây dựng theo hướng hiển thị dữ liệu khác nhau tùy theo vai trò người dùng.
++ Hệ thống có hỗ trợ thông báo cho các sự kiện quan trọng như công việc sắp đến hạn, nội dung chờ phê duyệt, vi phạm an toàn hoặc giao dịch chờ xử lý.
++ Nhật ký hoạt động giúp tăng khả năng theo dõi và truy vết thao tác trong quá trình vận hành.
+
+Nhìn chung, kết quả xây dựng cho thấy hệ thống không chỉ dừng ở mức mô phỏng giao diện mà đã có sự liên kết tương đối rõ giữa giao diện, API, phân quyền và dữ liệu nghiệp vụ. Đây là điểm quan trọng giúp đề tài có giá trị thực tiễn cao hơn.
+
+[Đề xuất chèn Hình 4.3.1: Giao diện bảng điều khiển của hệ thống]
+
+Hình 4.3.1: Giao diện bảng điều khiển của hệ thống
+
+[Đề xuất chèn Hình 4.3.2: Giao diện chi tiết dự án với các tab chức năng]
+
+Hình 4.3.2: Giao diện chi tiết dự án với các tab chức năng
+
+[Đề xuất chèn Hình 4.3.3: Giao diện tạo báo cáo ngày]
+
+Hình 4.3.3: Giao diện tạo báo cáo ngày
+
+[Đề xuất chèn Hình 4.3.4: Giao diện một phân hệ đặc thù như an toàn, chất lượng hoặc kho vật tư]
+
+Hình 4.3.4: Giao diện một phân hệ đặc thù của hệ thống
+
+4.4 Kết quả kiểm thử hệ thống
+
+Quá trình kiểm thử được thực hiện nhằm đánh giá mức độ đáp ứng của hệ thống đối với các chức năng chính, đồng thời kiểm tra tính ổn định của các luồng xử lý quan trọng như xác thực, phân quyền, thao tác nghiệp vụ và truy cập dữ liệu. Từ source code hiện tại có thể xác định rằng dự án đã có hệ thống kiểm thử tương đối rõ cho nhiều nhóm chức năng trọng tâm.
+
+Trong backend, hệ thống đã có các file kiểm thử cho một số module như xác thực, người dùng, dự án, công việc, báo cáo ngày, tài liệu, tệp tin, dashboard, audit log, middleware phân quyền và các luồng an toàn cốt lõi. Việc có nhiều file integration test cho thấy đề tài đã chú ý đến việc xác minh hành vi hệ thống ở mức API, chứ không chỉ dừng ở kiểm thử giao diện.
+
+Ngoài kiểm thử tự động, việc kiểm tra thủ công trên giao diện cũng có ý nghĩa quan trọng để đánh giá trải nghiệm sử dụng, khả năng điều hướng, hiển thị dữ liệu và phản hồi của từng chức năng khi kết nối với backend. Trong bối cảnh của đồ án tốt nghiệp, cách kết hợp giữa kiểm thử tự động và kiểm thử thủ công là phù hợp với quy mô và phạm vi của đề tài.
+
+Bảng 4.4.1: Kết quả kiểm thử một số chức năng chính của hệ thống
+
+STT	Chức năng kiểm thử	Nội dung kiểm thử	Kết quả
+1	Xác thực người dùng	Đăng nhập bằng tài khoản hợp lệ và không hợp lệ	Hệ thống xử lý đúng, từ chối truy cập khi thông tin sai
+2	Quản lý người dùng	Kiểm tra truy cập chức năng quản trị theo vai trò	Người dùng không đủ quyền bị chặn truy cập
+3	Quản lý dự án	Tạo dự án, xem danh sách và xem chi tiết dự án	Dữ liệu hiển thị đúng theo phạm vi truy cập
+4	Quản lý công việc	Tạo công việc, cập nhật trạng thái, theo dõi hạn xử lý	Chức năng hoạt động đúng theo luồng nghiệp vụ
+5	Báo cáo ngày	Tạo báo cáo ngày và gửi báo cáo chờ phê duyệt	Dữ liệu được lưu và cập nhật đúng trạng thái
+6	Tài liệu và tệp tin	Tải tệp lên và tra cứu tài liệu	Hệ thống lưu trữ và hiển thị đúng dữ liệu
+7	Phân quyền hệ thống	Kiểm tra quyền truy cập theo vai trò và theo phân hệ	Các middleware kiểm tra quyền hoạt động đúng
+8	Dashboard	Tổng hợp số liệu theo vai trò người dùng	Dữ liệu hiển thị khác nhau theo từng nhóm quyền
+
+[Đề xuất chèn Hình 4.4.1: Kết quả chạy kiểm thử hoặc minh họa quá trình kiểm tra hệ thống]
+
+Hình 4.4.1: Kết quả chạy kiểm thử hoặc minh họa quá trình kiểm tra hệ thống
+
+4.5 Đánh giá chung
+
+Qua quá trình phân tích, thiết kế, xây dựng và kiểm thử, có thể thấy hệ thống đã đáp ứng được phần lớn các mục tiêu cơ bản đặt ra ban đầu. Về mặt nghiệp vụ, hệ thống đã mô hình hóa được nhiều nhóm chức năng quan trọng trong quản lý thi công xây dựng, bao gồm quản lý dự án, công việc, báo cáo ngày, tài liệu, an toàn, chất lượng, kho vật tư và ngân sách. Đây là điểm nổi bật của đề tài vì giúp sản phẩm có tính gắn kết với môi trường doanh nghiệp xây dựng thực tế.
+
+Về mặt kỹ thuật, hệ thống được xây dựng trên nền tảng công nghệ hiện đại, có cấu trúc tương đối rõ ràng giữa frontend, backend và cơ sở dữ liệu. Việc sử dụng TypeScript, Prisma, React Query, middleware phân quyền và hệ thống kiểm thử giúp tăng tính rõ ràng, khả năng mở rộng và mức độ ổn định của dự án.
+
+Bên cạnh những kết quả đạt được, hệ thống vẫn còn một số điểm cần tiếp tục hoàn thiện. Một số tính năng mới dừng ở mức đáp ứng nghiệp vụ cốt lõi, chưa đi sâu vào các nhu cầu nâng cao như báo cáo thống kê chuyên sâu, tối ưu cho môi trường triển khai thực tế hoặc tích hợp với các hệ thống bên ngoài. Ngoài ra, vì đây là đồ án tốt nghiệp nên phạm vi triển khai vẫn còn giới hạn về thời gian, dữ liệu thực tế và quy mô kiểm thử.
+
+Tuy vậy, xét trong phạm vi của đề tài, sản phẩm đạt được là tương đối đầy đủ và có tính khả thi. Hệ thống có thể xem là một nền tảng bước đầu cho việc phát triển một giải pháp quản lý thi công xây dựng có tính ứng dụng thực tế cao hơn trong tương lai.
+
+4.6 Hướng phát triển
+
+4.6.1 Hướng phát triển của dự án
+
+Trong tương lai, hệ thống có thể tiếp tục được mở rộng theo nhiều hướng để nâng cao giá trị ứng dụng thực tế. Trước hết, cần bổ sung thêm các chức năng phân tích và báo cáo chuyên sâu hơn, giúp người quản lý có thể đánh giá tiến độ, hiệu quả công việc, tình trạng vật tư và chi phí theo nhiều chiều khác nhau.
+
+Bên cạnh đó, hệ thống có thể được hoàn thiện hơn về trải nghiệm người dùng, đặc biệt là trên các thiết bị di động phục vụ môi trường công trường. Việc tối ưu quy trình nhập liệu, tải ảnh, theo dõi báo cáo hoặc xác nhận xử lý ngay trên điện thoại sẽ giúp tăng tính tiện dụng khi áp dụng vào thực tế.
+
+Một hướng phát triển khác là mở rộng khả năng tích hợp với các nền tảng hoặc công cụ bên ngoài như hệ thống kế toán, phần mềm quản lý văn bản, email doanh nghiệp hoặc các nền tảng lưu trữ đám mây. Khi đó, hệ thống không chỉ hỗ trợ quản lý nội bộ mà còn có thể tham gia sâu hơn vào chuỗi vận hành số của doanh nghiệp.
+
+Ngoài ra, nếu có thêm thời gian và điều kiện triển khai, hệ thống cũng có thể phát triển các tính năng chuyên sâu hơn như báo cáo theo biểu đồ trực quan, đánh giá hiệu quả dự án theo từng giai đoạn, cảnh báo thông minh, nhật ký thao tác nâng cao hoặc tích hợp dữ liệu từ các thiết bị hiện trường.
+
+4.6.2 Hướng phát triển bản thân
+
+Thông qua quá trình thực hiện đề tài, bản thân em nhận thấy cần tiếp tục rèn luyện thêm cả về kiến thức chuyên môn lẫn kỹ năng làm việc thực tế. Ở khía cạnh kỹ thuật, em cần nâng cao khả năng thiết kế hệ thống lớn hơn, tối ưu hiệu năng, bảo mật ứng dụng và tổ chức mã nguồn theo hướng dễ bảo trì hơn.
+
+Ở khía cạnh nghiệp vụ, em cần tìm hiểu sâu hơn về quy trình quản lý trong doanh nghiệp xây dựng để có thể phân tích bài toán sát thực tế hơn và đưa ra giải pháp phù hợp hơn với người dùng cuối. Việc hiểu đúng nghiệp vụ là yếu tố rất quan trọng để xây dựng phần mềm không chỉ đúng về kỹ thuật mà còn có giá trị khi đưa vào sử dụng.
+
+Bên cạnh đó, em cũng cần tiếp tục cải thiện kỹ năng kiểm thử, kỹ năng viết tài liệu kỹ thuật, kỹ năng làm việc nhóm và kỹ năng trao đổi với người dùng nghiệp vụ. Đây là những yếu tố cần thiết để phát triển bản thân theo định hướng trở thành một lập trình viên hoặc kỹ sư phần mềm có khả năng tham gia vào các dự án thực tế trong tương lai.
+
+4.7 Kết luận chương 4
+
+Chương 4 đã trình bày môi trường xây dựng và triển khai phần mềm, cấu trúc cơ sở dữ liệu vật lý, kết quả xây dựng các phân hệ chính, kết quả kiểm thử hệ thống cũng như những đánh giá chung sau quá trình thực hiện đề tài. Qua đó có thể thấy hệ thống đã đạt được những kết quả tương đối rõ ràng cả về mặt kỹ thuật và mặt nghiệp vụ, đồng thời thể hiện được khả năng ứng dụng công nghệ thông tin vào bài toán quản lý thi công xây dựng.
+
+Những kết quả đạt được trong chương này là cơ sở để khẳng định đề tài không chỉ dừng ở mức nghiên cứu lý thuyết mà đã được hiện thực hóa thành một sản phẩm phần mềm có thể vận hành thử nghiệm. Đồng thời, chương này cũng cho thấy những điểm còn hạn chế và các hướng phát triển trong tương lai, qua đó làm rõ hơn giá trị thực tiễn cũng như ý nghĩa học tập của đề tài.
+
+Gợi ý hình ảnh nên chuẩn bị cho Chương 4:
+
+- Hình 4.1.1
++ Ảnh chụp hệ thống đang chạy thực tế trên trình duyệt, ví dụ trang đăng nhập hoặc dashboard.
+
+- Hình 4.2.1
++ Ảnh chụp một phần dữ liệu trong MySQL, Prisma Studio hoặc công cụ quản trị cơ sở dữ liệu.
+
+- Hình 4.3.1
++ Ảnh giao diện dashboard.
+
+- Hình 4.3.2
++ Ảnh giao diện chi tiết dự án.
+
+- Hình 4.3.3
++ Ảnh giao diện tạo báo cáo ngày.
+
+- Hình 4.3.4
++ Ảnh giao diện một phân hệ đặc thù như an toàn, chất lượng hoặc kho vật tư.
+
+- Hình 4.4.1
++ Ảnh minh họa kết quả kiểm thử hoặc cửa sổ terminal khi chạy test.

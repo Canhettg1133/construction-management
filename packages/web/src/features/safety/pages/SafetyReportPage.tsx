@@ -1,80 +1,94 @@
-﻿import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Save } from "lucide-react";
-import { safetyApi } from "../api/safetyApi";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { SpecialPrivilegeGate } from "../../../shared/components/SpecialPrivilegeGate";
-import { usePermission } from "../../../shared/hooks/usePermission";
-import { useProjectPermissions } from "../../../shared/hooks/useProjectPermissions";
-import { useAuthStore } from "../../../store/authStore";
-import { useUiStore } from "../../../store/uiStore";
+﻿import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CheckCircle2, Save } from 'lucide-react'
+import { safetyApi } from '../api/safetyApi'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { SpecialPrivilegeGate } from '../../../shared/components/SpecialPrivilegeGate'
+import { usePermission } from '../../../shared/hooks/usePermission'
+import { useProjectPermissions } from '../../../shared/hooks/useProjectPermissions'
+import { useAuthStore } from '../../../store/authStore'
+import { useUiStore } from '../../../store/uiStore'
 
 function formatDateInput(value?: string | null) {
-  if (!value) return "";
-  return value.slice(0, 10);
+  if (!value) return ''
+  return value.slice(0, 10)
 }
 
 function parsePhotoLines(value: string): string[] {
   return value
     .split(/\r?\n/)
     .map((item) => item.trim())
-    .filter((item) => item.length > 0);
+    .filter((item) => item.length > 0)
 }
 
 export function SafetyReportPage() {
-  const { id, reportId } = useParams<{ id: string; reportId?: string }>();
-  const projectId = id ?? "";
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((state) => state.showToast);
-  const { user } = useAuthStore();
-  const { data: permissionData } = useProjectPermissions(projectId);
-  const isEditing = Boolean(reportId);
-  const isPmOrAdmin =
-    user?.systemRole === "ADMIN" || permissionData?.projectRole === "PROJECT_MANAGER";
+  const { id, reportId } = useParams<{ id: string; reportId?: string }>()
+  const projectId = id ?? ''
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((state) => state.showToast)
+  const { user } = useAuthStore()
+  const { data: permissionData } = useProjectPermissions(projectId)
+  const isEditing = Boolean(reportId)
+  const isPmOrAdmin = user?.systemRole === 'ADMIN' || permissionData?.projectRole === 'PROJECT_MANAGER'
   const { has: canUseSafetyStandard } = usePermission({
     projectId,
-    toolId: "SAFETY",
-    minLevel: "STANDARD",
-  });
+    toolId: 'SAFETY',
+    minLevel: 'STANDARD',
+  })
 
-  const [reportDate, setReportDate] = useState("");
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
-  const [violations, setViolations] = useState<number>(0);
-  const [photosText, setPhotosText] = useState("");
+  const [reportDate, setReportDate] = useState('')
+  const [location, setLocation] = useState('')
+  const [description, setDescription] = useState('')
+  const [violations, setViolations] = useState<number>(0)
+  const [photosText, setPhotosText] = useState('')
 
-  const { data: report, isLoading, isError } = useQuery({
-    queryKey: ["safety-report", projectId, reportId],
+  const {
+    data: report,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['safety-report', projectId, reportId],
     queryFn: () => safetyApi.getById(projectId, String(reportId)),
     enabled: Boolean(projectId) && Boolean(reportId),
-  });
+  })
 
   useEffect(() => {
-    if (!report) return;
-    setReportDate(formatDateInput(report.reportDate));
-    setLocation(report.location);
-    setDescription(report.description);
-    setViolations(report.violations ?? 0);
-    setPhotosText((report.photos ?? []).join("\n"));
-  }, [report]);
+    if (!report) return
+    setReportDate(formatDateInput(report.reportDate))
+    setLocation(report.location)
+    setDescription(report.description)
+    setViolations(report.violations ?? 0)
+    setPhotosText((report.photos ?? []).join('\n'))
+  }, [report])
 
   useEffect(() => {
     if (!isEditing) {
-      const today = new Date().toISOString().slice(0, 10);
-      setReportDate(today);
+      const today = new Date().toISOString().slice(0, 10)
+      setReportDate(today)
     }
-  }, [isEditing]);
+  }, [isEditing])
 
   const canEditReport = useMemo(() => {
-    if (!canUseSafetyStandard) return false;
-    if (!isEditing) return true;
-    if (!report) return false;
-    if (report.status !== "PENDING") return false;
-    return isPmOrAdmin || report.inspectorId === user?.id;
-  }, [canUseSafetyStandard, isEditing, report, isPmOrAdmin, user?.id]);
+    if (!canUseSafetyStandard) return false
+    if (!isEditing) return true
+    if (!report) return false
+    if (report.status === 'APPROVED') return false
+    return isPmOrAdmin || report.inspectorId === user?.id
+  }, [canUseSafetyStandard, isEditing, report, isPmOrAdmin, user?.id])
+  const canReopenReport = Boolean(isEditing && report?.status === 'APPROVED' && isPmOrAdmin)
+  const editBlockedMessage = useMemo(() => {
+    if (!canUseSafetyStandard) return 'Bạn chưa có quyền sửa báo cáo an toàn trong dự án này.'
+    if (report?.status === 'APPROVED') {
+      return 'Báo cáo đã được duyệt, không thể chỉnh sửa trực tiếp. Admin hoặc PM có thể mở lại báo cáo nếu cần điều chỉnh.'
+    }
+    if (report && !isPmOrAdmin && report.inspectorId !== user?.id) {
+      return 'Chỉ người lập báo cáo, PM hoặc Admin được sửa báo cáo này.'
+    }
+    return 'Bạn không thể sửa báo cáo này ở trạng thái hiện tại.'
+  }, [canUseSafetyStandard, report, isPmOrAdmin, user?.id])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -84,53 +98,76 @@ export function SafetyReportPage() {
         description,
         violations,
         photos: parsePhotoLines(photosText),
-      };
-
-      if (!isEditing) {
-        return safetyApi.create(projectId, payload);
       }
 
-      return safetyApi.update(projectId, String(reportId), payload);
+      if (!isEditing) {
+        return safetyApi.create(projectId, payload)
+      }
+
+      return safetyApi.update(projectId, String(reportId), payload)
     },
     onSuccess: (saved) => {
-      queryClient.invalidateQueries({ queryKey: ["safety-reports", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["safety-report", projectId, reportId] });
+      queryClient.invalidateQueries({ queryKey: ['safety-reports', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['safety-report', projectId, reportId] })
       showToast({
-        type: "success",
-        title: isEditing ? "Đã cập nhật báo cáo an toàn" : "Đã tạo báo cáo an toàn",
-      });
+        type: 'success',
+        title: isEditing ? 'Đã cập nhật báo cáo an toàn' : 'Đã tạo báo cáo an toàn',
+      })
 
       if (!isEditing) {
-        navigate(`/projects/${projectId}/safety/${saved.id}`);
+        navigate(`/projects/${projectId}/safety/${saved.id}`)
       }
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể lưu báo cáo",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể lưu báo cáo',
+      })
     },
-  });
+  })
 
   const signMutation = useMutation({
     mutationFn: () => safetyApi.sign(projectId, String(reportId)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["safety-reports", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["safety-report", projectId, reportId] });
-      showToast({ type: "success", title: "Đã ký duyệt báo cáo an toàn" });
+      queryClient.invalidateQueries({ queryKey: ['safety-reports', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['safety-report', projectId, reportId] })
+      showToast({ type: 'success', title: 'Đã ký duyệt báo cáo an toàn' })
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể ký duyệt",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể ký duyệt',
+      })
     },
-  });
+  })
+
+  const reopenMutation = useMutation({
+    mutationFn: (reason: string) => safetyApi.reopen(projectId, String(reportId), reason),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['safety-report', projectId, reportId], updated)
+      queryClient.invalidateQueries({ queryKey: ['safety-reports', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['safety-report', projectId, reportId] })
+      showToast({ type: 'success', title: 'Đã mở lại báo cáo an toàn' })
+    },
+    onError: (error: unknown) => {
+      showToast({
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể mở lại báo cáo',
+      })
+    },
+  })
+
+  const handleReopen = () => {
+    const reason = window.prompt('Nhập lý do mở lại báo cáo đã duyệt:')
+    if (!reason?.trim()) return
+    reopenMutation.mutate(reason.trim())
+  }
 
   if (!projectId) {
-    return <ErrorState message="Không tìm thấy thông tin dự án." />;
+    return <ErrorState message="Không tìm thấy thông tin dự án." />
   }
 
   if (isEditing && isLoading) {
@@ -139,15 +176,15 @@ export function SafetyReportPage() {
         <SkeletonCard lines={2} />
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (isEditing && (isError || !report)) {
-    return <ErrorState message="Không tải được chi tiết báo cáo an toàn." />;
+    return <ErrorState message="Không tải được chi tiết báo cáo an toàn." />
   }
 
   if (!canUseSafetyStandard && !isEditing) {
-    return <ErrorState message="Bạn không có quyền tạo báo cáo an toàn." />;
+    return <ErrorState message="Bạn không có quyền tạo báo cáo an toàn." />
   }
 
   return (
@@ -160,26 +197,37 @@ export function SafetyReportPage() {
           >
             ← Safety dashboard
           </Link>
-          <h2 className="mt-1">{isEditing ? "Chi tiết báo cáo an toàn" : "Tạo báo cáo an toàn"}</h2>
+          <h2 className="mt-1">{isEditing ? 'Chi tiết báo cáo an toàn' : 'Tạo báo cáo an toàn'}</h2>
           {report && (
             <p className="page-subtitle">
-              Người lap: {report.inspector?.name ?? report.inspectorId} · Trạng thái: {report.status}
+              Người lập: {report.inspector?.name ?? report.inspectorId} · Trạng thái: {report.status}
             </p>
           )}
         </div>
 
-        {isEditing && report?.status === "PENDING" && (
-          <SpecialPrivilegeGate projectId={projectId} privilege="SAFETY_SIGNER">
+        <div className="flex items-center gap-2">
+          {canReopenReport && (
             <button
-              onClick={() => signMutation.mutate()}
-              disabled={signMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={handleReopen}
+              disabled={reopenMutation.isPending}
+              className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-700 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <CheckCircle2 className="h-4 w-4" />
-              Ký duyệt
+              Mở lại báo cáo
             </button>
-          </SpecialPrivilegeGate>
-        )}
+          )}
+          {isEditing && report?.status === 'PENDING' && (
+            <SpecialPrivilegeGate projectId={projectId} privilege="SAFETY_SIGNER">
+              <button
+                onClick={() => signMutation.mutate()}
+                disabled={signMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Ký duyệt
+              </button>
+            </SpecialPrivilegeGate>
+          )}
+        </div>
       </div>
 
       <div className="app-card space-y-4">
@@ -195,7 +243,7 @@ export function SafetyReportPage() {
             />
           </div>
           <div>
-            <label className="form-label">So vi phạm</label>
+            <label className="form-label">Số vi phạm</label>
             <input
               type="number"
               min={0}
@@ -231,7 +279,7 @@ export function SafetyReportPage() {
         </div>
 
         <div>
-          <label className="form-label">Anh hiện truong (moi dong 1 URL)</label>
+          <label className="form-label">Ảnh hiện trường (mỗi dòng 1 URL)</label>
           <textarea
             rows={4}
             value={photosText}
@@ -256,19 +304,15 @@ export function SafetyReportPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Save className="h-4 w-4" />
-              {isEditing ? "Lưu thay đổi" : "Tạo báo cáo"}
+              {isEditing ? 'Lưu thay đổi' : 'Tạo báo cáo'}
             </button>
           </div>
         ) : (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-            Bạn không có quyền sửa báo cáo này.
+            {editBlockedMessage}
           </div>
         )}
       </div>
     </div>
-  );
+  )
 }
-
-
-
-
