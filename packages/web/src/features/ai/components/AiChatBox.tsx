@@ -14,6 +14,8 @@ interface AiChatBoxProps {
   messages: AiMessage[];
   quickPrompts: QuickPrompt[];
   canDraft: boolean;
+  providerStatus?: string;
+  providerStatusTone?: "default" | "warning";
   isSending: boolean;
   onSend: (content: string, intent: AiMessageIntent) => Promise<void>;
 }
@@ -27,7 +29,15 @@ function messageTime(value: string) {
   });
 }
 
-export function AiChatBox({ messages, quickPrompts, canDraft, isSending, onSend }: AiChatBoxProps) {
+export function AiChatBox({
+  messages,
+  quickPrompts,
+  canDraft,
+  providerStatus,
+  providerStatusTone = "default",
+  isSending,
+  onSend,
+}: AiChatBoxProps) {
   const [content, setContent] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -64,6 +74,18 @@ export function AiChatBox({ messages, quickPrompts, canDraft, isSending, onSend 
             <p className="text-xs text-slate-500">Chat theo dự án, có kiểm soát quyền dữ liệu.</p>
           </div>
         </div>
+        {providerStatus && (
+          <div
+            className={`mt-3 inline-flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+              providerStatusTone === "warning"
+                ? "bg-amber-50 text-amber-700"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{providerStatus}</span>
+          </div>
+        )}
       </div>
 
       <div className="border-b border-slate-200 px-4 py-3">

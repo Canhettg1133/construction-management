@@ -10,10 +10,14 @@ import {
 } from "../../shared/middleware";
 import { aiAssistantController } from "./ai.controller";
 import {
+  createProviderCredentialsSchema,
   createProviderProfileSchema,
   createThreadSchema,
+  exportProviderCredentialsSchema,
+  providerTestSchema,
   sendMessageSchema,
   updateAiSettingsSchema,
+  updateProviderCredentialSchema,
   updateProviderProfileSchema,
 } from "./ai.validation";
 
@@ -27,6 +31,11 @@ aiAssistantRoutes.get(
   "/settings",
   requireToolPermission("AI_ASSISTANT", "ADMIN"),
   asyncHandler(aiAssistantController.getProjectSettings)
+);
+aiAssistantRoutes.get(
+  "/status",
+  requireToolPermission("AI_ASSISTANT", "READ"),
+  asyncHandler(aiAssistantController.getProjectAiStatus)
 );
 aiAssistantRoutes.put(
   "/settings",
@@ -64,9 +73,35 @@ aiProviderProfileRoutes.use(authorize("ADMIN"));
 
 aiProviderProfileRoutes.get("/", asyncHandler(aiAssistantController.listProviderProfiles));
 aiProviderProfileRoutes.post(
+  "/test",
+  validate(providerTestSchema),
+  asyncHandler(aiAssistantController.testProvider)
+);
+aiProviderProfileRoutes.post(
   "/",
   validate(createProviderProfileSchema),
   asyncHandler(aiAssistantController.createProviderProfile)
+);
+aiProviderProfileRoutes.get("/:profileId/models", asyncHandler(aiAssistantController.listProviderModels));
+aiProviderProfileRoutes.get("/:profileId/credentials", asyncHandler(aiAssistantController.listProviderCredentials));
+aiProviderProfileRoutes.post(
+  "/:profileId/credentials",
+  validate(createProviderCredentialsSchema),
+  asyncHandler(aiAssistantController.createProviderCredentials)
+);
+aiProviderProfileRoutes.post(
+  "/:profileId/credentials/export",
+  validate(exportProviderCredentialsSchema),
+  asyncHandler(aiAssistantController.exportProviderCredentials)
+);
+aiProviderProfileRoutes.put(
+  "/:profileId/credentials/:credentialId",
+  validate(updateProviderCredentialSchema),
+  asyncHandler(aiAssistantController.updateProviderCredential)
+);
+aiProviderProfileRoutes.delete(
+  "/:profileId/credentials/:credentialId",
+  asyncHandler(aiAssistantController.deleteProviderCredential)
 );
 aiProviderProfileRoutes.put(
   "/:profileId",

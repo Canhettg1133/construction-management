@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "node:crypto";
 import { env } from "../../config/env";
 import { BadRequestError } from "../../shared/errors";
 
@@ -49,4 +49,21 @@ export function decryptSecret(value: string | null | undefined) {
   ]);
 
   return decrypted.toString("utf8");
+}
+
+export function hashSecret(value: string) {
+  return createHmac("sha256", getEncryptionKey()).update(value.trim()).digest("hex");
+}
+
+export function maskSecret(value: string | null | undefined) {
+  const normalized = value?.trim() ?? "";
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.length <= 12) {
+    return `${normalized.slice(0, 3)}...${normalized.slice(-2)}`;
+  }
+
+  return `${normalized.slice(0, 6)}...${normalized.slice(-4)}`;
 }

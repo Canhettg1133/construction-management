@@ -97,9 +97,49 @@ export interface AiProviderProfile {
   isEnabled: boolean;
   isDefault: boolean;
   hasApiKey: boolean;
+  credentialCount?: number;
+  enabledCredentialCount?: number;
   readonly: boolean;
   createdAt?: string | null;
   updatedAt?: string | null;
+}
+
+export interface AiProviderCredential {
+  id: string;
+  label: string;
+  maskedKey: string;
+  isEnabled: boolean;
+  lastUsedAt?: string | null;
+  failureCount: number;
+  disabledUntil?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface AiProviderModelOption {
+  id: string;
+  label: string;
+  source: AiProviderType;
+}
+
+export interface AiProviderModelsResponse {
+  providerProfileId: string;
+  models: AiProviderModelOption[];
+}
+
+export interface AiProviderTestResponse {
+  success: boolean;
+  provider: AiProviderType;
+  model: string;
+  latencyMs?: number;
+  errorCode?: string;
+  message: string;
+}
+
+export interface ProjectAiStatus {
+  projectId: string;
+  providerProfile: AiProviderProfile;
+  displayText: string;
 }
 
 export interface ProjectAiSettings {
@@ -116,6 +156,7 @@ export interface ProviderProfilePayload {
   baseUrl?: string | null;
   model: string;
   apiKey?: string | null;
+  apiKeys?: string[] | null;
   config?: Record<string, unknown> | null;
   isEnabled?: boolean;
   isDefault?: boolean;
@@ -159,6 +200,13 @@ export const aiApi = {
     return response.data.data;
   },
 
+  async getProjectStatus(projectId: string) {
+    const response = await api.get<ApiSingleResponse<ProjectAiStatus>>(
+      `/projects/${projectId}/ai-chat/status`
+    );
+    return response.data.data;
+  },
+
   async updateProjectSettings(projectId: string, payload: Partial<ProjectAiSettings>) {
     const response = await api.put<ApiSingleResponse<ProjectAiSettings>>(
       `/projects/${projectId}/ai-chat/settings`,
@@ -181,6 +229,59 @@ export const aiApi = {
     const response = await api.put<ApiSingleResponse<AiProviderProfile>>(
       `/ai-provider-profiles/${profileId}`,
       payload
+    );
+    return response.data.data;
+  },
+
+  async listProviderModels(profileId: string) {
+    const response = await api.get<ApiSingleResponse<AiProviderModelsResponse>>(
+      `/ai-provider-profiles/${profileId}/models`
+    );
+    return response.data.data;
+  },
+
+  async testProvider(payload: Partial<ProviderProfilePayload> & { profileId?: string }) {
+    const response = await api.post<ApiSingleResponse<AiProviderTestResponse>>(
+      "/ai-provider-profiles/test",
+      payload
+    );
+    return response.data.data;
+  },
+
+  async listProviderCredentials(profileId: string) {
+    const response = await api.get<ApiSingleResponse<AiProviderCredential[]>>(
+      `/ai-provider-profiles/${profileId}/credentials`
+    );
+    return response.data.data;
+  },
+
+  async createProviderCredentials(profileId: string, payload: { keys: string | string[]; label?: string | null }) {
+    const response = await api.post<ApiSingleResponse<{ added: number; skipped: number; credentials: AiProviderCredential[] }>>(
+      `/ai-provider-profiles/${profileId}/credentials`,
+      payload
+    );
+    return response.data.data;
+  },
+
+  async updateProviderCredential(profileId: string, credentialId: string, payload: Partial<Pick<AiProviderCredential, "label" | "isEnabled">>) {
+    const response = await api.put<ApiSingleResponse<AiProviderCredential>>(
+      `/ai-provider-profiles/${profileId}/credentials/${credentialId}`,
+      payload
+    );
+    return response.data.data;
+  },
+
+  async deleteProviderCredential(profileId: string, credentialId: string) {
+    const response = await api.delete<ApiSingleResponse<{ id: string }>>(
+      `/ai-provider-profiles/${profileId}/credentials/${credentialId}`
+    );
+    return response.data.data;
+  },
+
+  async exportProviderCredentials(profileId: string) {
+    const response = await api.post<ApiSingleResponse<{ providerProfileId: string; keys: Array<{ id: string; label: string; apiKey: string | null }> }>>(
+      `/ai-provider-profiles/${profileId}/credentials/export`,
+      { confirmation: "EXPORT_PLAINTEXT_AI_KEYS" }
     );
     return response.data.data;
   },

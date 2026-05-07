@@ -39,13 +39,32 @@ const ACTION_COLORS: Record<AuditAction, string> = {
 const ENTITY_LABELS: Record<AuditEntityType, string> = {
   USER: "Người dùng",
   PROJECT: "Dự án",
-  PROJECT_MEMBER: "Thành viên",
+  PROJECT_MEMBER: "Thành viên dự án",
   PROJECT_TOOL_PERMISSION: "Quyền công cụ",
   SPECIAL_PRIVILEGE_ASSIGNMENT: "Đặc quyền",
   DAILY_REPORT: "Báo cáo ngày",
-  TASK: "Task",
-  FILE: "File",
+  TASK: "Công việc",
+  FILE: "Tệp",
+  AI_PROVIDER_PROFILE: "Cấu hình provider AI",
+  AI_PROVIDER_CREDENTIAL: "Khóa API provider AI",
+  PROJECT_AI_SETTING: "Cài đặt AI dự án",
 };
+
+const ACTIONS: AuditAction[] = ["LOGIN", "LOGOUT", "CREATE", "UPDATE", "DELETE", "STATUS_CHANGE"];
+
+const ENTITIES: AuditEntityType[] = [
+  "USER",
+  "PROJECT",
+  "PROJECT_MEMBER",
+  "PROJECT_TOOL_PERMISSION",
+  "SPECIAL_PRIVILEGE_ASSIGNMENT",
+  "DAILY_REPORT",
+  "TASK",
+  "FILE",
+  "AI_PROVIDER_PROFILE",
+  "AI_PROVIDER_CREDENTIAL",
+  "PROJECT_AI_SETTING",
+];
 
 function LogRow({ log }: { log: AuditLog }) {
   const Icon = ACTION_ICONS[log.action] ?? RefreshCw;
@@ -71,11 +90,11 @@ function LogRow({ log }: { log: AuditLog }) {
             <p className="text-xs text-slate-500">{log.user.email}</p>
           </div>
         ) : (
-          <span className="text-sm text-slate-400">—</span>
+          <span className="text-sm text-slate-400">Không xác định</span>
         )}
       </td>
       <td className="py-3 pr-3">
-        <p className="text-sm text-slate-700 line-clamp-2 max-w-xs">{log.description}</p>
+        <p className="line-clamp-2 max-w-xs text-sm text-slate-700">{log.description}</p>
       </td>
       <td className="py-3 text-right">
         <div className="flex flex-col items-end gap-0.5">
@@ -122,7 +141,7 @@ export function AuditLogPage() {
       }),
   });
 
-  const hasFilters = actionFilter || entityFilter || userFilter || fromDate || toDate;
+  const hasFilters = Boolean(actionFilter || entityFilter || userFilter || fromDate || toDate);
 
   const clearFilters = () => {
     setActionFilter("");
@@ -137,9 +156,6 @@ export function AuditLogPage() {
   const meta = data?.meta;
   const totalPages = meta?.totalPages ?? 1;
 
-  const ACTIONS: AuditAction[] = ["LOGIN", "LOGOUT", "CREATE", "UPDATE", "DELETE", "STATUS_CHANGE"];
-  const ENTITIES: AuditEntityType[] = ["USER", "PROJECT", "PROJECT_MEMBER", "DAILY_REPORT", "TASK", "FILE"];
-
   return (
     <div className="space-y-4 sm:space-y-5">
       <div className="page-header">
@@ -148,6 +164,7 @@ export function AuditLogPage() {
           <p className="page-subtitle">Theo dõi lịch sử thao tác để đảm bảo kiểm soát và truy vết.</p>
         </div>
         <button
+          type="button"
           onClick={() => setShowFilters((v) => !v)}
           className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
             showFilters || hasFilters
@@ -171,6 +188,7 @@ export function AuditLogPage() {
             <h3 className="text-sm font-semibold text-slate-700">Bộ lọc</h3>
             {hasFilters && (
               <button
+                type="button"
                 onClick={clearFilters}
                 className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700"
               >
@@ -189,8 +207,8 @@ export function AuditLogPage() {
                 className="form-input"
               >
                 <option value="">Tất cả thao tác</option>
-                {ACTIONS.map((a) => (
-                  <option key={a} value={a}>{ACTION_LABELS[a]}</option>
+                {ACTIONS.map((action) => (
+                  <option key={action} value={action}>{ACTION_LABELS[action]}</option>
                 ))}
               </select>
             </div>
@@ -203,8 +221,8 @@ export function AuditLogPage() {
                 className="form-input"
               >
                 <option value="">Tất cả đối tượng</option>
-                {ENTITIES.map((e) => (
-                  <option key={e} value={e}>{ENTITY_LABELS[e]}</option>
+                {ENTITIES.map((entity) => (
+                  <option key={entity} value={entity}>{ENTITY_LABELS[entity]}</option>
                 ))}
               </select>
             </div>
@@ -251,6 +269,7 @@ export function AuditLogPage() {
           action={
             hasFilters ? (
               <button
+                type="button"
                 onClick={clearFilters}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
               >
@@ -271,7 +290,7 @@ export function AuditLogPage() {
                   <th className="px-4 py-3 font-medium text-slate-500">Đối tượng</th>
                   <th className="px-4 py-3 font-medium text-slate-500">Người thực hiện</th>
                   <th className="px-4 py-3 font-medium text-slate-500">Chi tiết</th>
-                  <th className="px-4 py-3 font-medium text-slate-500 text-right">Thời gian</th>
+                  <th className="px-4 py-3 text-right font-medium text-slate-500">Thời gian</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -285,25 +304,27 @@ export function AuditLogPage() {
           {meta && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">
-                Hiển thị {((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, meta.total)} trong tổng {meta.total} log
+                Hiển thị {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, meta.total)} trong tổng {meta.total} log
               </p>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                 >
-                  ← Trước
+                  Trước
                 </button>
                 <span className="px-2 text-sm text-slate-500">
                   Trang {page} / {totalPages}
                 </span>
                 <button
+                  type="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                 >
-                  Sau →
+                  Sau
                 </button>
               </div>
             </div>

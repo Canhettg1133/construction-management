@@ -62,6 +62,13 @@ export function ProjectAiChatPage() {
     enabled: Boolean(projectId),
   });
 
+  const statusQuery = useQuery({
+    queryKey: ["project-ai-status", projectId],
+    queryFn: () => aiApi.getProjectStatus(projectId),
+    enabled: Boolean(projectId),
+    staleTime: 60_000,
+  });
+
   const selectedThread = useMemo(
     () => threadsQuery.data?.find((thread) => thread.id === selectedThreadId) ?? threadsQuery.data?.[0] ?? null,
     [threadsQuery.data, selectedThreadId]
@@ -190,6 +197,11 @@ export function ProjectAiChatPage() {
         messages={messages}
         quickPrompts={QUICK_PROMPTS}
         canDraft={canDraft}
+        providerStatus={
+          statusQuery.data?.displayText ??
+          (statusQuery.isLoading ? "Đang kiểm tra cấu hình provider AI..." : "Chưa tải được trạng thái provider AI.")
+        }
+        providerStatusTone={statusQuery.isError ? "warning" : "default"}
         isSending={sendMessageMutation.isPending || messagesQuery.isFetching}
         onSend={handleSend}
       />

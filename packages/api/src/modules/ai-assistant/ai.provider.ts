@@ -10,6 +10,7 @@ export interface AiProviderRuntimeProfile {
   apiKey: string | null;
   config?: Record<string, unknown> | null;
   readonly?: boolean;
+  credentialId?: string | null;
 }
 
 export interface AiProviderRequest {
@@ -21,6 +22,12 @@ export interface AiProviderResponse {
   text: string;
   provider: AiProviderType;
   model: string;
+}
+
+export interface AiProviderModelOption {
+  id: string;
+  label: string;
+  source: AiProviderType;
 }
 
 export class AiProviderCallError extends Error {
@@ -48,14 +55,9 @@ function readConfigString(profile: AiProviderRuntimeProfile, key: string, fallba
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
-async function postJson(url: string, body: unknown, headers: Record<string, string>) {
+async function requestJson(url: string, init: RequestInit) {
   const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
-    body: JSON.stringify(body),
+    ...init,
     signal: AbortSignal.timeout(env.AI_REQUEST_TIMEOUT_MS),
   });
 
@@ -74,6 +76,24 @@ async function postJson(url: string, body: unknown, headers: Record<string, stri
   }
 
   return data;
+}
+
+async function getJson(url: string, headers: Record<string, string>) {
+  return requestJson(url, {
+    method: "GET",
+    headers,
+  });
+}
+
+async function postJson(url: string, body: unknown, headers: Record<string, string>) {
+  return requestJson(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify(body),
+  });
 }
 
 function extractTextFromResponsesApi(data: unknown) {
@@ -166,6 +186,132 @@ function extractTextFromOllama(data: unknown) {
   throw new AiProviderCallError("AI_PROVIDER_EMPTY_RESPONSE");
 }
 
+function normalizeModelId(value: unknown) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.replace(/^models\//, "").trim();
+}
+
+function toModelLabel(modelId: string) {
+  return modelId
+    .replace(/^gpt-/, "GPT-")
+    .replace(/^gemini-/, "Gemini ")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function uniqueModelOptions(items: AiProviderModelOption[]) {
+  const byId = new Map<string, AiProviderModelOption>();
+  for (const item of items) {
+    if (item.id) {
+      byId.set(item.id, item);
+    }
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function extractOpenAICompatibleModels(data: unknown, provider: AiProviderType) {
+  const rawModels = data && typeof data === "object" ? (data as { data?: unknown }).data : data;
+  if (!Array.isArray(rawModels)) {
+    throw new AiProviderCallError("AI_PROVIDER_EMPTY_RESPONSE");
+  }
+
+  return uniqueModelOptions(
+    rawModels
+      .map((item): AiProviderModelOption | null => {
+        const id = normalizeModelId(
+          typeof item === "string" ? item : item && typeof item === "object" ? (item as { id?: unknown }).id : ""
+        );
+        return id ? { id, label: toModelLabel(id), source: provider } : null;
+      })
+      .filter((item): item is AiProviderModelOption => item !== null)
+  );
+}
+
+function extractGeminiModels(data: unknown) {
+  const models = data && typeof data === "object" ? (data as { models?: unknown }).models : undefined;
+  if (!Array.isArray(models)) {
+    throw new AiProviderCallError("AI_PROVIDER_EMPTY_RESPONSE");
+  }
+
+  return uniqueModelOptions(
+    models
+      .map((item): AiProviderModelOption | null => {
+        if (!item || typeof item !== "object") {
+          return null;
+        }
+        const methods = (item as { supportedGenerationMethods?: unknown }).supportedGenerationMethods;
+        if (
+          Array.isArray(methods) &&
+          !methods.includes("generateContent") &&
+          !methods.includes("streamGenerateContent")
+        ) {
+          return null;
+        }
+        const id = normalizeModelId((item as { name?: unknown }).name);
+        if (!id || !id.startsWith("gemini-")) {
+          return null;
+        }
+        const displayName = (item as { displayName?: unknown }).displayName;
+        return {
+          id,
+          label: typeof displayName === "string" && displayName.trim() ? displayName.trim() : toModelLabel(id),
+          source: "GEMINI_DIRECT" as const,
+        };
+      })
+      .filter((item): item is AiProviderModelOption => item !== null)
+  );
+}
+
+function extractOllamaModels(data: unknown) {
+  const models = data && typeof data === "object" ? (data as { models?: unknown }).models : undefined;
+  if (!Array.isArray(models)) {
+    throw new AiProviderCallError("AI_PROVIDER_EMPTY_RESPONSE");
+  }
+
+  return uniqueModelOptions(
+    models
+      .map((item): AiProviderModelOption | null => {
+        const id = normalizeModelId(
+          typeof item === "string" ? item : item && typeof item === "object" ? (item as { name?: unknown }).name : ""
+        );
+        return id ? { id, label: id, source: "OLLAMA" as const } : null;
+      })
+      .filter((item): item is AiProviderModelOption => item !== null)
+  );
+}
+
+function readPromptLine(prompt: string, prefix: string) {
+  const line = prompt
+    .split(/\r?\n/u)
+    .find((item) => item.trim().startsWith(prefix));
+  return line?.slice(prefix.length).trim() || "không có dữ liệu";
+}
+
+function buildMockResponse(request: AiProviderRequest) {
+  const question = readPromptLine(request.user, "Câu hỏi của người dùng:");
+  const includedTools = readPromptLine(request.user, "Phân hệ đã đưa vào context:");
+  const omittedTools = readPromptLine(request.user, "Phân hệ bị bỏ qua:");
+
+  return [
+    "Dựa trên dữ liệu hệ thống hiện có, đây là phản hồi mô phỏng của Trợ lý AI công trình.",
+    "",
+    "Phạm vi dữ liệu",
+    `- Câu hỏi: ${question}`,
+    `- Phân hệ đã dùng: ${includedTools}`,
+    `- Phân hệ bị bỏ qua: ${omittedTools}`,
+    "",
+    "Nhận xét mô phỏng",
+    "- Backend đã lọc context theo quyền người dùng trước khi gọi provider.",
+    "- Chế độ MOCK không gọi AI thật nên không phân tích sâu nội dung dự án.",
+    "- Để có câu trả lời tự nhiên và có phân tích, hãy cấu hình provider thật trong Cài đặt AI.",
+    "",
+    "Nguồn dữ liệu: context backend đã lọc theo quyền người dùng.",
+  ].join("\n");
+}
+
 export function getEnvProviderProfile(): AiProviderRuntimeProfile {
   const provider = env.AI_PROVIDER;
   if (provider === "OPENAI_RESPONSES") {
@@ -227,6 +373,43 @@ export function getEnvProviderProfile(): AiProviderRuntimeProfile {
   };
 }
 
+export async function listAiProviderModels(profile: AiProviderRuntimeProfile): Promise<AiProviderModelOption[]> {
+  if (profile.provider === "MOCK") {
+    return [
+      {
+        id: profile.model || "mock-construction-assistant",
+        label: "Mock construction assistant",
+        source: "MOCK",
+      },
+    ];
+  }
+
+  if (profile.provider === "OPENAI_RESPONSES" || profile.provider === "OPENAI_COMPATIBLE") {
+    const apiKey = assertApiKey(profile);
+    const baseUrl = profile.baseUrl ?? "https://api.openai.com/v1";
+    const modelsPath = readConfigString(profile, "modelsPath", "/models");
+    const data = await getJson(joinUrl(baseUrl, modelsPath), { Authorization: `Bearer ${apiKey}` });
+    return extractOpenAICompatibleModels(data, profile.provider);
+  }
+
+  if (profile.provider === "GEMINI_DIRECT") {
+    const apiKey = assertApiKey(profile);
+    const baseUrl = profile.baseUrl ?? "https://generativelanguage.googleapis.com/v1beta";
+    const data = await getJson(`${joinUrl(baseUrl, "/models")}?key=${encodeURIComponent(apiKey)}`, {});
+    return extractGeminiModels(data);
+  }
+
+  if (profile.provider === "OLLAMA") {
+    if (!profile.baseUrl) {
+      throw new AiProviderCallError("AI_PROVIDER_NOT_CONFIGURED");
+    }
+    const data = await getJson(joinUrl(profile.baseUrl, "/api/tags"), {});
+    return extractOllamaModels(data);
+  }
+
+  throw new AiProviderCallError("AI_PROVIDER_UNSUPPORTED");
+}
+
 export async function callAiProvider(
   profile: AiProviderRuntimeProfile,
   request: AiProviderRequest
@@ -235,13 +418,7 @@ export async function callAiProvider(
     return {
       provider: profile.provider,
       model: profile.model,
-      text: [
-        "Dựa trên dữ liệu hệ thống hiện có, đây là phản hồi mô phỏng của Trợ lý AI công trình.",
-        "",
-        request.user.slice(0, 1200),
-        "",
-        "Nguồn dữ liệu: context backend đã lọc theo quyền người dùng.",
-      ].join("\n"),
+      text: buildMockResponse(request),
     };
   }
 

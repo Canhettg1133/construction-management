@@ -32,6 +32,7 @@ export const createProviderProfileSchema = z.object({
     baseUrl: z.string().trim().url().nullable().optional(),
     model: z.string().trim().min(1).max(120),
     apiKey: z.string().trim().min(1).max(4000).nullable().optional(),
+    apiKeys: z.array(z.string().trim().min(1).max(4000)).max(50).nullable().optional(),
     config: z.record(z.unknown()).nullable().optional(),
     isEnabled: z.boolean().optional(),
     isDefault: z.boolean().optional(),
@@ -45,9 +46,42 @@ export const updateProviderProfileSchema = z.object({
     baseUrl: z.string().trim().url().nullable().optional(),
     model: z.string().trim().min(1).max(120).optional(),
     apiKey: z.string().trim().min(1).max(4000).nullable().optional(),
+    apiKeys: z.array(z.string().trim().min(1).max(4000)).max(50).nullable().optional(),
     clearApiKey: z.boolean().optional(),
     config: z.record(z.unknown()).nullable().optional(),
     isEnabled: z.boolean().optional(),
     isDefault: z.boolean().optional(),
+  }),
+});
+
+export const providerTestSchema = z.object({
+  body: z.object({
+    profileId: z.string().trim().min(1).max(191).optional(),
+    name: z.string().trim().min(1).max(120).optional(),
+    provider: z.enum(["MOCK", "OPENAI_RESPONSES", "OPENAI_COMPATIBLE", "GEMINI_DIRECT", "OLLAMA"]).optional(),
+    baseUrl: z.string().trim().url().nullable().optional(),
+    model: z.string().trim().min(1).max(120).optional(),
+    apiKey: z.string().trim().min(1).max(4000).nullable().optional(),
+    config: z.record(z.unknown()).nullable().optional(),
+  }),
+});
+
+export const createProviderCredentialsSchema = z.object({
+  body: z.object({
+    keys: z.union([z.string().trim().min(1), z.array(z.string().trim().min(1).max(4000)).max(50)]),
+    label: z.string().trim().min(1).max(120).nullable().optional(),
+  }),
+});
+
+export const updateProviderCredentialSchema = z.object({
+  body: z.object({
+    label: z.string().trim().min(1).max(120).optional(),
+    isEnabled: z.boolean().optional(),
+  }),
+});
+
+export const exportProviderCredentialsSchema = z.object({
+  body: z.object({
+    confirmation: z.literal("EXPORT_PLAINTEXT_AI_KEYS"),
   }),
 });

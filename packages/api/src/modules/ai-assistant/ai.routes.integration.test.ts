@@ -20,7 +20,7 @@ const permissionServiceMock = {
     userId,
     systemRole: userId === "admin-user" ? "ADMIN" : "STAFF",
     projectRole: userId === "admin-user" ? null : "VIEWER",
-    isMember: true,
+    isMember: userId !== "staff-user",
     isSystemAdmin: userId === "admin-user",
   })),
   getUserProjectPermissions: vi.fn(async (userId: string, projectId: string) => {
@@ -66,10 +66,36 @@ const aiAssistantServiceMock = {
     defaultProviderProfileId: null,
     availableProviderProfiles: [],
   }),
+  getProjectAiStatus: vi.fn().mockResolvedValue({
+    projectId: PROJECT_ID,
+    providerProfile: {
+      id: "profile-1",
+      name: "Gemini Direct",
+      provider: "GEMINI_DIRECT",
+      model: "gemini-2.5-flash",
+      readonly: false,
+    },
+    displayText: "Đang dùng: Gemini Direct · gemini-2.5-flash · cấu hình bởi quản trị viên",
+  }),
   updateProjectSettings: vi.fn(),
   listProviderProfiles: vi.fn().mockResolvedValue([]),
   createProviderProfile: vi.fn(),
   updateProviderProfile: vi.fn(),
+  listProviderModels: vi.fn().mockResolvedValue({ providerProfileId: "profile-1", models: [] }),
+  testProvider: vi.fn().mockResolvedValue({
+    success: true,
+    provider: "MOCK",
+    model: "mock-construction-assistant",
+    message: "Kết nối provider AI hoạt động.",
+  }),
+  listProviderCredentials: vi.fn().mockResolvedValue([]),
+  createProviderCredentials: vi.fn().mockResolvedValue({ added: 1, skipped: 0, credentials: [] }),
+  updateProviderCredential: vi.fn().mockResolvedValue({ id: "credential-1", maskedKey: "sk-abc...xyz" }),
+  deleteProviderCredential: vi.fn().mockResolvedValue({ id: "credential-1" }),
+  exportProviderCredentials: vi.fn().mockResolvedValue({
+    providerProfileId: "profile-1",
+    keys: [{ id: "credential-1", label: "Key 1", apiKey: "sk-secret" }],
+  }),
 };
 
 vi.mock("../../shared/services/permission.service", () => ({
@@ -97,6 +123,14 @@ describe("AI assistant routes", () => {
     expect(res.status).toBe(403);
   });
 
+  it("chặn user không thuộc dự án trước khi vào AI chat", async () => {
+    const res = await request(app)
+      .get(`/api/v1/projects/${PROJECT_ID}/ai-chat/threads`)
+      .set("Cookie", buildAuthCookie("STAFF"));
+
+    expect(res.status).toBe(403);
+  });
+
   it("cho phép member có AI_ASSISTANT READ xem thread private của mình", async () => {
     const res = await request(app)
       .get(`/api/v1/projects/${PROJECT_ID}/ai-chat/threads`)
@@ -105,6 +139,16 @@ describe("AI assistant routes", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(aiAssistantServiceMock.listThreads).toHaveBeenCalled();
+  });
+
+  it("cho phép user có AI_ASSISTANT READ xem trạng thái provider đã được admin cấu hình", async () => {
+    const res = await request(app)
+      .get(`/api/v1/projects/${PROJECT_ID}/ai-chat/status`)
+      .set("Cookie", buildAuthCookie("ENGINEER"));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.displayText).toContain("Gemini Direct");
+    expect(JSON.stringify(res.body)).not.toContain("sk-secret");
   });
 
   it("chỉ system admin được quản lý provider profile toàn cục", async () => {
@@ -117,5 +161,42 @@ describe("AI assistant routes", () => {
       .get("/api/v1/ai-provider-profiles")
       .set("Cookie", buildAuthCookie("ADMIN"));
     expect(allowed.status).toBe(200);
+  });
+
+  it("chỉ system admin được export plaintext API key provider", async () => {
+    const denied = await request(app)
+      .post("/api/v1/ai-provider-profiles/profile-1/credentials/export")
+      .set("Cookie", buildAuthCookie("ENGINEER"))
+      .send({ confirmation: "EXPORT_PLAINTEXT_AI_KEYS" });
+    expect(denied.status).toBe(403);
+
+    const allowed = await request(app)
+      .post("/api/v1/ai-provider-profiles/profile-1/credentials/export")
+      .set("Cookie", buildAuthCookie("ADMIN"))
+      .send({ confirmation: "EXPORT_PLAINTEXT_AI_KEYS" });
+    expect(allowed.status).toBe(200);
+    expect(aiAssistantServiceMock.exportProviderCredentials).toHaveBeenCalledWith({
+      providerProfileId: "profile-1",
+      confirmation: "EXPORT_PLAINTEXT_AI_KEYS",
+      actorUserId: "admin-user",
+    });
+  });
+
+  it("chỉ system admin được lấy model và kiểm tra provider toàn cục", async () => {
+    const denied = await request(app)
+      .get("/api/v1/ai-provider-profiles/profile-1/models")
+      .set("Cookie", buildAuthCookie("ENGINEER"));
+    expect(denied.status).toBe(403);
+
+    const models = await request(app)
+      .get("/api/v1/ai-provider-profiles/profile-1/models")
+      .set("Cookie", buildAuthCookie("ADMIN"));
+    expect(models.status).toBe(200);
+
+    const testResult = await request(app)
+      .post("/api/v1/ai-provider-profiles/test")
+      .set("Cookie", buildAuthCookie("ADMIN"))
+      .send({ provider: "MOCK", model: "mock-construction-assistant" });
+    expect(testResult.status).toBe(200);
   });
 });

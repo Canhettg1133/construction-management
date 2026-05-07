@@ -15,6 +15,9 @@ export type AuditEntityType =
   | 'DAILY_REPORT'
   | 'TASK'
   | 'FILE'
+  | 'AI_PROVIDER_PROFILE'
+  | 'AI_PROVIDER_CREDENTIAL'
+  | 'PROJECT_AI_SETTING'
 export type NotificationType =
   | 'TASK_ASSIGNED'
   | 'TASK_DEADLINE_SOON'

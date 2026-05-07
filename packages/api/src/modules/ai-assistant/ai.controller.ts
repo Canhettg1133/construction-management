@@ -54,12 +54,18 @@ export const aiAssistantController = {
     return sendSuccess(res, data);
   },
 
+  async getProjectAiStatus(req: Request, res: Response) {
+    const data = await aiAssistantService.getProjectAiStatus(readProjectId(req));
+    return sendSuccess(res, data);
+  },
+
   async updateProjectSettings(req: Request, res: Response) {
     const data = await aiAssistantService.updateProjectSettings({
       projectId: readProjectId(req),
       enabledSourceTools: req.body.enabledSourceTools,
       customSystemPrompt: req.body.customSystemPrompt,
       defaultProviderProfileId: req.body.defaultProviderProfileId,
+      actorUserId: req.user!.id,
     });
     return sendSuccess(res, data);
   },
@@ -70,7 +76,10 @@ export const aiAssistantController = {
   },
 
   async createProviderProfile(req: Request, res: Response) {
-    const data = await aiAssistantService.createProviderProfile(req.body);
+    const data = await aiAssistantService.createProviderProfile({
+      ...req.body,
+      actorUserId: req.user!.id,
+    });
     return sendSuccess(res, data);
   },
 
@@ -78,6 +87,61 @@ export const aiAssistantController = {
     const data = await aiAssistantService.updateProviderProfile({
       id: String(req.params.profileId ?? ""),
       ...req.body,
+      actorUserId: req.user!.id,
+    });
+    return sendSuccess(res, data);
+  },
+
+  async listProviderModels(req: Request, res: Response) {
+    const data = await aiAssistantService.listProviderModels(String(req.params.profileId ?? ""));
+    return sendSuccess(res, data);
+  },
+
+  async testProvider(req: Request, res: Response) {
+    const data = await aiAssistantService.testProvider(req.body);
+    return sendSuccess(res, data);
+  },
+
+  async listProviderCredentials(req: Request, res: Response) {
+    const data = await aiAssistantService.listProviderCredentials(String(req.params.profileId ?? ""));
+    return sendSuccess(res, data);
+  },
+
+  async createProviderCredentials(req: Request, res: Response) {
+    const data = await aiAssistantService.createProviderCredentials({
+      providerProfileId: String(req.params.profileId ?? ""),
+      keys: req.body.keys,
+      label: req.body.label,
+      actorUserId: req.user!.id,
+    });
+    return sendSuccess(res, data);
+  },
+
+  async updateProviderCredential(req: Request, res: Response) {
+    const data = await aiAssistantService.updateProviderCredential({
+      providerProfileId: String(req.params.profileId ?? ""),
+      credentialId: String(req.params.credentialId ?? ""),
+      label: req.body.label,
+      isEnabled: req.body.isEnabled,
+      actorUserId: req.user!.id,
+    });
+    return sendSuccess(res, data);
+  },
+
+  async deleteProviderCredential(req: Request, res: Response) {
+    const data = await aiAssistantService.deleteProviderCredential(
+      String(req.params.profileId ?? ""),
+      String(req.params.credentialId ?? ""),
+      req.user!.id
+    );
+    return sendSuccess(res, data);
+  },
+
+  async exportProviderCredentials(req: Request, res: Response) {
+    const data = await aiAssistantService.exportProviderCredentials({
+      providerProfileId: String(req.params.profileId ?? ""),
+      confirmation: req.body.confirmation,
+      actorUserId: req.user!.id,
     });
     return sendSuccess(res, data);
   },

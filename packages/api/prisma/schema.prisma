@@ -113,6 +113,9 @@ enum AuditEntityType {
   DAILY_REPORT
   TASK
   FILE
+  AI_PROVIDER_PROFILE
+  AI_PROVIDER_CREDENTIAL
+  PROJECT_AI_SETTING
 }
 
 enum NotificationType {
@@ -481,11 +484,33 @@ model AiProviderProfile {
 
   chatThreads     AiChatThread[]
   projectSettings ProjectAiSetting[]
+  credentials     AiProviderCredential[]
 
   @@index([provider])
   @@index([isEnabled])
   @@index([isDefault])
   @@map("ai_provider_profiles")
+}
+
+model AiProviderCredential {
+  id                String    @id @default(uuid())
+  providerProfileId String    @map("provider_profile_id")
+  label             String    @db.VarChar(120)
+  apiKeyEncrypted   String    @map("api_key_encrypted") @db.Text
+  keyHash           String    @map("key_hash") @db.VarChar(128)
+  isEnabled         Boolean   @default(true) @map("is_enabled")
+  lastUsedAt        DateTime? @map("last_used_at")
+  failureCount      Int       @default(0) @map("failure_count")
+  disabledUntil     DateTime? @map("disabled_until")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  providerProfile AiProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([providerProfileId, keyHash])
+  @@index([providerProfileId, isEnabled])
+  @@index([disabledUntil])
+  @@map("ai_provider_credentials")
 }
 
 model AiChatThread {
