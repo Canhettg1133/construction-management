@@ -39,4 +39,8 @@ if (Test-PortListening -Port $mysqlPort) {
 }
 
 Write-Host "Chay frontend va backend..."
+Write-Host "Dong bo migration neu co migration moi..."
+pnpm db:migrate
+
+Write-Host "Khoi dong frontend va backend..."
 pnpm dev

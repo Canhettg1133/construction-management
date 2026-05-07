@@ -73,7 +73,7 @@ Lenh nay se:
 pnpm dev
 ```
 
-Tren Windows/XAMPP co the chay tat ca bang mot lenh. Lenh nay chi bat MySQL neu chua chay, sau do chay backend va frontend; khong cai dependency, khong migrate, khong seed.
+Tren Windows/XAMPP co the chay tat ca bang mot lenh. Lenh nay chi bat MySQL neu chua chay, apply migration moi neu co, sau do chay backend va frontend; khong cai dependency va khong seed.
 
 ```bash
 pnpm dev:full
