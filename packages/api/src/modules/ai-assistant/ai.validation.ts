@@ -66,6 +66,8 @@ export const providerTestSchema = z.object({
   }),
 });
 
+export const providerModelsSchema = providerTestSchema;
+
 export const createProviderCredentialsSchema = z.object({
   body: z.object({
     keys: z.union([z.string().trim().min(1), z.array(z.string().trim().min(1).max(4000)).max(50)]),

@@ -82,6 +82,10 @@ const aiAssistantServiceMock = {
   createProviderProfile: vi.fn(),
   updateProviderProfile: vi.fn(),
   listProviderModels: vi.fn().mockResolvedValue({ providerProfileId: "profile-1", models: [] }),
+  listProviderModelsFromConfig: vi.fn().mockResolvedValue({
+    providerProfileId: "test",
+    models: [{ id: "openai/gpt-4.1-mini", label: "GPT 4.1 Mini", source: "OPENAI_COMPATIBLE" }],
+  }),
   testProvider: vi.fn().mockResolvedValue({
     success: true,
     provider: "MOCK",
@@ -198,5 +202,32 @@ describe("AI assistant routes", () => {
       .set("Cookie", buildAuthCookie("ADMIN"))
       .send({ provider: "MOCK", model: "mock-construction-assistant" });
     expect(testResult.status).toBe(200);
+  });
+
+  it("cho system admin lấy model từ cấu hình provider nháp trước khi lưu", async () => {
+    const denied = await request(app)
+      .post("/api/v1/ai-provider-profiles/models")
+      .set("Cookie", buildAuthCookie("ENGINEER"))
+      .send({
+        provider: "OPENAI_COMPATIBLE",
+        baseUrl: "https://ag.beijixingxing.com/v1",
+        model: "gpt-4.1-mini",
+        apiKey: "sk-test-key",
+        config: { modelsPath: "/models" },
+      });
+    expect(denied.status).toBe(403);
+
+    const allowed = await request(app)
+      .post("/api/v1/ai-provider-profiles/models")
+      .set("Cookie", buildAuthCookie("ADMIN"))
+      .send({
+        provider: "OPENAI_COMPATIBLE",
+        baseUrl: "https://ag.beijixingxing.com/v1",
+        model: "gpt-4.1-mini",
+        apiKey: "sk-test-key",
+        config: { modelsPath: "/models" },
+      });
+    expect(allowed.status).toBe(200);
+    expect(allowed.body.data.models[0].id).toBe("openai/gpt-4.1-mini");
   });
 });

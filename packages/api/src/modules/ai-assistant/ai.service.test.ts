@@ -354,6 +354,31 @@ describe("aiAssistantService", () => {
     expect(result.models).toHaveLength(1);
   });
 
+  it("lấy danh sách model từ cấu hình provider nháp mà không cần lưu provider trước", async () => {
+    providerMock.listAiProviderModels.mockResolvedValue([
+      { id: "openai/gpt-4.1-mini", label: "GPT 4.1 Mini", source: "OPENAI_COMPATIBLE" },
+    ]);
+
+    const result = await aiAssistantService.listProviderModelsFromConfig({
+      provider: "OPENAI_COMPATIBLE",
+      baseUrl: "https://ag.beijixingxing.com/v1",
+      model: "openai/gpt-4.1-mini",
+      apiKey: "sk-draft-key-123456",
+      config: { modelsPath: "/models" },
+    });
+
+    expect(result.providerProfileId).toBe("test");
+    expect(result.models).toHaveLength(1);
+    expect(providerMock.listAiProviderModels).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "test",
+        apiKey: "sk-draft-key-123456",
+        config: { modelsPath: "/models" },
+      })
+    );
+    expect(prismaMock.aiProviderProfile.findUnique).not.toHaveBeenCalled();
+  });
+
   it("provider test trả lỗi có kiểm soát và không lộ API key", async () => {
     providerMock.callAiProvider.mockRejectedValue(new MockAiProviderCallError("AI_PROVIDER_HTTP_429"));
 

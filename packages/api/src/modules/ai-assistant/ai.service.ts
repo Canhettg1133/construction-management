@@ -263,6 +263,18 @@ async function toRuntimeProfileWithCredential(profile: AiProviderProfile): Promi
   return toRuntimeProfile(profile);
 }
 
+function toRuntimeProfileFromProviderInput(input: ProviderTestInput): AiProviderRuntimeProfile {
+  return {
+    id: "test",
+    name: input.name ?? "Provider kiểm tra",
+    provider: input.provider ?? "MOCK",
+    baseUrl: input.baseUrl ?? null,
+    model: input.model ?? "mock-construction-assistant",
+    apiKey: input.apiKey ?? null,
+    config: input.config ?? null,
+  };
+}
+
 function shouldTemporarilyDisableCredential(code: string) {
   return ["AI_PROVIDER_HTTP_429", "AI_PROVIDER_HTTP_503", "AI_PROVIDER_HTTP_504"].includes(code);
 }
@@ -1052,6 +1064,21 @@ export const aiAssistantService = {
     });
 
     return { providerProfileId: profile.id, models };
+  },
+
+  async listProviderModelsFromConfig(input: ProviderTestInput) {
+    const runtimeProfile = input.profileId
+      ? await (async () => {
+          const profile = await prisma.aiProviderProfile.findUnique({ where: { id: input.profileId } });
+          if (!profile) {
+            throw new NotFoundError("Không tìm thấy provider AI");
+          }
+          return toRuntimeProfileWithCredential(profile);
+        })()
+      : toRuntimeProfileFromProviderInput(input);
+
+    const models = await listAiProviderModels(runtimeProfile);
+    return { providerProfileId: runtimeProfile.id, models };
   },
 
   async testProvider(input: ProviderTestInput) {

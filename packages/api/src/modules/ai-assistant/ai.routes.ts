@@ -14,6 +14,7 @@ import {
   createProviderProfileSchema,
   createThreadSchema,
   exportProviderCredentialsSchema,
+  providerModelsSchema,
   providerTestSchema,
   sendMessageSchema,
   updateAiSettingsSchema,
@@ -72,6 +73,11 @@ aiProviderProfileRoutes.use(authenticate);
 aiProviderProfileRoutes.use(authorize("ADMIN"));
 
 aiProviderProfileRoutes.get("/", asyncHandler(aiAssistantController.listProviderProfiles));
+aiProviderProfileRoutes.post(
+  "/models",
+  validate(providerModelsSchema),
+  asyncHandler(aiAssistantController.listProviderModelsFromConfig)
+);
 aiProviderProfileRoutes.post(
   "/test",
   validate(providerTestSchema),

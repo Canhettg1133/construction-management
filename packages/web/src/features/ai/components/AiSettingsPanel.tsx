@@ -248,6 +248,7 @@ export function AiSettingsPanel({ projectId }: AiSettingsPanelProps) {
   const [modelsPath, setModelsPath] = useState(PROVIDER_GROUPS[0].defaultModelsPath);
   const [singleKey, setSingleKey] = useState("");
   const [bulkKeys, setBulkKeys] = useState("");
+  const [createModelOptions, setCreateModelOptions] = useState<AiProviderModelOption[]>([]);
   const [selectedProfileDraft, setSelectedProfileDraft] = useState({
     name: "",
     baseUrl: "",
@@ -339,7 +340,7 @@ export function AiSettingsPanel({ projectId }: AiSettingsPanelProps) {
         ...providerForm,
         baseUrl: providerForm.baseUrl?.trim() || null,
         apiKeys: selectedGroup.requiresKey ? keys : [],
-        config: providerConfigPayload(selectedGroup, chatPath, modelsPath),
+        config: providerConfigPayload(selectedGroup, chatPath, modelsPath, createModelOptions),
       });
     },
     onSuccess: async (profile) => {
@@ -357,6 +358,51 @@ export function AiSettingsPanel({ projectId }: AiSettingsPanelProps) {
         type: "error",
         title: "Không tạo được provider AI",
         description: error instanceof Error ? error.message : "Vui lòng kiểm tra cấu hình",
+      });
+    },
+  });
+
+  const fetchCreateModelsMutation = useMutation({
+    mutationFn: () =>
+      aiApi.listProviderModelsFromConfig({
+        name: providerForm.name,
+        provider: providerForm.provider,
+        baseUrl: providerForm.baseUrl?.trim() || null,
+        model: providerForm.model || selectedGroup.defaultModel,
+        apiKey: selectedGroup.requiresKey ? [...parseKeys(singleKey), ...parseKeys(bulkKeys)][0] ?? null : null,
+        config: providerConfigPayload(selectedGroup, chatPath, modelsPath),
+      }),
+    onSuccess: (result) => {
+      setCreateModelOptions(result.models);
+      if (result.models.length > 0) {
+        setProviderForm((current) => ({ ...current, model: result.models[0].id }));
+      }
+      showToast({ type: "success", title: `Đã lấy ${result.models.length} model` });
+    },
+    onError: (error: unknown) => {
+      showToast({
+        type: "error",
+        title: "Không lấy được danh sách model",
+        description: error instanceof Error ? error.message : "Bạn vẫn có thể nhập model thủ công",
+      });
+    },
+  });
+
+  const testCreateProviderMutation = useMutation({
+    mutationFn: () =>
+      aiApi.testProvider({
+        name: providerForm.name,
+        provider: providerForm.provider,
+        baseUrl: providerForm.baseUrl?.trim() || null,
+        model: providerForm.model || selectedGroup.defaultModel,
+        apiKey: selectedGroup.requiresKey ? [...parseKeys(singleKey), ...parseKeys(bulkKeys)][0] ?? null : null,
+        config: providerConfigPayload(selectedGroup, chatPath, modelsPath, createModelOptions),
+      }),
+    onSuccess: (result) => {
+      showToast({
+        type: result.success ? "success" : "error",
+        title: result.success ? "Kết nối AI hoạt động" : "Kiểm tra provider thất bại",
+        description: result.message,
       });
     },
   });
@@ -488,6 +534,7 @@ export function AiSettingsPanel({ projectId }: AiSettingsPanelProps) {
     setModelsPath(group.defaultModelsPath);
     setSingleKey("");
     setBulkKeys("");
+    setCreateModelOptions([]);
   };
 
   const toggleSourceTool = (toolId: AiSourceToolId) => {
@@ -671,15 +718,61 @@ export function AiSettingsPanel({ projectId }: AiSettingsPanelProps) {
                 placeholder="Ví dụ: GitHub Models, Gemini AI Studio, Ollama local"
               />
             </label>
-            <label>
-              <span className="form-label">Model mặc định</span>
-              <input
-                value={providerForm.model}
-                onChange={(event) => setProviderForm((current) => ({ ...current, model: event.target.value }))}
-                className="form-input"
-                placeholder="gpt-5.4, gemini-2.5-flash, llama3.1..."
-              />
-            </label>
+            <div className="space-y-2">
+              <label>
+                <span className="form-label">Model mặc định</span>
+                <input
+                  value={providerForm.model}
+                  onChange={(event) => setProviderForm((current) => ({ ...current, model: event.target.value }))}
+                  className="form-input"
+                  placeholder="gpt-5.4, gemini-2.5-flash, llama3.1..."
+                />
+              </label>
+              {createModelOptions.length > 0 && (
+                <select
+                  value={providerForm.model}
+                  onChange={(event) => setProviderForm((current) => ({ ...current, model: event.target.value }))}
+                  className="form-input"
+                  aria-label="Chọn model đã lấy"
+                >
+                  {createModelOptions.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.label} · {model.id}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => fetchCreateModelsMutation.mutate()}
+                  disabled={
+                    fetchCreateModelsMutation.isPending ||
+                    (selectedGroup.requiresKey && parseKeys(singleKey).length + parseKeys(bulkKeys).length === 0)
+                  }
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  {fetchCreateModelsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  Lấy danh sách model
+                </button>
+                <button
+                  type="button"
+                  onClick={() => testCreateProviderMutation.mutate()}
+                  disabled={
+                    testCreateProviderMutation.isPending ||
+                    !providerForm.model.trim() ||
+                    (selectedGroup.requiresKey && parseKeys(singleKey).length + parseKeys(bulkKeys).length === 0)
+                  }
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  {testCreateProviderMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  Kiểm tra kết nối
+                </button>
+              </div>
+              {selectedGroup.requiresKey && parseKeys(singleKey).length + parseKeys(bulkKeys).length === 0 && (
+                <p className="text-xs text-slate-500">Nhập ít nhất 1 API key để backend lấy danh sách model.</p>
+              )}
+            </div>
             <label>
               <span className="form-label">Base URL</span>
               <input

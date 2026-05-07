@@ -240,6 +240,14 @@ export const aiApi = {
     return response.data.data;
   },
 
+  async listProviderModelsFromConfig(payload: Partial<ProviderProfilePayload>) {
+    const response = await api.post<ApiSingleResponse<AiProviderModelsResponse>>(
+      "/ai-provider-profiles/models",
+      payload
+    );
+    return response.data.data;
+  },
+
   async testProvider(payload: Partial<ProviderProfilePayload> & { profileId?: string }) {
     const response = await api.post<ApiSingleResponse<AiProviderTestResponse>>(
       "/ai-provider-profiles/test",

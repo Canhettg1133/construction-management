@@ -97,6 +97,11 @@ export const aiAssistantController = {
     return sendSuccess(res, data);
   },
 
+  async listProviderModelsFromConfig(req: Request, res: Response) {
+    const data = await aiAssistantService.listProviderModelsFromConfig(req.body);
+    return sendSuccess(res, data);
+  },
+
   async testProvider(req: Request, res: Response) {
     const data = await aiAssistantService.testProvider(req.body);
     return sendSuccess(res, data);
