@@ -32,6 +32,7 @@ import { WarehouseInventoryPage } from "../features/warehouse/pages/WarehouseInv
 import { WarehouseTransactionPage } from "../features/warehouse/pages/WarehouseTransactionPage";
 import { BudgetOverviewPage } from "../features/budget/pages/BudgetOverviewPage";
 import { BudgetApprovalPage } from "../features/budget/pages/BudgetApprovalPage";
+import { ProjectAiChatPage } from "../features/ai/pages/ProjectAiChatPage";
 import { TaskCreatePage } from "../features/tasks/pages/TaskCreatePage";
 import { TaskDetailPage } from "../features/tasks/pages/TaskDetailPage";
 import { TaskListPage } from "../features/tasks/pages/TaskListPage";
@@ -163,6 +164,14 @@ export const router = createBrowserRouter([
             element: (
               <PermissionGuard toolId="BUDGET" minLevel="READ">
                 <BudgetApprovalPage />
+              </PermissionGuard>
+            ),
+          },
+          {
+            path: "ai-chat",
+            element: (
+              <PermissionGuard toolId="AI_ASSISTANT" minLevel="READ">
+                <ProjectAiChatPage />
               </PermissionGuard>
             ),
           },

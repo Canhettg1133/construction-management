@@ -20,6 +20,7 @@ import qualityRoutes from "../modules/quality/quality.routes";
 import warehouseRoutes from "../modules/warehouse/warehouse.routes";
 import budgetRoutes from "../modules/budget/budget.routes";
 import { documentRoutes, projectDocumentRoutes } from "../modules/documents/document.routes";
+import aiAssistantRoutes, { aiProviderProfileRoutes } from "../modules/ai-assistant/ai.routes";
 
 const router: Router = Router();
 
@@ -37,7 +38,9 @@ router.use("/projects/:projectId/safety", safetyRoutes);
 router.use("/projects/:projectId/quality", qualityRoutes);
 router.use("/projects/:projectId/warehouse", warehouseRoutes);
 router.use("/projects/:projectId/budget", budgetRoutes);
+router.use("/projects/:projectId/ai-chat", aiAssistantRoutes);
 router.use("/projects/:projectId/settings", projectSettingsPermissionRoutes);
+router.use("/ai-provider-profiles", aiProviderProfileRoutes);
 router.use("/documents", documentRoutes);
 router.use("/audit-logs", auditRoutes);
 router.use("/dashboard", dashboardRoutes);

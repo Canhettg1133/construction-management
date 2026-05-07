@@ -35,6 +35,18 @@ const envSchema = z.object({
   APP_URL: z.string().default("http://localhost:5173"),
   FRONTEND_URL: z.string().default("http://localhost:5173"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug"]).default("debug"),
+  AI_SECRET_ENCRYPTION_KEY: z.string().optional(),
+  AI_PROVIDER: z.enum(["MOCK", "OPENAI_RESPONSES", "OPENAI_COMPATIBLE", "GEMINI_DIRECT", "OLLAMA"]).default("MOCK"),
+  AI_OPENAI_API_KEY: z.string().optional(),
+  AI_OPENAI_MODEL: z.string().default("gpt-5.4"),
+  AI_OPENAI_COMPATIBLE_BASE_URL: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_API_KEY: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_MODEL: z.string().default("gpt-5.4"),
+  AI_GEMINI_API_KEY: z.string().optional(),
+  AI_GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+  AI_OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
+  AI_OLLAMA_MODEL: z.string().default("llama3.1"),
+  AI_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120000).default(30000),
 });
 
 export const env = envSchema.parse(process.env);

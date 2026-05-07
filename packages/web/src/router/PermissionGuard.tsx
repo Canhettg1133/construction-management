@@ -86,7 +86,7 @@ export function PermissionGuard({
   if (acceptedSystemRoles && acceptedSystemRoles.length > 0 && !acceptedSystemRoles.includes(user.systemRole)) {
     return resolveDeny({
       requiredRole: acceptedSystemRoles.join(", "),
-      description: "Tai khoan hien tai khong nam trong nhom vai tro duoc phep.",
+      description: "Tài khoản hiện tại không nằm trong nhóm vai trò được phép.",
     });
   }
 
@@ -94,7 +94,7 @@ export function PermissionGuard({
   if (projectRoles && projectRoles.length > 0) {
     if (!resolvedProjectId) {
       return resolveDeny({
-        description: "Khong xac dinh duoc du an de kiem tra vai tro.",
+        description: "Không xác định được dự án để kiểm tra vai trò.",
       });
     }
 
@@ -111,7 +111,7 @@ export function PermissionGuard({
     if (!isSystemAdmin && !hasProjectRole) {
       return resolveDeny({
         requiredRole: projectRoles.join(", "),
-        description: "Vai tro trong du an khong du dieu kien truy cap.",
+        description: "Vai trò trong dự án không đủ điều kiện truy cập.",
       });
     }
   }
@@ -121,7 +121,7 @@ export function PermissionGuard({
     if (!resolvedProjectId) {
       return resolveDeny({
         requiredTool: toolId,
-        description: "Khong xac dinh duoc du an de kiem tra quyen cong cu.",
+        description: "Không xác định được dự án để kiểm tra quyền công cụ.",
       });
     }
 
@@ -139,7 +139,7 @@ export function PermissionGuard({
     if (!resolvedProjectId) {
       return resolveDeny({
         requiredPrivilege: privilege,
-        description: "Khong xac dinh duoc du an de kiem tra quyen dac biet.",
+        description: "Không xác định được dự án để kiểm tra quyền đặc biệt.",
       });
     }
 

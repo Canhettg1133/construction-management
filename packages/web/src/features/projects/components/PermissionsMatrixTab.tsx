@@ -73,12 +73,12 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
 
       setPending({});
       await onRefresh();
-      showToast({ type: "success", title: "Đã cập nhật permission matrix" });
+      showToast({ type: "success", title: "Đã cập nhật ma trận phân quyền" });
     } catch (error) {
       showToast({
         type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể cập nhật permission matrix",
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể cập nhật ma trận phân quyền",
       });
     } finally {
       setIsApplying(false);
@@ -110,12 +110,12 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
       });
 
       await onRefresh();
-      showToast({ type: "success", title: "Da reset override cua nguoi dung" });
+      showToast({ type: "success", title: "Đã đặt lại ghi đè của người dùng" });
     } catch (error) {
       showToast({
         type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể reset override",
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể đặt lại ghi đè",
       });
     } finally {
       setResettingUserId(null);
@@ -125,13 +125,13 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3>Permissions Matrix</h3>
+        <h3>Ma trận phân quyền</h3>
         <button
           onClick={handleApplyChanges}
           disabled={Object.keys(pending).length === 0 || isApplying}
           className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Apply changes
+          Áp dụng thay đổi
         </button>
       </div>
 
@@ -139,13 +139,13 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
         <table className="min-w-[1200px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <th className="px-3 py-2">User</th>
+              <th className="px-3 py-2">Người dùng</th>
               {TOOL_IDS.map((toolId) => (
                 <th key={toolId} className="px-3 py-2">
                   {TOOL_LABELS[toolId]}
                 </th>
               ))}
-              <th className="px-3 py-2 text-right">Actions</th>
+              <th className="px-3 py-2 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -186,7 +186,7 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
                         ))}
                       </select>
                       <p className="mt-1 text-[11px] text-slate-400">
-                        {overrideLevel ? "Override" : "Preset"}
+                        {overrideLevel ? "Ghi đè" : "Mặc định"}
                       </p>
                     </td>
                   );
@@ -198,7 +198,7 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
                     disabled={resettingUserId === member.userId}
                     className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Reset to default
+                    Đặt lại mặc định
                   </button>
                 </td>
               </tr>

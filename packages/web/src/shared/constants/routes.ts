@@ -6,6 +6,7 @@ export const ROUTES = {
   PROJECT_QUALITY: (id: string) => `/projects/${id}/quality`,
   PROJECT_WAREHOUSE: (id: string) => `/projects/${id}/warehouse`,
   PROJECT_BUDGET: (id: string) => `/projects/${id}/budget`,
+  PROJECT_AI_CHAT: (id: string) => `/projects/${id}/ai-chat`,
   PROJECT_SETTINGS: (id: string) => `/projects/${id}/settings`,
   PROJECT_MEMBERS: (id: string) => `/projects/${id}/members`,
   PROJECT_REPORTS: (id: string) => `/projects/${id}/reports`,

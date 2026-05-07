@@ -42,6 +42,7 @@ enum ToolId {
   QUALITY
   WAREHOUSE
   BUDGET
+  AI_ASSISTANT
 }
 
 // ============================================================
@@ -127,6 +128,24 @@ enum NotificationType {
   PROJECT_PROGRESS_UPDATE
 }
 
+enum AiProviderType {
+  MOCK
+  OPENAI_RESPONSES
+  OPENAI_COMPATIBLE
+  GEMINI_DIRECT
+  OLLAMA
+}
+
+enum AiChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AiThreadVisibility {
+  PRIVATE
+}
+
 enum ApprovalStatus {
   PENDING
   APPROVED
@@ -170,6 +189,8 @@ model User {
   qualityInspections     QualityReport[]          @relation("QualityInspectorReports")
   warehouseRequests      WarehouseTransaction[]   @relation("WarehouseRequester")
   reportedNearMisses  SafetyNearMiss[]          @relation("SafetyNearMissReporter")
+  aiChatThreads      AiChatThread[]             @relation("AiThreadOwner")
+  aiChatMessages     AiChatMessage[]            @relation("AiMessageUser")
 
   @@index([systemRole])
   @@index([isActive])
@@ -204,6 +225,9 @@ model Project {
   budgetItems       BudgetItem[]
   toolPermissions   ProjectToolPermission[]
   specialPrivileges SpecialPrivilegeAssignment[]
+  aiChatThreads     AiChatThread[]
+  aiChatMessages    AiChatMessage[]
+  aiSetting         ProjectAiSetting?
 
   @@index([status])
   @@index([createdBy])
@@ -440,6 +464,89 @@ model Notification {
   @@index([userId, isRead])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+model AiProviderProfile {
+  id              String         @id @default(uuid())
+  name            String         @db.VarChar(120)
+  provider        AiProviderType
+  baseUrl         String?        @map("base_url") @db.VarChar(500)
+  model           String         @db.VarChar(120)
+  apiKeyEncrypted String?        @map("api_key_encrypted") @db.Text
+  config          Json?
+  isEnabled       Boolean        @default(true) @map("is_enabled")
+  isDefault       Boolean        @default(false) @map("is_default")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  chatThreads     AiChatThread[]
+  projectSettings ProjectAiSetting[]
+
+  @@index([provider])
+  @@index([isEnabled])
+  @@index([isDefault])
+  @@map("ai_provider_profiles")
+}
+
+model AiChatThread {
+  id                String             @id @default(uuid())
+  projectId         String             @map("project_id")
+  ownerId           String             @map("owner_id")
+  title             String             @db.VarChar(200)
+  visibility        AiThreadVisibility @default(PRIVATE)
+  providerProfileId String?            @map("provider_profile_id")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
+
+  project         Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner           User               @relation("AiThreadOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  providerProfile AiProviderProfile? @relation(fields: [providerProfileId], references: [id], onDelete: SetNull)
+  messages        AiChatMessage[]
+
+  @@index([projectId, ownerId])
+  @@index([projectId, updatedAt])
+  @@index([providerProfileId])
+  @@map("ai_chat_threads")
+}
+
+model AiChatMessage {
+  id             String     @id @default(uuid())
+  threadId       String     @map("thread_id")
+  projectId      String     @map("project_id")
+  userId         String?    @map("user_id")
+  role           AiChatRole
+  content        String     @db.Text
+  provider       String?    @db.VarChar(80)
+  model          String?    @db.VarChar(120)
+  latencyMs      Int?       @map("latency_ms")
+  contextSources Json?      @map("context_sources")
+  errorCode      String?    @map("error_code") @db.VarChar(80)
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  thread  AiChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?        @relation("AiMessageUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([threadId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([userId])
+  @@map("ai_chat_messages")
+}
+
+model ProjectAiSetting {
+  id                       String   @id @default(uuid())
+  projectId                String   @unique @map("project_id")
+  enabledSourceTools       Json?    @map("enabled_source_tools")
+  customSystemPrompt       String?  @map("custom_system_prompt") @db.Text
+  defaultProviderProfileId String?  @map("default_provider_profile_id")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at")
+
+  project                Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  defaultProviderProfile AiProviderProfile? @relation(fields: [defaultProviderProfileId], references: [id], onDelete: SetNull)
+
+  @@index([defaultProviderProfileId])
+  @@map("project_ai_settings")
 }
 
 model SafetyReport {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Bot,
   CheckSquare,
   ClipboardCheck,
   FileText,
@@ -158,6 +159,13 @@ export function AppLayout() {
           label: "Ngân sách",
           icon: Wallet,
           toolId: "BUDGET",
+          minLevel: "READ",
+        },
+        {
+          to: ROUTES.PROJECT_AI_CHAT(currentProjectId),
+          label: "Trợ lý AI",
+          icon: Bot,
+          toolId: "AI_ASSISTANT",
           minLevel: "READ",
         },
       ]

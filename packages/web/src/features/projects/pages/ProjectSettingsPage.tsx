@@ -1,18 +1,20 @@
 ﻿import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { AiSettingsPanel } from "../../ai/components/AiSettingsPanel";
 import { projectSettingsApi } from "../api/projectSettingsApi";
 import { PermissionsMatrixTab } from "../components/PermissionsMatrixTab";
 import { PrivilegesTab } from "../components/PrivilegesTab";
 import { ErrorState } from "../../../shared/components/feedback/ErrorState";
 import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
 
-type Tab = "general" | "permissions" | "privileges";
+type Tab = "general" | "permissions" | "privileges" | "ai";
 
 const TAB_LABELS: Record<Tab, string> = {
-  general: "General",
-  permissions: "Permissions",
-  privileges: "Privileges",
+  general: "Tổng quan",
+  permissions: "Phân quyền",
+  privileges: "Quyền đặc biệt",
+  ai: "Trợ lý AI",
 };
 
 export function ProjectSettingsPage() {
@@ -42,7 +44,7 @@ export function ProjectSettingsPage() {
   }
 
   if (settingsQuery.isError || matrixQuery.isError || !settingsQuery.data || !matrixQuery.data) {
-    return <ErrorState message="Không tải được project settings." />;
+    return <ErrorState message="Không tải được cài đặt dự án." />;
   }
 
   const settings = settingsQuery.data;
@@ -55,10 +57,10 @@ export function ProjectSettingsPage() {
           to={`/projects/${projectId}`}
           className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
         >
-          ← Project detail
+          ← Chi tiết dự án
         </Link>
-        <h2 className="mt-1">Project Settings</h2>
-        <p className="page-subtitle">Quản lý permission matrix va special privileges cho dự án.</p>
+        <h2 className="mt-1">Cài đặt dự án</h2>
+        <p className="page-subtitle">Quản lý phân quyền, quyền đặc biệt và cấu hình Trợ lý AI cho dự án.</p>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
@@ -81,14 +83,14 @@ export function ProjectSettingsPage() {
 
       {activeTab === "general" && (
         <div className="app-card space-y-3">
-          <h3>General</h3>
+          <h3>Tổng quan</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
               <p className="text-xs text-slate-500">Tên dự án</p>
               <p className="text-sm font-medium text-slate-900">{settings.name}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Ma dự án</p>
+              <p className="text-xs text-slate-500">Mã dự án</p>
               <p className="text-sm font-medium text-slate-900">{settings.code}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
@@ -100,30 +102,30 @@ export function ProjectSettingsPage() {
               <p className="text-sm font-medium text-slate-900">{Number(settings.progress)}%</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Bat đầu</p>
+              <p className="text-xs text-slate-500">Bắt đầu</p>
               <p className="text-sm font-medium text-slate-900">
                 {new Date(settings.startDate).toLocaleDateString("vi-VN")}
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Ket thuc</p>
+              <p className="text-xs text-slate-500">Kết thúc</p>
               <p className="text-sm font-medium text-slate-900">
-                {settings.endDate ? new Date(settings.endDate).toLocaleDateString("vi-VN") : "Chưa xac dinh"}
+                {settings.endDate ? new Date(settings.endDate).toLocaleDateString("vi-VN") : "Chưa xác định"}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-              <p className="text-xs text-slate-500">Members</p>
+              <p className="text-xs text-slate-500">Thành viên</p>
               <p className="text-lg font-semibold text-slate-900">{settings.memberCount}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-              <p className="text-xs text-slate-500">Permission overrides</p>
+              <p className="text-xs text-slate-500">Ghi đè phân quyền</p>
               <p className="text-lg font-semibold text-slate-900">{settings.overrideCount}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-              <p className="text-xs text-slate-500">Special privileges</p>
+              <p className="text-xs text-slate-500">Quyền đặc biệt</p>
               <p className="text-lg font-semibold text-slate-900">{settings.privilegeAssignmentCount}</p>
             </div>
           </div>
@@ -151,6 +153,8 @@ export function ProjectSettingsPage() {
           }}
         />
       )}
+
+      {activeTab === "ai" && <AiSettingsPanel projectId={projectId} />}
     </div>
   );
 }
