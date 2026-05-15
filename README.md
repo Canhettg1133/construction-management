@@ -32,6 +32,30 @@ Yeu cau:
 
 `.env` o root repo la source of truth cho local runtime va Prisma commands.
 
+### Cach nhanh nhat sau khi clone
+
+Tren Windows/XAMPP, co the setup tat ca va chay ung dung bang mot lenh:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-and-run.ps1
+```
+
+Lenh nay se:
+- tao `.env` local neu chua co
+- bat MySQL bang XAMPP neu MySQL local chua chay
+- tao database `construction_mgmt` neu chua co
+- cai dependencies bang `pnpm install --frozen-lockfile`
+- build package shared
+- apply Prisma migrations
+- seed du lieu mau
+- chay frontend va backend
+
+Sau khi chay thanh cong:
+- Web: `http://localhost:5173`
+- API: `http://localhost:3001/api/v1`
+
+### Setup thu cong
+
 1. Cai dependency
 
 ```bash
