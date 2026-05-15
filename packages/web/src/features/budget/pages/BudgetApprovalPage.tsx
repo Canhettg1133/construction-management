@@ -1,64 +1,68 @@
-﻿import { Link, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { budgetApi } from "../api/budgetApi";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { SpecialPrivilegeGate } from "../../../shared/components/SpecialPrivilegeGate";
-import { useUiStore } from "../../../store/uiStore";
+﻿import { Link, useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { budgetApi } from '../api/budgetApi'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { SpecialPrivilegeGate } from '../../../shared/components/SpecialPrivilegeGate'
+import { useUiStore } from '../../../store/uiStore'
 
 function money(value: number | string | null | undefined) {
-  return Number(value ?? 0).toLocaleString("vi-VN");
+  return Number(value ?? 0).toLocaleString('vi-VN')
 }
 
 export function BudgetApprovalPage() {
-  const { id } = useParams<{ id: string }>();
-  const projectId = id ?? "";
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((state) => state.showToast);
+  const { id } = useParams<{ id: string }>()
+  const projectId = id ?? ''
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((state) => state.showToast)
 
-  const { data: itemsData, isLoading, isError } = useQuery({
-    queryKey: ["budget-items", projectId],
+  const {
+    data: itemsData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['budget-items', projectId],
     queryFn: () => budgetApi.listItems(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
   const approveMutation = useMutation({
-    mutationFn: (payload: { id: string; status: "APPROVED" | "PAID" }) =>
+    mutationFn: (payload: { id: string; status: 'APPROVED' | 'PAID' }) =>
       budgetApi.approveDisbursement(projectId, payload.id, { status: payload.status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budget-overview", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["budget-items", projectId] });
-      showToast({ type: "success", title: "Đã duyệt giải ngân" });
+      queryClient.invalidateQueries({ queryKey: ['budget-overview', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['budget-items', projectId] })
+      showToast({ type: 'success', title: 'Đã duyệt giải ngân' })
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể duyet giải ngân",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể duyệt giải ngân',
+      })
     },
-  });
+  })
 
   if (isLoading) {
     return (
       <div className="space-y-3">
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (isError || !itemsData) {
-    return <ErrorState message="Không tải được danh sach giải ngân." />;
+    return <ErrorState message="Không tải được danh sách giải ngân." />
   }
 
   const pendingDisbursements = itemsData.items.flatMap((item) =>
     (item.disbursements ?? [])
-      .filter((disbursement) => disbursement.status === "PENDING")
+      .filter((disbursement) => disbursement.status === 'PENDING')
       .map((disbursement) => ({
         ...disbursement,
         budgetItem: item,
-      }))
-  );
+      })),
+  )
 
   return (
     <div className="space-y-4">
@@ -67,10 +71,10 @@ export function BudgetApprovalPage() {
           to={`/projects/${projectId}/budget`}
           className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
         >
-          ← Budget overview
+          ← Tổng quan ngân sách
         </Link>
         <h2 className="mt-1">Duyệt giải ngân</h2>
-        <p className="page-subtitle">Danh sách phieu giải ngân dang cho phê duyệt.</p>
+        <p className="page-subtitle">Danh sách phiếu giải ngân đang chờ phê duyệt.</p>
       </div>
 
       <div className="app-card space-y-3">
@@ -85,17 +89,17 @@ export function BudgetApprovalPage() {
                     {disbursement.budgetItem?.category} - {disbursement.budgetItem?.description}
                   </p>
                   <p className="text-sm text-slate-600">
-                    So tien: <span className="font-semibold">{money(disbursement.amount)} VND</span>
+                    Số tiền: <span className="font-semibold">{money(disbursement.amount)} VND</span>
                   </p>
                   {disbursement.note && <p className="mt-1 text-xs text-slate-500">{disbursement.note}</p>}
                 </div>
                 <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                  PENDING
+                  Chờ duyệt
                 </span>
               </div>
 
               <div className="mt-2 text-xs text-slate-500">
-                Tạo lúc: {new Date(disbursement.createdAt).toLocaleString("vi-VN")}
+                Tạo lúc: {new Date(disbursement.createdAt).toLocaleString('vi-VN')}
               </div>
 
               <SpecialPrivilegeGate projectId={projectId} privilege="BUDGET_APPROVER">
@@ -104,7 +108,7 @@ export function BudgetApprovalPage() {
                     onClick={() =>
                       approveMutation.mutate({
                         id: disbursement.id,
-                        status: "APPROVED",
+                        status: 'APPROVED',
                       })
                     }
                     disabled={approveMutation.isPending}
@@ -116,13 +120,13 @@ export function BudgetApprovalPage() {
                     onClick={() =>
                       approveMutation.mutate({
                         id: disbursement.id,
-                        status: "PAID",
+                        status: 'PAID',
                       })
                     }
                     disabled={approveMutation.isPending}
                     className="rounded-xl bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Duyệt & ghi nhan da chi
+                    Duyệt và ghi nhận đã chi
                   </button>
                 </div>
               </SpecialPrivilegeGate>
@@ -131,9 +135,5 @@ export function BudgetApprovalPage() {
         )}
       </div>
     </div>
-  );
+  )
 }
-
-
-
-

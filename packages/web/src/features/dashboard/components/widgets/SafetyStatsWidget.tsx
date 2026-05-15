@@ -1,20 +1,20 @@
-import { ShieldAlert, AlertTriangle, ClipboardList, TrendingUp } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
-import { calculateTrend, formatNumber } from "./utils";
+import { ShieldAlert, AlertTriangle, ClipboardList, TrendingUp } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
+import { calculateTrend, formatNumber } from './utils'
 
 export function SafetyStatsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.showSafetyStats) {
-    return null;
+    return null
   }
 
-  const safetyStats = data?.safetyStats;
-  const pending = data?.pendingSafetyApprovals ?? safetyStats?.pendingApprovals ?? 0;
-  const violations = safetyStats?.totalViolations ?? 0;
-  const complianceRate = Math.max(0, 100 - (safetyStats?.violationRate ?? 0));
+  const safetyStats = data?.safetyStats
+  const pending = data?.pendingSafetyApprovals ?? safetyStats?.pendingApprovals ?? 0
+  const violations = safetyStats?.totalViolations ?? 0
+  const complianceRate = Math.max(0, 100 - (safetyStats?.violationRate ?? 0))
 
   return (
     <div className="app-card space-y-4">
@@ -35,12 +35,12 @@ export function SafetyStatsWidget() {
           icon={AlertTriangle}
           title="Vi phạm"
           value={formatNumber(violations)}
-          tone={violations > 0 ? "danger" : "success"}
+          tone={violations > 0 ? 'danger' : 'success'}
         />
         <StatCell icon={ShieldAlert} title="Tỷ lệ tuân thủ" value={`${complianceRate.toFixed(1)}%`} tone="success" />
       </div>
     </div>
-  );
+  )
 }
 
 function StatCell({
@@ -48,22 +48,22 @@ function StatCell({
   title,
   value,
   hint,
-  tone = "default",
+  tone = 'default',
 }: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  value: string;
-  hint?: string;
-  tone?: "default" | "warning" | "danger" | "success";
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  value: string
+  hint?: string
+  tone?: 'default' | 'warning' | 'danger' | 'success'
 }) {
   const toneClass =
-    tone === "warning"
-      ? "text-amber-700 bg-amber-50"
-      : tone === "danger"
-      ? "text-red-700 bg-red-50"
-      : tone === "success"
-      ? "text-emerald-700 bg-emerald-50"
-      : "text-slate-700 bg-slate-50";
+    tone === 'warning'
+      ? 'text-amber-700 bg-amber-50'
+      : tone === 'danger'
+        ? 'text-red-700 bg-red-50'
+        : tone === 'success'
+          ? 'text-emerald-700 bg-emerald-50'
+          : 'text-slate-700 bg-slate-50'
 
   return (
     <div className={`flex min-h-32 flex-col rounded-xl border border-slate-200 p-3 ${toneClass}`}>
@@ -76,5 +76,5 @@ function StatCell({
         {hint ? <p className="mt-1 text-xs opacity-80">{hint}</p> : null}
       </div>
     </div>
-  );
+  )
 }

@@ -25,7 +25,7 @@ export const notificationTriggers = {
     await notificationService.create({
       userId: params.assigneeId,
       type: 'TASK_ASSIGNED',
-      title: 'Ban duoc giao task moi',
+      title: 'Bạn được giao công việc mới',
       message: params.taskTitle,
       data: {
         taskId: params.taskId,
@@ -39,8 +39,8 @@ export const notificationTriggers = {
     const dateStr = params.reportDate.toLocaleDateString('vi-VN')
     await notificationService.createMany(params.pmIds, {
       type: 'REPORT_PENDING_APPROVAL',
-      title: 'Co bao cao ngay can duyet',
-      message: `Bao cao ngay ${dateStr} dang cho duyet`,
+      title: 'Có báo cáo ngày cần duyệt',
+      message: `Báo cáo ngày ${dateStr} đang chờ duyệt`,
       data: {
         reportId: params.reportId,
         projectId: params.projectId,
@@ -52,7 +52,7 @@ export const notificationTriggers = {
   async taskSubmitted(params: { pmIds: string[]; taskId: string; taskTitle: string; projectId: string }) {
     await notificationService.createMany(params.pmIds, {
       type: 'REPORT_PENDING_APPROVAL',
-      title: 'Co task can duyet',
+      title: 'Có công việc cần duyệt',
       message: params.taskTitle,
       data: {
         taskId: params.taskId,
@@ -67,8 +67,8 @@ export const notificationTriggers = {
     await notificationService.create({
       userId: params.creatorId,
       type: 'PROJECT_PROGRESS_UPDATE',
-      title: 'Bao cao da duoc duyet',
-      message: `Bao cao ngay ${dateStr} da duoc duyet`,
+      title: 'Báo cáo đã được duyệt',
+      message: `Báo cáo ngày ${dateStr} đã được duyệt`,
       data: {
         reportId: params.reportId,
         projectId: params.projectId,
@@ -88,8 +88,8 @@ export const notificationTriggers = {
     await notificationService.create({
       userId: params.creatorId,
       type: 'PROJECT_PROGRESS_UPDATE',
-      title: 'Bao cao bi tu choi',
-      message: `Bao cao ngay ${dateStr} bi tu choi: ${params.reason}`,
+      title: 'Báo cáo bị từ chối',
+      message: `Báo cáo ngày ${dateStr} bị từ chối: ${params.reason}`,
       data: {
         reportId: params.reportId,
         projectId: params.projectId,
@@ -102,7 +102,7 @@ export const notificationTriggers = {
     await notificationService.create({
       userId: params.creatorId,
       type: 'PROJECT_PROGRESS_UPDATE',
-      title: 'Task da duoc duyet',
+      title: 'Công việc đã được duyệt',
       message: params.taskTitle,
       data: {
         taskId: params.taskId,
@@ -122,8 +122,8 @@ export const notificationTriggers = {
     await notificationService.create({
       userId: params.creatorId,
       type: 'PROJECT_PROGRESS_UPDATE',
-      title: 'Task bi tu choi',
-      message: `${params.taskTitle} - Ly do: ${params.reason}`,
+      title: 'Công việc bị từ chối',
+      message: `${params.taskTitle} - Lý do: ${params.reason}`,
       data: {
         taskId: params.taskId,
         projectId: params.projectId,
@@ -143,8 +143,8 @@ export const notificationTriggers = {
     await notificationService.create({
       userId: params.assigneeId,
       type: 'TASK_DEADLINE_SOON',
-      title: 'Task sap qua han',
-      message: `"${params.taskTitle}" can hoan thanh truoc ngay ${dateStr}`,
+      title: 'Công việc sắp quá hạn',
+      message: `"${params.taskTitle}" cần hoàn thành trước ngày ${dateStr}`,
       data: {
         taskId: params.taskId,
         projectId: params.projectId,
@@ -158,8 +158,8 @@ export const notificationTriggers = {
     await notificationService.create({
       userId: params.assigneeId,
       type: 'TASK_OVERDUE',
-      title: 'Task da qua han',
-      message: `"${params.taskTitle}" da qua han`,
+      title: 'Công việc đã quá hạn',
+      message: `"${params.taskTitle}" đã quá hạn`,
       data: {
         taskId: params.taskId,
         projectId: params.projectId,
@@ -171,8 +171,8 @@ export const notificationTriggers = {
   async safetyReportPending(params: { projectId: string; reportId: string; location: string }) {
     await notificationService.notifyProjectRolesAndAdmins(params.projectId, ['SAFETY_OFFICER'], {
       type: 'SAFETY_REPORT_PENDING',
-      title: 'Bao cao an toan cho duyet',
-      message: `Bao cao an toan tai ${params.location} dang cho duyet`,
+      title: 'Báo cáo an toàn chờ duyệt',
+      message: `Báo cáo an toàn tại ${params.location} đang chờ duyệt`,
       data: {
         reportId: params.reportId,
         projectId: params.projectId,
@@ -184,8 +184,8 @@ export const notificationTriggers = {
   async safetyViolationCreated(params: { projectId: string; reportId: string; location: string; violations: number }) {
     await notificationService.notifyProjectRolesAndAdmins(params.projectId, ['SAFETY_OFFICER', 'PROJECT_MANAGER'], {
       type: 'SAFETY_VIOLATION',
-      title: 'Canh bao vi pham an toan',
-      message: `${params.violations} vi pham an toan tai ${params.location}`,
+      title: 'Cảnh báo vi phạm an toàn',
+      message: `${params.violations} vi phạm an toàn tại ${params.location}`,
       data: {
         reportId: params.reportId,
         projectId: params.projectId,
@@ -198,8 +198,8 @@ export const notificationTriggers = {
   async qualityReportPending(params: { projectId: string; reportId: string; location: string }) {
     await notificationService.notifyProjectRolesAndAdmins(params.projectId, ['QUALITY_MANAGER'], {
       type: 'QUALITY_REPORT_PENDING',
-      title: 'Bao cao chat luong cho duyet',
-      message: `Bao cao QC tai ${params.location} dang cho duyet`,
+      title: 'Báo cáo chất lượng chờ duyệt',
+      message: `Báo cáo chất lượng tại ${params.location} đang chờ duyệt`,
       data: {
         reportId: params.reportId,
         projectId: params.projectId,
@@ -217,7 +217,7 @@ export const notificationTriggers = {
   }) {
     await notificationService.notifyProjectRoles(params.projectId, ['WAREHOUSE_KEEPER', 'PROJECT_MANAGER'], {
       type: 'LOW_STOCK_ALERT',
-      title: 'Canh bao ton kho thap',
+      title: 'Cảnh báo tồn kho thấp',
       message: `${params.materialName}: ${params.quantity} < ${params.minQuantity}`,
       data: {
         inventoryId: params.inventoryId,
@@ -237,7 +237,7 @@ export const notificationTriggers = {
   }) {
     await notificationService.notifyProjectRoles(params.projectId, ['WAREHOUSE_KEEPER'], {
       type: 'TRANSACTION_PENDING',
-      title: 'Yeu cau vat tu cho xu ly',
+      title: 'Yêu cầu vật tư chờ xử lý',
       message: `${params.materialName}: ${params.quantity}`,
       data: {
         transactionId: params.transactionId,

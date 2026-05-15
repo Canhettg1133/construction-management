@@ -18,6 +18,7 @@ packages/
 ```
 
 Nguyen tac:
+
 - `packages/shared` chua shared contract
 - `packages/api` chua backend vertical modules
 - `packages/web` chua feature UI va state client
@@ -25,6 +26,7 @@ Nguyen tac:
 ## Backend Boundaries
 
 Moi module backend thuong co:
+
 - `*.routes.ts`
 - `*.controller.ts`
 - `*.service.ts`
@@ -32,6 +34,7 @@ Moi module backend thuong co:
 - `*.validation.ts` neu co request schema
 
 `src/shared/` chi chua:
+
 - middleware dung chung
 - error handling
 - utility response/pagination
@@ -42,16 +45,19 @@ Slice nao chua hoan thien khong duoc de o trang thai compile-fail. Trong cleanup
 ## Permission Model
 
 2 tang quyen:
+
 - Company-level: `SystemRole`
 - Project-level: `ProjectRole` + tool overrides + special privileges
 
 Permission resolution:
+
 1. `authenticate` doc JWT va gan `req.user`
 2. `requireProjectMembership` kiem tra user co thuoc project khong
 3. `loadUserPermissions` tinh effective permissions
 4. `requireToolPermission` enforce tung endpoint
 
 JWT chi giu claim toi thieu:
+
 - `id`
 - `email`
 - `systemRole`
@@ -77,12 +83,14 @@ Project role khong nam trong JWT.
 ## Adding A New Vertical Slice
 
 Chi them slice moi khi du 4 dieu kien:
+
 1. Prisma schema va migration dat ten dung nghia
 2. Route/controller/service build pass
 3. Shared type va permission surface da ro rang
 4. Docs duoc cap nhat trong 4 file source-of-truth
 
 Khong merge:
+
 - module mo coi khong mount route
 - schema da them nhung code chua co
 - migration accidental hoac ten khong lien quan noi dung

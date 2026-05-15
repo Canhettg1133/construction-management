@@ -1,46 +1,46 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Calendar, Filter, X, CloudRain, Sun, Cloud, HelpCircle } from "lucide-react";
-import { listReports } from "../api/reportApi";
-import { listProjectMembers } from "../../projects/api/memberApi";
-import { PermissionGate } from "../../../shared/components/PermissionGate";
-import { EmptyState } from "../../../shared/components/feedback/EmptyState";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { usePermission } from "../../../shared/hooks/usePermission";
+import { useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { Calendar, Filter, X, CloudRain, Sun, Cloud, HelpCircle } from 'lucide-react'
+import { listReports } from '../api/reportApi'
+import { listProjectMembers } from '../../projects/api/memberApi'
+import { PermissionGate } from '../../../shared/components/PermissionGate'
+import { EmptyState } from '../../../shared/components/feedback/EmptyState'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { usePermission } from '../../../shared/hooks/usePermission'
 
 const WEATHER_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   SUNNY: Sun,
   RAINY: CloudRain,
   CLOUDY: Cloud,
   OTHER: HelpCircle,
-};
+}
 
 const WEATHER_LABELS: Record<string, string> = {
-  SUNNY: "Nắng",
-  RAINY: "Mưa",
-  CLOUDY: "Nhiều mây",
-  OTHER: "Khác",
-};
+  SUNNY: 'Nắng',
+  RAINY: 'Mưa',
+  CLOUDY: 'Nhiều mây',
+  OTHER: 'Khác',
+}
 
 export function ReportListPage() {
-  const { id: projectId } = useParams();
-  const currentProjectId = projectId ?? "";
+  const { id: projectId } = useParams()
+  const currentProjectId = projectId ?? ''
   const { has: canCreateReport } = usePermission({
     projectId: currentProjectId,
-    toolId: "DAILY_REPORT",
-    minLevel: "STANDARD",
-  });
+    toolId: 'DAILY_REPORT',
+    minLevel: 'STANDARD',
+  })
 
-  const [showFilters, setShowFilters] = useState(false);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [creatorId, setCreatorId] = useState("");
-  const [page, setPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false)
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [creatorId, setCreatorId] = useState('')
+  const [page, setPage] = useState(1)
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["reports", currentProjectId, page, fromDate, toDate, creatorId],
+    queryKey: ['reports', currentProjectId, page, fromDate, toDate, creatorId],
     queryFn: () =>
       listReports(currentProjectId, {
         page,
@@ -50,26 +50,26 @@ export function ReportListPage() {
         created_by: creatorId || undefined,
       }),
     enabled: Boolean(currentProjectId),
-  });
+  })
 
   const { data: members } = useQuery({
-    queryKey: ["project-members", currentProjectId],
+    queryKey: ['project-members', currentProjectId],
     queryFn: () => listProjectMembers(currentProjectId),
     enabled: Boolean(currentProjectId),
-  });
+  })
 
-  const hasFilters = fromDate || toDate || creatorId;
+  const hasFilters = fromDate || toDate || creatorId
 
   const clearFilters = () => {
-    setFromDate("");
-    setToDate("");
-    setCreatorId("");
-    setPage(1);
-  };
+    setFromDate('')
+    setToDate('')
+    setCreatorId('')
+    setPage(1)
+  }
 
-  const reports = data?.reports ?? [];
-  const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
+  const reports = data?.reports ?? []
+  const meta = data?.meta
+  const totalPages = meta?.totalPages ?? 1
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -83,8 +83,8 @@ export function ReportListPage() {
             onClick={() => setShowFilters((v) => !v)}
             className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
               showFilters || hasFilters
-                ? "border-brand-300 bg-brand-50 text-brand-700"
-                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                ? 'border-brand-300 bg-brand-50 text-brand-700'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
             }`}
           >
             <Filter className="h-4 w-4" />
@@ -126,7 +126,10 @@ export function ReportListPage() {
               <input
                 type="date"
                 value={fromDate}
-                onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setFromDate(e.target.value)
+                  setPage(1)
+                }}
                 className="form-input"
               />
             </div>
@@ -135,7 +138,10 @@ export function ReportListPage() {
               <input
                 type="date"
                 value={toDate}
-                onChange={(e) => { setToDate(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setToDate(e.target.value)
+                  setPage(1)
+                }}
                 className="form-input"
               />
             </div>
@@ -143,7 +149,10 @@ export function ReportListPage() {
               <label className="form-label text-xs">Người tạo</label>
               <select
                 value={creatorId}
-                onChange={(e) => { setCreatorId(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setCreatorId(e.target.value)
+                  setPage(1)
+                }}
                 className="form-input"
               >
                 <option value="">Tất cả</option>
@@ -152,7 +161,7 @@ export function ReportListPage() {
                     <option key={m.userId} value={m.userId}>
                       {m.user.name}
                     </option>
-                  ) : null
+                  ) : null,
                 )}
               </select>
             </div>
@@ -175,10 +184,10 @@ export function ReportListPage() {
           title="Không có báo cáo nào"
           description={
             hasFilters
-              ? "Thử thay đổi bộ lọc để xem kết quả khác."
+              ? 'Thử thay đổi bộ lọc để xem kết quả khác.'
               : canCreateReport
-              ? "Bắt đầu bằng cách tạo báo cáo ngày đầu tiên."
-              : "Hiện chưa có báo cáo nào cho dự án này."
+                ? 'Bắt đầu bằng cách tạo báo cáo ngày đầu tiên.'
+                : 'Hiện chưa có báo cáo nào cho dự án này.'
           }
           action={
             canCreateReport && !hasFilters ? (
@@ -204,7 +213,7 @@ export function ReportListPage() {
         <>
           <div className="space-y-3">
             {reports.map((report) => {
-              const WeatherIcon = WEATHER_ICONS[report.weather] ?? HelpCircle;
+              const WeatherIcon = WEATHER_ICONS[report.weather] ?? HelpCircle
               return (
                 <Link
                   key={report.id}
@@ -216,11 +225,11 @@ export function ReportListPage() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                         <h3 className="text-sm font-semibold text-slate-800">
-                          {new Date(report.reportDate).toLocaleDateString("vi-VN", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
+                          {new Date(report.reportDate).toLocaleDateString('vi-VN', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
                           })}
                         </h3>
                       </div>
@@ -243,17 +252,17 @@ export function ReportListPage() {
                       <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
                         {report.progress}%
                       </span>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        report.status === "SENT"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-amber-50 text-amber-700"
-                      }`}>
-                        {report.status === "SENT" ? "Đã gửi" : "Nháp"}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          report.status === 'SENT' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                        }`}
+                      >
+                        {report.status === 'SENT' ? 'Đã gửi' : 'Nháp'}
                       </span>
                     </div>
                   </div>
                 </Link>
-              );
+              )
             })}
           </div>
 
@@ -281,5 +290,5 @@ export function ReportListPage() {
         </>
       )}
     </div>
-  );
+  )
 }

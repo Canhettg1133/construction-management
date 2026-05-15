@@ -1,28 +1,28 @@
-import { ShieldAlert } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
+import { ShieldAlert } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
 
-function severityTone(level: "LOW" | "MEDIUM" | "HIGH"): string {
-  if (level === "HIGH") return "text-red-700 bg-red-50";
-  if (level === "MEDIUM") return "text-amber-700 bg-amber-50";
-  return "text-sky-700 bg-sky-50";
+function severityTone(level: 'LOW' | 'MEDIUM' | 'HIGH'): string {
+  if (level === 'HIGH') return 'text-red-700 bg-red-50'
+  if (level === 'MEDIUM') return 'text-amber-700 bg-amber-50'
+  return 'text-sky-700 bg-sky-50'
 }
 
-function severityLabel(level: "LOW" | "MEDIUM" | "HIGH"): string {
-  if (level === "HIGH") return "Cao";
-  if (level === "MEDIUM") return "Trung bình";
-  return "Thấp";
+function severityLabel(level: 'LOW' | 'MEDIUM' | 'HIGH'): string {
+  if (level === 'HIGH') return 'Cao'
+  if (level === 'MEDIUM') return 'Trung bình'
+  return 'Thấp'
 }
 
 export function SafetyViolationsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.isSafety) {
-    return null;
+    return null
   }
 
-  const violations = data?.safetyViolations ?? [];
+  const violations = data?.safetyViolations ?? []
 
   return (
     <div className="app-card">
@@ -42,18 +42,14 @@ export function SafetyViolationsWidget() {
                   <p className="truncate text-sm font-medium text-slate-900">{violation.location}</p>
                   <p className="line-clamp-2 text-xs text-slate-500">{violation.description}</p>
                 </div>
-                <span
-                  className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${severityTone(
-                    violation.severity
-                  )}`}
-                >
+                <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${severityTone(violation.severity)}`}>
                   {severityLabel(violation.severity)}
                 </span>
               </div>
               <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
-                <span>{new Date(violation.date).toLocaleDateString("vi-VN")}</span>
-                <span className={violation.resolved ? "text-emerald-600" : "text-red-600"}>
-                  {violation.resolved ? "Đã xử lý" : "Chưa xử lý"}
+                <span>{new Date(violation.date).toLocaleDateString('vi-VN')}</span>
+                <span className={violation.resolved ? 'text-emerald-600' : 'text-red-600'}>
+                  {violation.resolved ? 'Đã xử lý' : 'Chưa xử lý'}
                 </span>
               </div>
             </div>
@@ -61,5 +57,5 @@ export function SafetyViolationsWidget() {
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -1,18 +1,18 @@
-import { BriefcaseBusiness, CircleDollarSign } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
-import { formatCurrency } from "./utils";
+import { BriefcaseBusiness, CircleDollarSign } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
+import { formatCurrency } from './utils'
 
 export function ClientStatsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.isClient) {
-    return null;
+    return null
   }
 
-  const projectProgress = data?.projectProgress ?? [];
-  const budgetOverview = data?.budgetOverview ?? [];
+  const projectProgress = data?.projectProgress ?? []
+  const budgetOverview = data?.budgetOverview ?? []
 
   return (
     <div className="space-y-4 xl:col-span-3">
@@ -65,7 +65,7 @@ export function ClientStatsWidget() {
                   <p>Dự toán: {formatCurrency(budget.totalEstimated)}</p>
                   <p>Đã duyệt: {formatCurrency(budget.totalApproved)}</p>
                   <p>Đã chi: {formatCurrency(budget.totalSpent)}</p>
-                  <p className={budget.remaining < 0 ? "font-semibold text-red-600" : "font-semibold text-emerald-600"}>
+                  <p className={budget.remaining < 0 ? 'font-semibold text-red-600' : 'font-semibold text-emerald-600'}>
                     Còn lại: {formatCurrency(budget.remaining)}
                   </p>
                 </div>
@@ -75,5 +75,5 @@ export function ClientStatsWidget() {
         )}
       </div>
     </div>
-  );
+  )
 }

@@ -1,20 +1,17 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState } from 'react'
 
 const DEFAULT_ITEMS = [
-  "Trang bị đầy đủ bảo hộ lao động",
-  "Kiểm tra dây điện và aptomat",
-  "Khu vực làm việc có biển báo cảnh báo",
-  "Lối thoát hiểm thông thoáng",
-  "Thiết bị PCCC sẵn sàng sử dụng",
-];
+  'Trang bị đầy đủ bảo hộ lao động',
+  'Kiểm tra dây điện và aptomat',
+  'Khu vực làm việc có biển báo cảnh báo',
+  'Lối thoát hiểm thông thoáng',
+  'Thiết bị PCCC sẵn sàng sử dụng',
+]
 
 export function SafetyChecklist() {
-  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [checked, setChecked] = useState<Record<number, boolean>>({})
 
-  const completed = useMemo(
-    () => DEFAULT_ITEMS.filter((_, idx) => checked[idx]).length,
-    [checked]
-  );
+  const completed = useMemo(() => DEFAULT_ITEMS.filter((_, idx) => checked[idx]).length, [checked])
 
   return (
     <div className="app-card space-y-3">
@@ -34,9 +31,7 @@ export function SafetyChecklist() {
             <input
               type="checkbox"
               checked={Boolean(checked[idx])}
-              onChange={(event) =>
-                setChecked((prev) => ({ ...prev, [idx]: event.target.checked }))
-              }
+              onChange={(event) => setChecked((prev) => ({ ...prev, [idx]: event.target.checked }))}
               className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
             <span>{item}</span>
@@ -44,5 +39,5 @@ export function SafetyChecklist() {
         ))}
       </div>
     </div>
-  );
+  )
 }

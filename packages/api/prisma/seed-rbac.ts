@@ -1,1 +1,1 @@
-import "./seed-role-presets";
+import './seed-role-presets'

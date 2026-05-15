@@ -116,6 +116,9 @@ enum AuditEntityType {
   AI_PROVIDER_PROFILE
   AI_PROVIDER_CREDENTIAL
   PROJECT_AI_SETTING
+  AI_SYSTEM_SETTING
+  AI_CHAT_THREAD
+  AI_CHAT_MESSAGE
 }
 
 enum NotificationType {
@@ -194,6 +197,7 @@ model User {
   reportedNearMisses  SafetyNearMiss[]          @relation("SafetyNearMissReporter")
   aiChatThreads      AiChatThread[]             @relation("AiThreadOwner")
   aiChatMessages     AiChatMessage[]            @relation("AiMessageUser")
+  updatedAiSystemSettings AiSystemSetting[]     @relation("AiSystemSettingUpdater")
 
   @@index([systemRole])
   @@index([isActive])
@@ -484,6 +488,7 @@ model AiProviderProfile {
 
   chatThreads     AiChatThread[]
   projectSettings ProjectAiSetting[]
+  systemSettings  AiSystemSetting[]
   credentials     AiProviderCredential[]
 
   @@index([provider])
@@ -522,6 +527,7 @@ model AiChatThread {
   providerProfileId String?            @map("provider_profile_id")
   createdAt         DateTime           @default(now()) @map("created_at")
   updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
 
   project         Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   owner           User               @relation("AiThreadOwner", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -530,6 +536,7 @@ model AiChatThread {
 
   @@index([projectId, ownerId])
   @@index([projectId, updatedAt])
+  @@index([deletedAt])
   @@index([providerProfileId])
   @@map("ai_chat_threads")
 }
@@ -545,8 +552,14 @@ model AiChatMessage {
   model          String?    @db.VarChar(120)
   latencyMs      Int?       @map("latency_ms")
   contextSources Json?      @map("context_sources")
+  toolCalls      Json?      @map("tool_calls")
+  toolResults    Json?      @map("tool_results")
+  omittedTools   Json?      @map("omitted_tools")
   errorCode      String?    @map("error_code") @db.VarChar(80)
   createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at")
+  editedAt       DateTime?  @map("edited_at")
+  deletedAt      DateTime?  @map("deleted_at")
 
   thread  AiChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
   project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -555,6 +568,7 @@ model AiChatMessage {
   @@index([threadId, createdAt])
   @@index([projectId, createdAt])
   @@index([userId])
+  @@index([deletedAt])
   @@map("ai_chat_messages")
 }
 
@@ -572,6 +586,25 @@ model ProjectAiSetting {
 
   @@index([defaultProviderProfileId])
   @@map("project_ai_settings")
+}
+
+model AiSystemSetting {
+  id                       String   @id @default("global") @db.VarChar(40)
+  defaultProviderProfileId String?  @map("default_provider_profile_id")
+  enabledSourceTools       Json?    @map("enabled_source_tools")
+  globalSystemPrompt       String?  @map("global_system_prompt") @db.Text
+  maxContextItems          Int      @default(40) @map("max_context_items")
+  allowDrafts              Boolean  @default(true) @map("allow_drafts")
+  updatedBy                String?  @map("updated_by")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at")
+
+  defaultProviderProfile AiProviderProfile? @relation(fields: [defaultProviderProfileId], references: [id], onDelete: SetNull)
+  updater                User?              @relation("AiSystemSettingUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([defaultProviderProfileId])
+  @@index([updatedBy])
+  @@map("ai_system_settings")
 }
 
 model SafetyReport {

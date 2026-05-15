@@ -1,44 +1,45 @@
-import { Navigate, createBrowserRouter } from "react-router-dom";
-import { AppLayout } from "../shared/components/Layout/AppLayout";
-import { AccessDeniedPage } from "../shared/components/AccessDeniedPage";
-import { ROUTES } from "../shared/constants/routes";
-import { ApprovalsPage } from "../features/approvals/pages/ApprovalsPage";
-import { LoginPage } from "../features/auth/pages/LoginPage";
-import { ForgotPasswordPage } from "../features/auth/pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "../features/auth/pages/ResetPasswordPage";
-import { ChangePasswordPage } from "../features/auth/pages/ChangePasswordPage";
-import { AuditLogPage } from "../features/audit/pages/AuditLogPage";
-import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
-import { DocumentsPage } from "../features/documents/pages/DocumentsPage";
-import { DocumentSearchPage } from "../features/documents/pages/DocumentSearchPage";
-import { NotificationsPage } from "../features/notifications/pages/NotificationsPage";
-import { ProfilePage } from "../features/settings/pages/ProfilePage";
-import { SettingsIndexPage } from "../features/settings/pages/SettingsIndexPage";
-import { ProjectDetailPage } from "../features/projects/pages/ProjectDetailPage";
-import { ProjectFilesTab } from "../features/projects/pages/ProjectFilesTab";
-import { ProjectListPage } from "../features/projects/pages/ProjectListPage";
-import { ProjectMembersTab } from "../features/projects/pages/ProjectMembersTab";
-import { ProjectOverviewTab } from "../features/projects/pages/ProjectOverviewTab";
-import { ProjectSettingsPage } from "../features/projects/pages/ProjectSettingsPage";
-import { ReportCreatePage } from "../features/reports/pages/ReportCreatePage";
-import { ReportDetailPage } from "../features/reports/pages/ReportDetailPage";
-import { ReportListPage } from "../features/reports/pages/ReportListPage";
-import { SafetyDashboardPage } from "../features/safety/pages/SafetyDashboardPage";
-import { SafetyReportPage } from "../features/safety/pages/SafetyReportPage";
-import { QualityDashboardPage } from "../features/quality/pages/QualityDashboardPage";
-import { QualityReportPage } from "../features/quality/pages/QualityReportPage";
-import { WarehouseDashboardPage } from "../features/warehouse/pages/WarehouseDashboardPage";
-import { WarehouseInventoryPage } from "../features/warehouse/pages/WarehouseInventoryPage";
-import { WarehouseTransactionPage } from "../features/warehouse/pages/WarehouseTransactionPage";
-import { BudgetOverviewPage } from "../features/budget/pages/BudgetOverviewPage";
-import { BudgetApprovalPage } from "../features/budget/pages/BudgetApprovalPage";
-import { ProjectAiChatPage } from "../features/ai/pages/ProjectAiChatPage";
-import { TaskCreatePage } from "../features/tasks/pages/TaskCreatePage";
-import { TaskDetailPage } from "../features/tasks/pages/TaskDetailPage";
-import { TaskListPage } from "../features/tasks/pages/TaskListPage";
-import { UserManagementPage } from "../features/users/pages/UserManagementPage";
-import { PermissionGuard } from "./PermissionGuard";
-import { ProtectedRoute } from "./ProtectedRoute";
+import { Navigate, createBrowserRouter } from 'react-router-dom'
+import { AppLayout } from '../shared/components/Layout/AppLayout'
+import { AccessDeniedPage } from '../shared/components/AccessDeniedPage'
+import { ROUTES } from '../shared/constants/routes'
+import { ApprovalsPage } from '../features/approvals/pages/ApprovalsPage'
+import { LoginPage } from '../features/auth/pages/LoginPage'
+import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
+import { ChangePasswordPage } from '../features/auth/pages/ChangePasswordPage'
+import { AuditLogPage } from '../features/audit/pages/AuditLogPage'
+import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
+import { DocumentsPage } from '../features/documents/pages/DocumentsPage'
+import { DocumentSearchPage } from '../features/documents/pages/DocumentSearchPage'
+import { NotificationsPage } from '../features/notifications/pages/NotificationsPage'
+import { ProfilePage } from '../features/settings/pages/ProfilePage'
+import { SettingsIndexPage } from '../features/settings/pages/SettingsIndexPage'
+import { ProjectDetailPage } from '../features/projects/pages/ProjectDetailPage'
+import { ProjectFilesTab } from '../features/projects/pages/ProjectFilesTab'
+import { ProjectListPage } from '../features/projects/pages/ProjectListPage'
+import { ProjectMembersTab } from '../features/projects/pages/ProjectMembersTab'
+import { ProjectOverviewTab } from '../features/projects/pages/ProjectOverviewTab'
+import { ProjectSettingsPage } from '../features/projects/pages/ProjectSettingsPage'
+import { ReportCreatePage } from '../features/reports/pages/ReportCreatePage'
+import { ReportDetailPage } from '../features/reports/pages/ReportDetailPage'
+import { ReportListPage } from '../features/reports/pages/ReportListPage'
+import { SafetyDashboardPage } from '../features/safety/pages/SafetyDashboardPage'
+import { SafetyReportPage } from '../features/safety/pages/SafetyReportPage'
+import { QualityDashboardPage } from '../features/quality/pages/QualityDashboardPage'
+import { QualityReportPage } from '../features/quality/pages/QualityReportPage'
+import { WarehouseDashboardPage } from '../features/warehouse/pages/WarehouseDashboardPage'
+import { WarehouseInventoryPage } from '../features/warehouse/pages/WarehouseInventoryPage'
+import { WarehouseTransactionPage } from '../features/warehouse/pages/WarehouseTransactionPage'
+import { BudgetOverviewPage } from '../features/budget/pages/BudgetOverviewPage'
+import { BudgetApprovalPage } from '../features/budget/pages/BudgetApprovalPage'
+import { ProjectAiChatPage } from '../features/ai/pages/ProjectAiChatPage'
+import { AiSettingsPage } from '../features/ai/pages/AiSettingsPage'
+import { TaskCreatePage } from '../features/tasks/pages/TaskCreatePage'
+import { TaskDetailPage } from '../features/tasks/pages/TaskDetailPage'
+import { TaskListPage } from '../features/tasks/pages/TaskListPage'
+import { UserManagementPage } from '../features/users/pages/UserManagementPage'
+import { PermissionGuard } from './PermissionGuard'
+import { ProtectedRoute } from './ProtectedRoute'
 
 export const router = createBrowserRouter([
   {
@@ -50,11 +51,15 @@ export const router = createBrowserRouter([
     element: <ForgotPasswordPage />,
   },
   {
-    path: "/reset-password/:token",
+    path: '/reset-password/:token',
     element: <ResetPasswordPage />,
   },
   {
-    path: "/",
+    path: '/reset-password',
+    element: <ResetPasswordPage />,
+  },
+  {
+    path: '/',
     element: (
       <ProtectedRoute>
         <AppLayout />
@@ -62,25 +67,33 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to={ROUTES.DASHBOARD} replace /> },
-      { path: "dashboard", element: <DashboardPage /> },
-      { path: "projects", element: <ProjectListPage /> },
-      { path: "notifications", element: <NotificationsPage /> },
+      { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'projects', element: <ProjectListPage /> },
+      { path: 'notifications', element: <NotificationsPage /> },
       {
-        path: "projects/:id",
+        path: 'projects/:id/ai-chat',
+        element: (
+          <PermissionGuard toolId="AI_ASSISTANT" minLevel="READ">
+            <ProjectAiChatPage />
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: 'projects/:id',
         element: <ProjectDetailPage />,
         children: [
           { index: true, element: <ProjectOverviewTab /> },
-          { path: "reports", element: <ReportListPage /> },
-          { path: "reports/new", element: <ReportCreatePage /> },
-          { path: "reports/:reportId", element: <ReportDetailPage /> },
-          { path: "tasks", element: <TaskListPage /> },
-          { path: "tasks/new", element: <TaskCreatePage /> },
-          { path: "tasks/:taskId", element: <TaskDetailPage /> },
-          { path: "members", element: <ProjectMembersTab /> },
-          { path: "files", element: <ProjectFilesTab /> },
-          { path: "documents", element: <DocumentsPage /> },
+          { path: 'reports', element: <ReportListPage /> },
+          { path: 'reports/new', element: <ReportCreatePage /> },
+          { path: 'reports/:reportId', element: <ReportDetailPage /> },
+          { path: 'tasks', element: <TaskListPage /> },
+          { path: 'tasks/new', element: <TaskCreatePage /> },
+          { path: 'tasks/:taskId', element: <TaskDetailPage /> },
+          { path: 'members', element: <ProjectMembersTab /> },
+          { path: 'files', element: <ProjectFilesTab /> },
+          { path: 'documents', element: <DocumentsPage /> },
           {
-            path: "safety",
+            path: 'safety',
             element: (
               <PermissionGuard toolId="SAFETY" minLevel="READ">
                 <SafetyDashboardPage />
@@ -88,7 +101,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "safety/new",
+            path: 'safety/new',
             element: (
               <PermissionGuard toolId="SAFETY" minLevel="STANDARD">
                 <SafetyReportPage />
@@ -96,7 +109,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "safety/:reportId",
+            path: 'safety/:reportId',
             element: (
               <PermissionGuard toolId="SAFETY" minLevel="READ">
                 <SafetyReportPage />
@@ -104,7 +117,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "quality",
+            path: 'quality',
             element: (
               <PermissionGuard toolId="QUALITY" minLevel="READ">
                 <QualityDashboardPage />
@@ -112,7 +125,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "quality/new",
+            path: 'quality/new',
             element: (
               <PermissionGuard toolId="QUALITY" minLevel="STANDARD">
                 <QualityReportPage />
@@ -120,7 +133,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "quality/:reportId",
+            path: 'quality/:reportId',
             element: (
               <PermissionGuard toolId="QUALITY" minLevel="READ">
                 <QualityReportPage />
@@ -128,7 +141,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "warehouse",
+            path: 'warehouse',
             element: (
               <PermissionGuard toolId="WAREHOUSE" minLevel="READ">
                 <WarehouseDashboardPage />
@@ -136,7 +149,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "warehouse/inventory/:inventoryId",
+            path: 'warehouse/inventory/:inventoryId',
             element: (
               <PermissionGuard toolId="WAREHOUSE" minLevel="READ">
                 <WarehouseInventoryPage />
@@ -144,7 +157,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "warehouse/transactions/new",
+            path: 'warehouse/transactions/new',
             element: (
               <PermissionGuard toolId="WAREHOUSE" minLevel="READ">
                 <WarehouseTransactionPage />
@@ -152,7 +165,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "budget",
+            path: 'budget',
             element: (
               <PermissionGuard toolId="BUDGET" minLevel="READ">
                 <BudgetOverviewPage />
@@ -160,7 +173,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "budget/approvals",
+            path: 'budget/approvals',
             element: (
               <PermissionGuard toolId="BUDGET" minLevel="READ">
                 <BudgetApprovalPage />
@@ -168,15 +181,7 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "ai-chat",
-            element: (
-              <PermissionGuard toolId="AI_ASSISTANT" minLevel="READ">
-                <ProjectAiChatPage />
-              </PermissionGuard>
-            ),
-          },
-          {
-            path: "settings",
+            path: 'settings',
             element: (
               <PermissionGuard toolId="PROJECT" minLevel="ADMIN">
                 <ProjectSettingsPage />
@@ -185,35 +190,43 @@ export const router = createBrowserRouter([
           },
         ],
       },
-      { path: "documents/search", element: <DocumentSearchPage /> },
+      { path: 'documents/search', element: <DocumentSearchPage /> },
       {
-        path: "users",
+        path: 'users',
         element: (
-          <PermissionGuard systemRoles={["ADMIN"]}>
+          <PermissionGuard systemRoles={['ADMIN']}>
             <UserManagementPage />
           </PermissionGuard>
         ),
       },
       {
-        path: "approvals",
+        path: 'approvals',
         element: (
-          <PermissionGuard systemRoles={["ADMIN", "STAFF"]}>
+          <PermissionGuard systemRoles={['ADMIN', 'STAFF']}>
             <ApprovalsPage />
           </PermissionGuard>
         ),
       },
       {
-        path: "audit-logs",
+        path: 'audit-logs',
         element: (
-          <PermissionGuard systemRoles={["ADMIN"]}>
+          <PermissionGuard systemRoles={['ADMIN']}>
             <AuditLogPage />
           </PermissionGuard>
         ),
       },
-      { path: "settings", element: <SettingsIndexPage /> },
-      { path: "settings/profile", element: <ProfilePage /> },
-      { path: "settings/change-password", element: <ChangePasswordPage /> },
-      { path: "access-denied", element: <AccessDeniedPage /> },
+      { path: 'settings', element: <SettingsIndexPage /> },
+      { path: 'settings/profile', element: <ProfilePage /> },
+      { path: 'settings/change-password', element: <ChangePasswordPage /> },
+      {
+        path: 'settings/ai',
+        element: (
+          <PermissionGuard systemRoles={['ADMIN']}>
+            <AiSettingsPage />
+          </PermissionGuard>
+        ),
+      },
+      { path: 'access-denied', element: <AccessDeniedPage /> },
     ],
   },
-]);
+])

@@ -47,23 +47,28 @@ Error:
 ## Auth Flow
 
 Login:
+
 - `POST /auth/login`
 - set cookie `access_token`
 - set cookie `refresh_token`
 
 Session restore:
+
 - `GET /auth/me`
 - tra user hien tai neu cookie hop le
 
 Refresh:
+
 - `POST /auth/refresh`
 - dung `refresh_token` cookie de cap lai `access_token`
 
 Logout:
+
 - `POST /auth/logout`
 - xoa `access_token` va `refresh_token`
 
 JWT access token contract:
+
 - claim duoc support: `id`, `email`, `systemRole`
 - khong con dung claim `role` legacy
 
@@ -77,6 +82,7 @@ JWT access token contract:
 ## Main Route Groups
 
 Public:
+
 - `GET /health`
 - `POST /auth/login`
 - `POST /auth/forgot-password`
@@ -84,6 +90,7 @@ Public:
 - `POST /auth/refresh`
 
 System-level protected:
+
 - `/auth/me`
 - `/auth/logout`
 - `/auth/change-password`
@@ -93,6 +100,7 @@ System-level protected:
 - `/notifications`
 
 Project-scoped protected:
+
 - `/projects`
 - `/projects/:projectId/members`
 - `/projects/:projectId/reports`
@@ -106,6 +114,7 @@ Project-scoped protected:
 - `/projects/:projectId/settings`
 
 Other protected:
+
 - `/documents`
 - `/permissions`
 - `/approvals`
@@ -113,14 +122,17 @@ Other protected:
 ## Authorization Model
 
 System-level:
+
 - middleware `authorize(...)` check `req.user.systemRole`
 
 Project-level:
+
 - `requireProjectMembership`
 - `loadUserPermissions`
 - `requireToolPermission(toolId, level)`
 
 Quyen project duoc tinh tu:
+
 - `systemRole`
 - `projectRole`
 - `project_tool_permissions`

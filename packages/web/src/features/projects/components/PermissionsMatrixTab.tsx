@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from 'react'
 import {
   PERMISSION_LEVELS,
   PERMISSION_LEVEL_LABELS,
@@ -6,61 +6,61 @@ import {
   TOOL_LABELS,
   type PermissionLevel,
   type ToolId,
-} from "@construction/shared";
-import type { ProjectPermissionMatrixResponse } from "../api/projectSettingsApi";
-import { projectSettingsApi } from "../api/projectSettingsApi";
-import { useUiStore } from "../../../store/uiStore";
+} from '@construction/shared'
+import type { ProjectPermissionMatrixResponse } from '../api/projectSettingsApi'
+import { projectSettingsApi } from '../api/projectSettingsApi'
+import { useUiStore } from '../../../store/uiStore'
 
 interface PermissionsMatrixTabProps {
-  projectId: string;
-  matrix: ProjectPermissionMatrixResponse;
-  onRefresh: () => Promise<void>;
+  projectId: string
+  matrix: ProjectPermissionMatrixResponse
+  onRefresh: () => Promise<void>
 }
 
 function keyOf(userId: string, toolId: ToolId) {
-  return `${userId}:${toolId}`;
+  return `${userId}:${toolId}`
 }
 
 export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: PermissionsMatrixTabProps) {
-  const showToast = useUiStore((state) => state.showToast);
-  const [pending, setPending] = useState<Record<string, PermissionLevel>>({});
-  const [isApplying, setIsApplying] = useState(false);
-  const [resettingUserId, setResettingUserId] = useState<string | null>(null);
+  const showToast = useUiStore((state) => state.showToast)
+  const [pending, setPending] = useState<Record<string, PermissionLevel>>({})
+  const [isApplying, setIsApplying] = useState(false)
+  const [resettingUserId, setResettingUserId] = useState<string | null>(null)
 
   const overridesByKey = useMemo(() => {
-    const map = new Map<string, PermissionLevel>();
+    const map = new Map<string, PermissionLevel>()
     for (const override of matrix.overrides) {
-      map.set(keyOf(override.userId, override.toolId), override.level);
+      map.set(keyOf(override.userId, override.toolId), override.level)
     }
-    return map;
-  }, [matrix.overrides]);
+    return map
+  }, [matrix.overrides])
 
   const currentLevel = (userId: string, toolId: ToolId): PermissionLevel => {
-    const member = matrix.members.find((item) => item.userId === userId);
-    if (!member) return "NONE";
-    return (member.toolPermissions[toolId] ?? "NONE") as PermissionLevel;
-  };
+    const member = matrix.members.find((item) => item.userId === userId)
+    if (!member) return 'NONE'
+    return (member.toolPermissions[toolId] ?? 'NONE') as PermissionLevel
+  }
 
   const handleApplyChanges = async () => {
-    const entries = Object.entries(pending);
+    const entries = Object.entries(pending)
     if (entries.length === 0) {
-      return;
+      return
     }
 
-    setIsApplying(true);
+    setIsApplying(true)
     try {
       for (const [compoundKey, level] of entries) {
-        const [userId, toolIdRaw] = compoundKey.split(":");
-        const toolId = toolIdRaw as ToolId;
-        const existingOverride = overridesByKey.get(compoundKey);
-        const current = currentLevel(userId, toolId);
+        const [userId, toolIdRaw] = compoundKey.split(':')
+        const toolId = toolIdRaw as ToolId
+        const existingOverride = overridesByKey.get(compoundKey)
+        const current = currentLevel(userId, toolId)
 
         if (existingOverride === level) {
-          continue;
+          continue
         }
 
         if (!existingOverride && current === level) {
-          continue;
+          continue
         }
 
         await projectSettingsApi.upsertPermissionOverride({
@@ -68,59 +68,59 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
           userId,
           toolId,
           level,
-        });
+        })
       }
 
-      setPending({});
-      await onRefresh();
-      showToast({ type: "success", title: "Đã cập nhật ma trận phân quyền" });
+      setPending({})
+      await onRefresh()
+      showToast({ type: 'success', title: 'Đã cập nhật ma trận phân quyền' })
     } catch (error) {
       showToast({
-        type: "error",
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Không thể cập nhật ma trận phân quyền",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể cập nhật ma trận phân quyền',
+      })
     } finally {
-      setIsApplying(false);
+      setIsApplying(false)
     }
-  };
+  }
 
   const resetUserOverrides = async (userId: string) => {
-    const userOverrides = matrix.overrides.filter((override) => override.userId === userId);
+    const userOverrides = matrix.overrides.filter((override) => override.userId === userId)
     if (userOverrides.length === 0) {
-      return;
+      return
     }
 
-    setResettingUserId(userId);
+    setResettingUserId(userId)
     try {
       for (const override of userOverrides) {
         await projectSettingsApi.removePermissionOverride({
           projectId,
           userId: override.userId,
           toolId: override.toolId,
-        });
+        })
       }
 
       setPending((prev) => {
-        const next = { ...prev };
+        const next = { ...prev }
         for (const toolId of TOOL_IDS) {
-          delete next[keyOf(userId, toolId)];
+          delete next[keyOf(userId, toolId)]
         }
-        return next;
-      });
+        return next
+      })
 
-      await onRefresh();
-      showToast({ type: "success", title: "Đã đặt lại ghi đè của người dùng" });
+      await onRefresh()
+      showToast({ type: 'success', title: 'Đã đặt lại ghi đè của người dùng' })
     } catch (error) {
       showToast({
-        type: "error",
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Không thể đặt lại ghi đè",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể đặt lại ghi đè',
+      })
     } finally {
-      setResettingUserId(null);
+      setResettingUserId(null)
     }
-  };
+  }
 
   return (
     <div className="space-y-3">
@@ -158,10 +158,10 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
                 </td>
 
                 {TOOL_IDS.map((toolId) => {
-                  const cellKey = keyOf(member.userId, toolId);
-                  const effectiveLevel = currentLevel(member.userId, toolId);
-                  const overrideLevel = overridesByKey.get(cellKey);
-                  const value = pending[cellKey] ?? effectiveLevel;
+                  const cellKey = keyOf(member.userId, toolId)
+                  const effectiveLevel = currentLevel(member.userId, toolId)
+                  const overrideLevel = overridesByKey.get(cellKey)
+                  const value = pending[cellKey] ?? effectiveLevel
 
                   return (
                     <td key={toolId} className="px-3 py-2 align-top">
@@ -175,8 +175,8 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
                         }
                         className={`w-full rounded-lg border px-2 py-1 text-xs font-medium ${
                           overrideLevel
-                            ? "border-brand-200 bg-brand-50 text-brand-700"
-                            : "border-slate-200 bg-slate-50 text-slate-700"
+                            ? 'border-brand-200 bg-brand-50 text-brand-700'
+                            : 'border-slate-200 bg-slate-50 text-slate-700'
                         }`}
                       >
                         {PERMISSION_LEVELS.map((level) => (
@@ -185,11 +185,9 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
                           </option>
                         ))}
                       </select>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        {overrideLevel ? "Ghi đè" : "Mặc định"}
-                      </p>
+                      <p className="mt-1 text-[11px] text-slate-400">{overrideLevel ? 'Ghi đè' : 'Mặc định'}</p>
                     </td>
-                  );
+                  )
                 })}
 
                 <td className="px-3 py-2 text-right align-top">
@@ -207,8 +205,5 @@ export function PermissionsMatrixTab({ projectId, matrix, onRefresh }: Permissio
         </table>
       </div>
     </div>
-  );
+  )
 }
-
-
-

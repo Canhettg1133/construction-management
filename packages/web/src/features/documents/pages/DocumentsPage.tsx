@@ -45,8 +45,8 @@ function formatFileSize(bytes: number) {
 }
 
 /**
- * Fixes filenames that were incorrectly encoded as Latin1 instead of UTF-8.
- * Example: "TÃ i liá»‡u" -> "Tài liệu"
+ * Sửa tên tệp bị đọc nhầm mã hóa Latin1 thay vì UTF-8.
+ * Ví dụ: tên tệp bị lỗi mã hóa sẽ được đổi về "Tài liệu".
  */
 function sanitizeMangledVietnamese(str: string): string {
   try {
@@ -95,8 +95,7 @@ export function DocumentsPage() {
   const uploadInputRef = useRef<HTMLInputElement>(null)
   const replaceInputRef = useRef<HTMLInputElement>(null)
   const normalizedSystemRole = user?.systemRole?.toUpperCase?.()
-  const canEditDocuments =
-    normalizedSystemRole === 'ADMIN'
+  const canEditDocuments = normalizedSystemRole === 'ADMIN'
   const canMoveToTrash = normalizedSystemRole === 'ADMIN'
   const canPermanentlyDelete = normalizedSystemRole === 'ADMIN'
 
@@ -629,7 +628,11 @@ export function DocumentsPage() {
                             className="rounded-lg p-1.5 text-red-500 hover:bg-red-50"
                             disabled={moveToTrashMutation.isPending}
                             onClick={() => {
-                              if (confirm(`Chuyển tài liệu "${sanitizeMangledVietnamese(file.originalName)}" vào thùng rác?`)) {
+                              if (
+                                confirm(
+                                  `Chuyển tài liệu "${sanitizeMangledVietnamese(file.originalName)}" vào thùng rác?`,
+                                )
+                              ) {
                                 moveToTrashMutation.mutate(file.id)
                               }
                             }}

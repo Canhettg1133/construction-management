@@ -1,23 +1,23 @@
-import { Warehouse, AlertTriangle, TrendingUp } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
-import { formatNumber } from "./utils";
+import { Warehouse, AlertTriangle, TrendingUp } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
+import { formatNumber } from './utils'
 
 export function WarehouseOverviewWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.isQuality) {
-    return null;
+    return null
   }
 
-  const stats = data?.warehouseStats;
+  const stats = data?.warehouseStats
 
   return (
     <div className="app-card">
       <div className="mb-3 flex items-center gap-2">
         <Warehouse className="h-4 w-4 text-indigo-600" />
-        <h3 className="text-sm font-semibold text-slate-700">Tổng quan kho phục vụ QC</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Tổng quan kho phục vụ chất lượng</h3>
       </div>
 
       <div className="space-y-2">
@@ -27,7 +27,7 @@ export function WarehouseOverviewWidget() {
         <Row label="Xuất kho tháng này" value={formatNumber(stats?.thisMonthOut)} icon={TrendingUp} />
       </div>
     </div>
-  );
+  )
 }
 
 function Row({
@@ -35,9 +35,9 @@ function Row({
   value,
   icon: Icon,
 }: {
-  label: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
+  label: string
+  value: string
+  icon: React.ComponentType<{ className?: string }>
 }) {
   return (
     <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
@@ -47,5 +47,5 @@ function Row({
       </div>
       <span className="text-sm font-semibold text-slate-900">{value}</span>
     </div>
-  );
+  )
 }

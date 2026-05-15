@@ -1,16 +1,16 @@
-import { ClipboardCheck } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
+import { ClipboardCheck } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
 
 export function PendingSafetyApprovalsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.isSafety) {
-    return null;
+    return null
   }
 
-  const pending = data?.pendingSafetyApprovals ?? data?.safetyStats?.pendingApprovals ?? 0;
+  const pending = data?.pendingSafetyApprovals ?? data?.safetyStats?.pendingApprovals ?? 0
 
   return (
     <div className="app-card">
@@ -25,5 +25,5 @@ export function PendingSafetyApprovalsWidget() {
         <p className="mt-1 text-xs text-amber-700">Cần xử lý để bảo đảm tuân thủ an toàn công trường.</p>
       </div>
     </div>
-  );
+  )
 }

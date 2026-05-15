@@ -1,95 +1,93 @@
-import type { Request, Response } from "express";
-import { authService } from "./auth.service";
-import { authRepository } from "./auth.repository";
-import { UnauthorizedError } from "../../shared/errors";
-import { sendSuccess } from "../../shared/utils";
-import { env } from "../../config/env";
-import { logger } from "../../config/logger";
+import type { Request, Response } from 'express'
+import { authService } from './auth.service'
+import { authRepository } from './auth.repository'
+import { UnauthorizedError } from '../../shared/errors'
+import { sendSuccess } from '../../shared/utils'
+import { env } from '../../config/env'
+import { logger } from '../../config/logger'
 
-const isProd = env.NODE_ENV === "production";
+const isProd = env.NODE_ENV === 'production'
 
 export const authController = {
   async login(req: Request, res: Response) {
-    const { email, password } = req.body;
-    const result = await authService.login(email, password);
+    const { email, password } = req.body
+    const result = await authService.login(email, password)
 
-    res.cookie("access_token", result.accessToken, {
+    res.cookie('access_token', result.accessToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
-      path: "/",
+      sameSite: 'strict',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    })
 
-    res.cookie("refresh_token", result.refreshToken, {
+    res.cookie('refresh_token', result.refreshToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
-      path: "/api/v1/auth/refresh",
+      sameSite: 'strict',
+      path: '/api/v1/auth/refresh',
       maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    })
 
-    logger.info({ userId: result.user.id }, "User logged in");
-    return sendSuccess(res, { user: result.user });
+    logger.info({ userId: result.user.id }, 'User logged in')
+    return sendSuccess(res, { user: result.user })
   },
 
   async logout(_req: Request, res: Response) {
-    res.clearCookie("access_token", { path: "/" });
-    res.clearCookie("refresh_token", { path: "/api/v1/auth/refresh" });
-    return sendSuccess(res, null);
+    res.clearCookie('access_token', { path: '/' })
+    res.clearCookie('refresh_token', { path: '/api/v1/auth/refresh' })
+    return sendSuccess(res, null)
   },
 
   async refresh(req: Request, res: Response) {
-    const token = req.cookies?.refresh_token;
+    const token = req.cookies?.refresh_token
     if (!token) {
-      return res.status(401).json({ success: false, error: { code: "UNAUTHORIZED", message: "Chưa đăng nhập" } });
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Chưa đăng nhập' } })
     }
 
-    const decoded = authService.verifyRefreshToken(token);
+    const decoded = authService.verifyRefreshToken(token)
+    const user = await authRepository.findById(decoded.id)
+    if (!user || user.deletedAt || !user.isActive) {
+      throw new UnauthorizedError('Phiên đăng nhập không hợp lệ')
+    }
 
-    // Generate a new access token with minimal claims (ID + role)
-    // The refresh endpoint intentionally does NOT re-fetch user from DB for performance
-    const newAccessToken = authService.generateAccessToken(
-      decoded.id,
-      "", // email will be re-fetched from /me endpoint
-      ""  // systemRole will be re-fetched from /me endpoint
-    );
+    const newAccessToken = authService.generateAccessToken(user.id, user.email, user.systemRole)
 
-    res.cookie("access_token", newAccessToken, {
+    res.cookie('access_token', newAccessToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
-      path: "/",
+      sameSite: 'strict',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    })
 
-    return sendSuccess(res, null);
+    return sendSuccess(res, null)
   },
 
   async forgotPassword(req: Request, res: Response) {
-    await authService.forgotPassword(req.body.email);
-    return sendSuccess(res, null);
+    await authService.forgotPassword(req.body.email)
+    return sendSuccess(res, null)
   },
 
   async resetPassword(req: Request, res: Response) {
-    await authService.resetPassword(req.body.token, req.body.newPassword);
-    return sendSuccess(res, null);
+    await authService.resetPassword(req.body.token, req.body.newPassword)
+    return sendSuccess(res, null)
   },
 
   async changePassword(req: Request, res: Response) {
-    const { currentPassword, newPassword } = req.body;
-    await authService.changePassword(req.user!.id, currentPassword, newPassword);
-    return sendSuccess(res, null);
+    const { currentPassword, newPassword } = req.body
+    await authService.changePassword(req.user!.id, currentPassword, newPassword)
+    return sendSuccess(res, null)
   },
 
   async me(req: Request, res: Response) {
-    const user = await authRepository.findById(req.user!.id);
+    const user = await authRepository.findById(req.user!.id)
     if (!user || user.deletedAt) {
-      throw new UnauthorizedError("Không tìm thấy người dùng");
+      throw new UnauthorizedError('Không tìm thấy người dùng')
     }
     return sendSuccess(res, {
       id: user.id,
-      name: user.name ?? "",
+      name: user.name ?? '',
       email: user.email,
       systemRole: user.systemRole,
       specialty: user.specialty ?? null,
@@ -99,6 +97,6 @@ export const authController = {
       lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
-    });
+    })
   },
-};
+}

@@ -1,4 +1,4 @@
-import { SkeletonCard } from "../../../../shared/components/feedback/SkeletonCard";
+import { SkeletonCard } from '../../../../shared/components/feedback/SkeletonCard'
 
 export function DashboardSkeleton() {
   return (
@@ -17,6 +17,5 @@ export function DashboardSkeleton() {
       </div>
       <SkeletonCard lines={4} />
     </div>
-  );
+  )
 }
-

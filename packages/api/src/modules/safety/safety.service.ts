@@ -359,7 +359,7 @@ export const safetyService = {
     await ensureProjectExists(projectId)
 
     if (!canManageAnyReport(actor)) {
-      throw new ForbiddenError('Chỉ Admin hoặc PM được mở lại báo cáo đã duyệt')
+      throw new ForbiddenError('Chỉ quản trị viên hoặc quản lý dự án được mở lại báo cáo đã duyệt')
     }
 
     const reason = parseReopenReason(payload.reason)

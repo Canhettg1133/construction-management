@@ -1,43 +1,43 @@
-import { ArrowDownUp } from "lucide-react";
-import type { WarehouseTransaction } from "@construction/shared";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
+import { ArrowDownUp } from 'lucide-react'
+import type { WarehouseTransaction } from '@construction/shared'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
 
 function statusTone(status: string): string {
-  if (status === "APPROVED") return "text-emerald-700 bg-emerald-50";
-  if (status === "REJECTED") return "text-red-700 bg-red-50";
-  if (status === "PENDING") return "text-amber-700 bg-amber-50";
-  return "text-slate-700 bg-slate-100";
+  if (status === 'APPROVED') return 'text-emerald-700 bg-emerald-50'
+  if (status === 'REJECTED') return 'text-red-700 bg-red-50'
+  if (status === 'PENDING') return 'text-amber-700 bg-amber-50'
+  return 'text-slate-700 bg-slate-100'
 }
 
 function statusLabel(status: string): string {
-  if (status === "APPROVED") return "Đã duyệt";
-  if (status === "REJECTED") return "Từ chối";
-  if (status === "PENDING") return "Chờ duyệt";
-  return status;
+  if (status === 'APPROVED') return 'Đã duyệt'
+  if (status === 'REJECTED') return 'Từ chối'
+  if (status === 'PENDING') return 'Chờ duyệt'
+  return status
 }
 
 function typeLabel(type: string): string {
-  if (type === "IN") return "Nhập";
-  if (type === "OUT") return "Xuất";
-  if (type === "REQUEST") return "Yêu cầu";
-  return type;
+  if (type === 'IN') return 'Nhập'
+  if (type === 'OUT') return 'Xuất'
+  if (type === 'REQUEST') return 'Yêu cầu'
+  return type
 }
 
 function toNumber(value: number | string | null | undefined): number {
-  const num = typeof value === "number" ? value : Number(value ?? 0);
-  return Number.isFinite(num) ? num : 0;
+  const num = typeof value === 'number' ? value : Number(value ?? 0)
+  return Number.isFinite(num) ? num : 0
 }
 
 export function RecentTransactionsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.isWarehouse) {
-    return null;
+    return null
   }
 
-  const transactions = (data?.recentTransactions ?? []) as WarehouseTransaction[];
+  const transactions = (data?.recentTransactions ?? []) as WarehouseTransaction[]
 
   return (
     <div className="app-card">
@@ -54,7 +54,7 @@ export function RecentTransactionsWidget() {
             <div key={transaction.id} className="rounded-xl border border-slate-200 p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-medium text-slate-900">
-                  {transaction.inventory?.materialName ?? "Vật tư"}
+                  {transaction.inventory?.materialName ?? 'Vật tư'}
                 </p>
                 <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${statusTone(transaction.status)}`}>
                   {statusLabel(transaction.status)}
@@ -62,15 +62,15 @@ export function RecentTransactionsWidget() {
               </div>
               <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
                 <span>
-                  {typeLabel(transaction.type)}: {toNumber(transaction.quantity).toLocaleString("vi-VN")}{" "}
-                  {transaction.inventory?.unit ?? ""}
+                  {typeLabel(transaction.type)}: {toNumber(transaction.quantity).toLocaleString('vi-VN')}{' '}
+                  {transaction.inventory?.unit ?? ''}
                 </span>
-                <span>{new Date(transaction.createdAt).toLocaleDateString("vi-VN")}</span>
+                <span>{new Date(transaction.createdAt).toLocaleDateString('vi-VN')}</span>
               </div>
             </div>
           ))}
         </div>
       )}
     </div>
-  );
+  )
 }

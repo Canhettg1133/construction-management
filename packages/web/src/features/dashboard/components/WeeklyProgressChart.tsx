@@ -1,34 +1,22 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { TrendingUp } from "lucide-react";
-import type { DashboardWeeklyProgress } from "@construction/shared";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { TrendingUp } from 'lucide-react'
+import type { DashboardWeeklyProgress } from '@construction/shared'
 
 interface WeeklyProgressChartProps {
-  data: DashboardWeeklyProgress[];
+  data: DashboardWeeklyProgress[]
 }
 
 export function WeeklyProgressChart({ data }: WeeklyProgressChartProps) {
   const formatted = data.map((item) => ({
     ...item,
-    date: new Date(item.date).toLocaleDateString("vi-VN", {
-      weekday: "short",
-      day: "2-digit",
-      month: "2-digit",
+    date: new Date(item.date).toLocaleDateString('vi-VN', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
     }),
-  }));
+  }))
 
-  const maxValue = Math.max(
-    ...data.map((item) => Math.max(item.totalTasks, item.completedTasks, item.newTasks)),
-    1
-  );
+  const maxValue = Math.max(...data.map((item) => Math.max(item.totalTasks, item.completedTasks, item.newTasks)), 1)
 
   return (
     <div className="app-card">
@@ -43,23 +31,18 @@ export function WeeklyProgressChart({ data }: WeeklyProgressChartProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 11, fill: "#94a3b8" }}
+            tick={{ fontSize: 11, fill: '#94a3b8' }}
             tickLine={false}
-            axisLine={{ stroke: "#e2e8f0" }}
+            axisLine={{ stroke: '#e2e8f0' }}
           />
-          <YAxis
-            tick={{ fontSize: 11, fill: "#94a3b8" }}
-            tickLine={false}
-            axisLine={false}
-            domain={[0, maxValue]}
-          />
+          <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} domain={[0, maxValue]} />
           <Tooltip
             contentStyle={{
               borderRadius: 8,
-              border: "1px solid #e2e8f0",
+              border: '1px solid #e2e8f0',
               fontSize: 12,
             }}
-            labelStyle={{ fontWeight: 600, color: "#334155" }}
+            labelStyle={{ fontWeight: 600, color: '#334155' }}
           />
           <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" iconSize={8} />
           <Bar dataKey="newTasks" name="Công việc mới" fill="#f59e0b" radius={[3, 3, 0, 0]} />
@@ -67,5 +50,5 @@ export function WeeklyProgressChart({ data }: WeeklyProgressChartProps) {
         </BarChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }

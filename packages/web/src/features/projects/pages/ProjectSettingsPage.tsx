@@ -1,38 +1,36 @@
-﻿import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { AiSettingsPanel } from "../../ai/components/AiSettingsPanel";
-import { projectSettingsApi } from "../api/projectSettingsApi";
-import { PermissionsMatrixTab } from "../components/PermissionsMatrixTab";
-import { PrivilegesTab } from "../components/PrivilegesTab";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
+﻿import { useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { projectSettingsApi } from '../api/projectSettingsApi'
+import { PermissionsMatrixTab } from '../components/PermissionsMatrixTab'
+import { PrivilegesTab } from '../components/PrivilegesTab'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
 
-type Tab = "general" | "permissions" | "privileges" | "ai";
+type Tab = 'general' | 'permissions' | 'privileges'
 
 const TAB_LABELS: Record<Tab, string> = {
-  general: "Tổng quan",
-  permissions: "Phân quyền",
-  privileges: "Quyền đặc biệt",
-  ai: "Trợ lý AI",
-};
+  general: 'Tổng quan',
+  permissions: 'Phân quyền',
+  privileges: 'Quyền đặc biệt',
+}
 
 export function ProjectSettingsPage() {
-  const { id } = useParams<{ id: string }>();
-  const projectId = id ?? "";
-  const [activeTab, setActiveTab] = useState<Tab>("general");
+  const { id } = useParams<{ id: string }>()
+  const projectId = id ?? ''
+  const [activeTab, setActiveTab] = useState<Tab>('general')
 
   const settingsQuery = useQuery({
-    queryKey: ["project-settings", projectId],
+    queryKey: ['project-settings', projectId],
     queryFn: () => projectSettingsApi.getSettings(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
   const matrixQuery = useQuery({
-    queryKey: ["project-settings-matrix", projectId],
+    queryKey: ['project-settings-matrix', projectId],
     queryFn: () => projectSettingsApi.getPermissionMatrix(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
   if (settingsQuery.isLoading || matrixQuery.isLoading) {
     return (
@@ -40,15 +38,15 @@ export function ProjectSettingsPage() {
         <SkeletonCard lines={2} />
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (settingsQuery.isError || matrixQuery.isError || !settingsQuery.data || !matrixQuery.data) {
-    return <ErrorState message="Không tải được cài đặt dự án." />;
+    return <ErrorState message="Không tải được cài đặt dự án." />
   }
 
-  const settings = settingsQuery.data;
-  const matrix = matrixQuery.data;
+  const settings = settingsQuery.data
+  const matrix = matrixQuery.data
 
   return (
     <div className="space-y-4">
@@ -60,7 +58,7 @@ export function ProjectSettingsPage() {
           ← Chi tiết dự án
         </Link>
         <h2 className="mt-1">Cài đặt dự án</h2>
-        <p className="page-subtitle">Quản lý phân quyền, quyền đặc biệt và cấu hình Trợ lý AI cho dự án.</p>
+        <p className="page-subtitle">Quản lý phân quyền và quyền đặc biệt cho dự án.</p>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
@@ -71,8 +69,8 @@ export function ProjectSettingsPage() {
               onClick={() => setActiveTab(tab)}
               className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                 activeTab === tab
-                  ? "bg-brand-50 text-brand-700 ring-1 ring-brand-100"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-100'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               {TAB_LABELS[tab]}
@@ -81,7 +79,7 @@ export function ProjectSettingsPage() {
         </div>
       </div>
 
-      {activeTab === "general" && (
+      {activeTab === 'general' && (
         <div className="app-card space-y-3">
           <h3>Tổng quan</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -104,13 +102,13 @@ export function ProjectSettingsPage() {
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
               <p className="text-xs text-slate-500">Bắt đầu</p>
               <p className="text-sm font-medium text-slate-900">
-                {new Date(settings.startDate).toLocaleDateString("vi-VN")}
+                {new Date(settings.startDate).toLocaleDateString('vi-VN')}
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
               <p className="text-xs text-slate-500">Kết thúc</p>
               <p className="text-sm font-medium text-slate-900">
-                {settings.endDate ? new Date(settings.endDate).toLocaleDateString("vi-VN") : "Chưa xác định"}
+                {settings.endDate ? new Date(settings.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}
               </p>
             </div>
           </div>
@@ -132,31 +130,27 @@ export function ProjectSettingsPage() {
         </div>
       )}
 
-      {activeTab === "permissions" && (
+      {activeTab === 'permissions' && (
         <PermissionsMatrixTab
           projectId={projectId}
           matrix={matrix}
           onRefresh={async () => {
-            await matrixQuery.refetch();
-            await settingsQuery.refetch();
+            await matrixQuery.refetch()
+            await settingsQuery.refetch()
           }}
         />
       )}
 
-      {activeTab === "privileges" && (
+      {activeTab === 'privileges' && (
         <PrivilegesTab
           projectId={projectId}
           matrix={matrix}
           onRefresh={async () => {
-            await matrixQuery.refetch();
-            await settingsQuery.refetch();
+            await matrixQuery.refetch()
+            await settingsQuery.refetch()
           }}
         />
       )}
-
-      {activeTab === "ai" && <AiSettingsPanel projectId={projectId} />}
     </div>
-  );
+  )
 }
-
-

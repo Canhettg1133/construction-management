@@ -1,11 +1,11 @@
-import type { SystemRole } from "@construction/shared";
-import { PermissionGuard } from "./PermissionGuard";
+import type { SystemRole } from '@construction/shared'
+import { PermissionGuard } from './PermissionGuard'
 
 interface RoleGuardProps {
-  roles: SystemRole[];
-  children: React.ReactNode;
+  roles: SystemRole[]
+  children: React.ReactNode
 }
 
 export function RoleGuard({ roles, children }: RoleGuardProps) {
-  return <PermissionGuard systemRoles={roles}>{children}</PermissionGuard>;
+  return <PermissionGuard systemRoles={roles}>{children}</PermissionGuard>
 }

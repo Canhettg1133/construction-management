@@ -1,61 +1,69 @@
-import { taskCommentRepository } from "./task-comment.repository";
-import { NotFoundError, ForbiddenError } from "../../shared/errors";
-import { taskRepository } from "./task.repository";
-import { auditService } from "../audit/audit.service";
-import { AuditEntityType } from "@prisma/client";
+import { taskCommentRepository } from './task-comment.repository'
+import { NotFoundError, ForbiddenError } from '../../shared/errors'
+import { taskRepository } from './task.repository'
+import { auditService } from '../audit/audit.service'
+import { AuditEntityType } from '@prisma/client'
 
 export const taskCommentService = {
-  async list(taskId: string) {
-    return taskCommentRepository.findByTask(taskId);
+  async list(projectId: string, taskId: string) {
+    const task = await taskRepository.findByProjectId(projectId, taskId)
+    if (!task) throw new NotFoundError('Không tìm thấy công việc')
+    return taskCommentRepository.findByTask(taskId)
   },
 
-  async create(taskId: string, authorId: string, content: string) {
-    const task = await taskRepository.findById(taskId);
-    if (!task) throw new NotFoundError("Không tìm thấy task");
+  async create(projectId: string, taskId: string, authorId: string, content: string) {
+    const task = await taskRepository.findByProjectId(projectId, taskId)
+    if (!task) throw new NotFoundError('Không tìm thấy công việc')
 
-    const comment = await taskCommentRepository.create({ taskId, authorId, content });
+    const comment = await taskCommentRepository.create({ taskId, authorId, content })
 
     await auditService.log({
       userId: authorId,
-      action: "CREATE",
+      action: 'CREATE',
       entityType: AuditEntityType.TASK,
       entityId: taskId,
-      description: `Đã bình luận trên task "${task.title}"`,
-    });
+      description: `Đã bình luận trên công việc "${task.title}"`,
+    })
 
-    return comment;
+    return comment
   },
 
-  async update(commentId: string, authorId: string, content: string) {
-    const comment = await taskCommentRepository.findById(commentId);
-    if (!comment) throw new NotFoundError("Không tìm thấy bình luận");
-    if (comment.authorId !== authorId) throw new ForbiddenError("Bạn chỉ có thể sửa bình luận của mình");
+  async update(projectId: string, taskId: string, commentId: string, authorId: string, content: string) {
+    const task = await taskRepository.findByProjectId(projectId, taskId)
+    if (!task) throw new NotFoundError('Không tìm thấy công việc')
 
-    const updated = await taskCommentRepository.update(commentId, content);
+    const comment = await taskCommentRepository.findById(commentId)
+    if (!comment || comment.taskId !== taskId) throw new NotFoundError('Không tìm thấy bình luận')
+    if (comment.authorId !== authorId) throw new ForbiddenError('Bạn chỉ có thể sửa bình luận của mình')
+
+    const updated = await taskCommentRepository.update(commentId, content)
 
     await auditService.log({
       userId: authorId,
-      action: "UPDATE",
+      action: 'UPDATE',
       entityType: AuditEntityType.TASK,
       entityId: comment.taskId,
-      description: `Đã sửa bình luận trên task`,
-    });
+      description: 'Đã sửa bình luận trên công việc',
+    })
 
-    return updated;
+    return updated
   },
 
-  async delete(commentId: string, userId: string) {
-    const comment = await taskCommentRepository.findById(commentId);
-    if (!comment) throw new NotFoundError("Không tìm thấy bình luận");
+  async delete(projectId: string, taskId: string, commentId: string, userId: string) {
+    const task = await taskRepository.findByProjectId(projectId, taskId)
+    if (!task) throw new NotFoundError('Không tìm thấy công việc')
 
-    await taskCommentRepository.delete(commentId);
+    const comment = await taskCommentRepository.findById(commentId)
+    if (!comment || comment.taskId !== taskId) throw new NotFoundError('Không tìm thấy bình luận')
+
+    await taskCommentRepository.delete(commentId)
 
     await auditService.log({
       userId,
-      action: "DELETE",
+      action: 'DELETE',
       entityType: AuditEntityType.TASK,
       entityId: comment.taskId,
-      description: `Đã xóa bình luận trên task`,
-    });
+      description: 'Đã xóa bình luận trên công việc',
+    })
   },
-};
+}

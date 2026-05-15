@@ -1,19 +1,19 @@
-import { Boxes, AlertTriangle, ClipboardList, CircleDollarSign } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
-import { formatCurrency, formatNumber } from "./utils";
+import { Boxes, AlertTriangle, ClipboardList, CircleDollarSign } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
+import { formatCurrency, formatNumber } from './utils'
 
 export function WarehouseStatsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.showWarehouseStats) {
-    return null;
+    return null
   }
 
-  const stats = data?.warehouseStats;
-  const lowStock = stats?.lowStockCount ?? 0;
-  const pendingTransactions = data?.pendingTransactions ?? stats?.pendingRequests ?? 0;
+  const stats = data?.warehouseStats
+  const lowStock = stats?.lowStockCount ?? 0
+  const pendingTransactions = data?.pendingTransactions ?? stats?.pendingRequests ?? 0
 
   return (
     <div className="app-card space-y-4">
@@ -28,34 +28,39 @@ export function WarehouseStatsWidget() {
           icon={AlertTriangle}
           title="Cảnh báo tồn thấp"
           value={formatNumber(lowStock)}
-          tone={lowStock > 0 ? "warning" : "success"}
+          tone={lowStock > 0 ? 'warning' : 'success'}
         />
-        <StatCell icon={ClipboardList} title="Yêu cầu chờ duyệt" value={formatNumber(pendingTransactions)} tone="warning" />
+        <StatCell
+          icon={ClipboardList}
+          title="Yêu cầu chờ duyệt"
+          value={formatNumber(pendingTransactions)}
+          tone="warning"
+        />
         <StatCell icon={CircleDollarSign} title="Giá trị tồn kho" value={formatCurrency(stats?.totalValue)} />
       </div>
     </div>
-  );
+  )
 }
 
 function StatCell({
   icon: Icon,
   title,
   value,
-  tone = "default",
+  tone = 'default',
 }: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  value: string;
-  tone?: "default" | "warning" | "danger" | "success";
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  value: string
+  tone?: 'default' | 'warning' | 'danger' | 'success'
 }) {
   const toneClass =
-    tone === "warning"
-      ? "text-amber-700 bg-amber-50"
-      : tone === "danger"
-      ? "text-red-700 bg-red-50"
-      : tone === "success"
-      ? "text-emerald-700 bg-emerald-50"
-      : "text-slate-700 bg-slate-50";
+    tone === 'warning'
+      ? 'text-amber-700 bg-amber-50'
+      : tone === 'danger'
+        ? 'text-red-700 bg-red-50'
+        : tone === 'success'
+          ? 'text-emerald-700 bg-emerald-50'
+          : 'text-slate-700 bg-slate-50'
 
   return (
     <div className={`flex min-h-32 flex-col rounded-xl border border-slate-200 p-3 ${toneClass}`}>
@@ -65,5 +70,5 @@ function StatCell({
       </div>
       <p className="mt-auto text-2xl font-semibold tracking-tight">{value}</p>
     </div>
-  );
+  )
 }

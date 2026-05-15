@@ -1,13 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
-import request from "supertest";
-import { buildAuthCookie, buildTestUser } from "../../test/request-test-helpers";
+import { describe, expect, it, vi } from 'vitest'
+import request from 'supertest'
+import { buildAuthCookie, buildTestUser } from '../../test/request-test-helpers'
 
-process.env.DATABASE_URL = process.env.DATABASE_URL ?? "mysql://test:test@localhost:3306/test";
-process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-jwt-secret-test-jwt-secret-123";
-process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? "test-refresh-secret-test-refresh-secret-123";
-process.env.NODE_ENV = "test";
+process.env.DATABASE_URL = process.env.DATABASE_URL ?? 'mysql://test:test@localhost:3306/test'
+process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret-test-jwt-secret-123'
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? 'test-refresh-secret-test-refresh-secret-123'
+process.env.NODE_ENV = 'test'
 
-vi.mock("./auth.service", () => ({
+vi.mock('./auth.service', () => ({
   authService: {
     login: vi.fn(),
     forgotPassword: vi.fn().mockResolvedValue(undefined),
@@ -16,104 +16,126 @@ vi.mock("./auth.service", () => ({
     verifyRefreshToken: vi.fn(),
     generateAccessToken: vi.fn(),
   },
-}));
+}))
 
-vi.mock("./auth.repository", () => ({
+vi.mock('./auth.repository', () => ({
   authRepository: {
-    findById: vi.fn().mockResolvedValue(buildTestUser("ENGINEER")),
+    findById: vi.fn().mockResolvedValue(buildTestUser('ENGINEER')),
   },
-}));
+}))
 
-const { default: app } = await import("../../app");
+const { default: app } = await import('../../app')
+const { authService } = await import('./auth.service')
+const { authRepository } = await import('./auth.repository')
 
-describe("Auth - request contract", () => {
-  it("POST /auth/login rejects invalid email format", async () => {
-    const res = await request(app).post("/api/v1/auth/login").send({ email: "not-an-email", password: "password123" });
+describe('Auth - request contract', () => {
+  it('POST /auth/login rejects invalid email format', async () => {
+    const res = await request(app).post('/api/v1/auth/login').send({ email: 'not-an-email', password: 'password123' })
 
-    expect(res.status).toBe(400);
-    expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe("VALIDATION_ERROR");
-  });
+    expect(res.status).toBe(400)
+    expect(res.body.success).toBe(false)
+    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+  })
 
-  it("POST /auth/login rejects empty password", async () => {
-    const res = await request(app).post("/api/v1/auth/login").send({ email: "admin@example.com", password: "" });
+  it('POST /auth/login rejects empty password', async () => {
+    const res = await request(app).post('/api/v1/auth/login').send({ email: 'admin@example.com', password: '' })
 
-    expect(res.status).toBe(400);
-    expect(res.body.success).toBe(false);
-  });
+    expect(res.status).toBe(400)
+    expect(res.body.success).toBe(false)
+  })
 
-  it("POST /auth/forgot-password returns success for unknown email", async () => {
-    const res = await request(app).post("/api/v1/auth/forgot-password").send({ email: "nobody@example.com" });
+  it('POST /auth/forgot-password returns success for unknown email', async () => {
+    const res = await request(app).post('/api/v1/auth/forgot-password').send({ email: 'nobody@example.com' })
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-  });
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+  })
 
-  it("POST /auth/forgot-password rejects invalid email format", async () => {
-    const res = await request(app).post("/api/v1/auth/forgot-password").send({ email: "bad-format" });
+  it('POST /auth/forgot-password rejects invalid email format', async () => {
+    const res = await request(app).post('/api/v1/auth/forgot-password').send({ email: 'bad-format' })
 
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe("VALIDATION_ERROR");
-  });
+    expect(res.status).toBe(400)
+    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+  })
 
-  it("POST /auth/reset-password rejects token < 1 char", async () => {
-    const res = await request(app).post("/api/v1/auth/reset-password").send({ token: "", newPassword: "NewPass123" });
+  it('POST /auth/reset-password rejects token < 1 char', async () => {
+    const res = await request(app).post('/api/v1/auth/reset-password').send({ token: '', newPassword: 'NewPass123' })
 
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe("VALIDATION_ERROR");
-  });
+    expect(res.status).toBe(400)
+    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+  })
 
-  it("POST /auth/reset-password rejects weak password", async () => {
-    const res = await request(app).post("/api/v1/auth/reset-password").send({ token: "somevalidtoken123", newPassword: "short" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe("VALIDATION_ERROR");
-  });
-
-  it("POST /auth/change-password requires authentication", async () => {
+  it('POST /auth/reset-password rejects weak password', async () => {
     const res = await request(app)
-      .post("/api/v1/auth/change-password")
-      .send({ currentPassword: "OldPass123", newPassword: "NewPass123" });
+      .post('/api/v1/auth/reset-password')
+      .send({ token: 'somevalidtoken123', newPassword: 'short' })
 
-    expect(res.status).toBe(401);
-  });
+    expect(res.status).toBe(400)
+    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+  })
 
-  it("POST /auth/change-password validates newPassword complexity", async () => {
+  it('POST /auth/change-password requires authentication', async () => {
     const res = await request(app)
-      .post("/api/v1/auth/change-password")
-      .set("Cookie", buildAuthCookie("ADMIN"))
-      .send({ currentPassword: "OldPass123", newPassword: "weak" });
+      .post('/api/v1/auth/change-password')
+      .send({ currentPassword: 'OldPass123', newPassword: 'NewPass123' })
 
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe("VALIDATION_ERROR");
-  });
+    expect(res.status).toBe(401)
+  })
 
-  it("GET /auth/me requires authentication", async () => {
-    const res = await request(app).get("/api/v1/auth/me");
-    expect(res.status).toBe(401);
-  });
+  it('POST /auth/change-password validates newPassword complexity', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/change-password')
+      .set('Cookie', buildAuthCookie('ADMIN'))
+      .send({ currentPassword: 'OldPass123', newPassword: 'weak' })
 
-  it("GET /auth/me returns the current user shape", async () => {
-    const res = await request(app).get("/api/v1/auth/me").set("Cookie", buildAuthCookie("ENGINEER"));
+    expect(res.status).toBe(400)
+    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+  })
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
+  it('GET /auth/me requires authentication', async () => {
+    const res = await request(app).get('/api/v1/auth/me')
+    expect(res.status).toBe(401)
+  })
+
+  it('GET /auth/me returns the current user shape', async () => {
+    const res = await request(app).get('/api/v1/auth/me').set('Cookie', buildAuthCookie('ENGINEER'))
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
     expect(res.body.data).toMatchObject({
-      id: "engineer-user",
-      email: "engineer@construction.local",
-      systemRole: "STAFF",
-    });
-  });
+      id: 'engineer-user',
+      email: 'engineer@construction.local',
+      systemRole: 'STAFF',
+    })
+  })
 
-  it("POST /auth/logout clears cookies", async () => {
-    const res = await request(app).post("/api/v1/auth/logout").set("Cookie", buildAuthCookie("ADMIN"));
+  it('POST /auth/logout clears cookies', async () => {
+    const res = await request(app).post('/api/v1/auth/logout').set('Cookie', buildAuthCookie('ADMIN'))
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-  });
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+  })
 
-  it("POST /auth/refresh without refresh_token returns 401", async () => {
-    const res = await request(app).post("/api/v1/auth/refresh");
-    expect(res.status).toBe(401);
-  });
-});
+  it('POST /auth/refresh without refresh_token returns 401', async () => {
+    const res = await request(app).post('/api/v1/auth/refresh')
+    expect(res.status).toBe(401)
+  })
+
+  it('POST /auth/refresh rebuilds access token with persisted email and role', async () => {
+    vi.clearAllMocks()
+    vi.mocked(authService.verifyRefreshToken).mockReturnValue({ id: 'engineer-user' })
+    vi.mocked(authRepository.findById).mockResolvedValue(buildTestUser('ENGINEER'))
+    vi.mocked(authService.generateAccessToken).mockReturnValue('new-access-token')
+
+    const res = await request(app).post('/api/v1/auth/refresh').set('Cookie', ['refresh_token=valid-refresh-token'])
+
+    expect(res.status).toBe(200)
+    expect(authRepository.findById).toHaveBeenCalledWith('engineer-user')
+    expect(authService.generateAccessToken).toHaveBeenCalledWith(
+      'engineer-user',
+      'engineer@construction.local',
+      'STAFF',
+    )
+    expect(res.headers['set-cookie'].join(';')).toContain('access_token=new-access-token')
+  })
+})

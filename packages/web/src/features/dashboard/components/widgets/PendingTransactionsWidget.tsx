@@ -1,16 +1,16 @@
-import { ClipboardList } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
+import { ClipboardList } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
 
 export function PendingTransactionsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.isWarehouse) {
-    return null;
+    return null
   }
 
-  const pendingCount = data?.pendingTransactions ?? 0;
+  const pendingCount = data?.pendingTransactions ?? 0
 
   return (
     <div className="app-card">
@@ -25,5 +25,5 @@ export function PendingTransactionsWidget() {
         <p className="mt-1 text-xs text-amber-700">Bao gồm nhập kho, xuất kho và yêu cầu vật tư.</p>
       </div>
     </div>
-  );
+  )
 }

@@ -1,13 +1,13 @@
-import nodemailer from "nodemailer";
-import { env } from "../../config/env";
-import { logger } from "../../config/logger";
+import nodemailer from 'nodemailer'
+import { env } from '../../config/env'
+import { logger } from '../../config/logger'
 
-let transporter: nodemailer.Transporter | null = null;
+let transporter: nodemailer.Transporter | null = null
 
 function getTransporter() {
   if (!transporter) {
     if (!env.SMTP_USER || !env.SMTP_PASS) {
-      return null;
+      return null
     }
     transporter = nodemailer.createTransport({
       host: env.SMTP_HOST,
@@ -17,30 +17,30 @@ function getTransporter() {
         user: env.SMTP_USER,
         pass: env.SMTP_PASS,
       },
-    });
+    })
   }
-  return transporter;
+  return transporter
 }
 
 export interface SendEmailOptions {
-  to: string;
-  subject: string;
-  html: string;
-  text?: string;
+  to: string
+  subject: string
+  html: string
+  text?: string
 }
 
 export const mailService = {
   async send(options: SendEmailOptions): Promise<void> {
-    const transport = getTransporter();
+    const transport = getTransporter()
 
     if (!transport) {
       // Dev fallback: log the email link
-      const resetUrl = options.html.match(/href="([^"]+)"/)?.[1] ?? "(no link found)";
+      const resetUrl = options.html.match(/href="([^"]+)"/)?.[1] ?? '(no link found)'
       logger.warn(
         { to: options.to, subject: options.subject, resetUrl },
-        "Email not sent (SMTP not configured). Check the link above."
-      );
-      return;
+        'Email not sent (SMTP not configured). Check the link above.',
+      )
+      return
     }
 
     try {
@@ -50,10 +50,10 @@ export const mailService = {
         subject: options.subject,
         html: options.html,
         text: options.text,
-      });
-      logger.info({ to: options.to, subject: options.subject }, "Email sent successfully");
+      })
+      logger.info({ to: options.to, subject: options.subject }, 'Email sent successfully')
     } catch (err) {
-      logger.error({ err, to: options.to, subject: options.subject }, "Failed to send email");
+      logger.error({ err, to: options.to, subject: options.subject }, 'Failed to send email')
       // Don't throw — email failure shouldn't block password reset flow
     }
   },
@@ -61,7 +61,7 @@ export const mailService = {
   async sendPasswordReset(email: string, resetUrl: string): Promise<void> {
     await this.send({
       to: email,
-      subject: "Đặt lại mật khẩu — Xây Dựng Console",
+      subject: 'Đặt lại mật khẩu — Xây Dựng Console',
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px;">
           <h2 style="color: #1e293b;">Xin chào,</h2>
@@ -85,6 +85,6 @@ export const mailService = {
         </div>
       `,
       text: `Xin chào,\n\nYêu cầu đặt lại mật khẩu cho ${email}.\n\nNhấn vào link sau để đặt lại mật khẩu (hiệu lực 1 giờ):\n${resetUrl}\n\nNếu bạn không yêu cầu, bỏ qua email này.`,
-    });
+    })
   },
-};
+}

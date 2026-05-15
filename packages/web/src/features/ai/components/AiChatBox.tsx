@@ -217,7 +217,21 @@ function tableColumnWeight(header: string, index: number) {
     return 0.45
   }
 
-  if (headerHasAny(header, ['đề xuất', 'xử lý', 'nội dung', 'chi tiết', 'phương án', 'hành động', 'việc cần làm', 'recommendation', 'action', 'detail', 'summary'])) {
+  if (
+    headerHasAny(header, [
+      'đề xuất',
+      'xử lý',
+      'nội dung',
+      'chi tiết',
+      'phương án',
+      'hành động',
+      'việc cần làm',
+      'recommendation',
+      'action',
+      'detail',
+      'summary',
+    ])
+  ) {
     return 1.75
   }
 
@@ -225,7 +239,24 @@ function tableColumnWeight(header: string, index: number) {
     return 0.75
   }
 
-  if (headerHasAny(header, ['rủi ro', 'ảnh hưởng', 'ghi chú', 'lưu ý', 'nhận định', 'mô tả', 'kết quả', 'lý do', 'risk', 'impact', 'note', 'description', 'result', 'reason'])) {
+  if (
+    headerHasAny(header, [
+      'rủi ro',
+      'ảnh hưởng',
+      'ghi chú',
+      'lưu ý',
+      'nhận định',
+      'mô tả',
+      'kết quả',
+      'lý do',
+      'risk',
+      'impact',
+      'note',
+      'description',
+      'result',
+      'reason',
+    ])
+  ) {
     return 1.4
   }
 
@@ -291,7 +322,10 @@ function renderTable(tableLines: string[], key: string) {
         </thead>
         <tbody className="bg-white">
           {bodyRows.map((row, rowIndex) => (
-            <tr key={`${key}-row-${rowIndex}`} className="border-b border-slate-100 align-top last:border-b-0 even:bg-slate-50/45">
+            <tr
+              key={`${key}-row-${rowIndex}`}
+              className="border-b border-slate-100 align-top last:border-b-0 even:bg-slate-50/45"
+            >
               {headerCells.map((_, cellIndex) => (
                 <td
                   key={`${key}-cell-${rowIndex}-${cellIndex}`}
@@ -835,7 +869,9 @@ function MessageItem({ message, isSending, onCopy, onEdit, onRetry }: MessageIte
                 : 'border border-slate-200 bg-white text-slate-800'
           }`}
         >
-          <div className={`flex min-w-0 items-start gap-2 break-words leading-6 ${isUser ? 'whitespace-pre-wrap' : ''}`}>
+          <div
+            className={`flex min-w-0 items-start gap-2 break-words leading-6 ${isUser ? 'whitespace-pre-wrap' : ''}`}
+          >
             {isPending && !isUser && <Loader2 className="mt-1 h-4 w-4 shrink-0 animate-spin text-brand-600" />}
             {isUser ? <span>{message.content}</span> : <MarkdownMessage content={message.content} />}
           </div>

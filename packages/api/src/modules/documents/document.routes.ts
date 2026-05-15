@@ -40,7 +40,7 @@ const upload = multer({
       cb(null, true)
       return
     }
-    cb(new Error('Loai file khong duoc ho tro'))
+    cb(new Error('Loại tệp không được hỗ trợ'))
   },
 })
 

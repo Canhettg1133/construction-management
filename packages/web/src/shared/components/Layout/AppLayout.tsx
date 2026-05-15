@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Bot,
   CheckSquare,
@@ -22,242 +22,243 @@ import {
   Wallet,
   Warehouse,
   X,
-} from "lucide-react";
-import { hasMinPermission, type PermissionLevel, type SystemRole, type ToolId } from "@construction/shared";
-import { Link, Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
-import { logout as logoutApi } from "../../../features/auth/api/authApi";
-import { getProject } from "../../../features/projects/api/projectApi";
-import { useProjectPermissions } from "../../hooks/useProjectPermissions";
-import { ROUTES } from "../../constants/routes";
-import { useAuthStore } from "../../../store/authStore";
-import { useNotificationStore } from "../../../store/notificationStore";
-import { useUiStore } from "../../../store/uiStore";
-import { connectSocket, disconnectSocket } from "../../../socket/socketClient";
-import { NotificationBell } from "../NotificationBell";
+} from 'lucide-react'
+import { hasMinPermission, type PermissionLevel, type SystemRole, type ToolId } from '@construction/shared'
+import { Link, Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom'
+import { logout as logoutApi } from '../../../features/auth/api/authApi'
+import { getProject } from '../../../features/projects/api/projectApi'
+import { useProjectPermissions } from '../../hooks/useProjectPermissions'
+import { ROUTES } from '../../constants/routes'
+import { useAuthStore } from '../../../store/authStore'
+import { useNotificationStore } from '../../../store/notificationStore'
+import { useUiStore } from '../../../store/uiStore'
+import { connectSocket, disconnectSocket } from '../../../socket/socketClient'
+import { NotificationBell } from '../NotificationBell'
 
 interface NavItem {
-  to: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  systemRoles?: SystemRole[];
-  toolId?: ToolId;
-  minLevel?: PermissionLevel;
+  to: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  systemRoles?: SystemRole[]
+  toolId?: ToolId
+  minLevel?: PermissionLevel
 }
 
-const DESKTOP_SIDEBAR_STORAGE_KEY = "desktopSidebarOpen";
+const DESKTOP_SIDEBAR_STORAGE_KEY = 'desktopSidebarOpen'
 
 const globalNavItems: NavItem[] = [
-  { to: ROUTES.DASHBOARD, label: "Bảng điều khiển", icon: FolderKanban },
-  { to: ROUTES.PROJECTS, label: "Dự án", icon: FolderKanban },
-];
+  { to: ROUTES.DASHBOARD, label: 'Bảng điều khiển', icon: FolderKanban },
+  { to: ROUTES.PROJECTS, label: 'Dự án', icon: FolderKanban },
+]
 
 const systemNavItems: NavItem[] = [
-  { to: ROUTES.USERS, label: "Người dùng", icon: Users, systemRoles: ["ADMIN"] },
-  { to: ROUTES.APPROVALS, label: "Duyệt", icon: ClipboardCheck, systemRoles: ["ADMIN", "STAFF"] },
-  { to: ROUTES.AUDIT_LOGS, label: "Nhật ký hệ thống", icon: FileText, systemRoles: ["ADMIN"] },
-];
+  { to: ROUTES.USERS, label: 'Người dùng', icon: Users, systemRoles: ['ADMIN'] },
+  { to: ROUTES.APPROVALS, label: 'Duyệt', icon: ClipboardCheck, systemRoles: ['ADMIN', 'STAFF'] },
+  { to: ROUTES.SETTINGS_AI, label: 'Cài đặt AI', icon: Bot, systemRoles: ['ADMIN'] },
+  { to: ROUTES.AUDIT_LOGS, label: 'Nhật ký hệ thống', icon: FileText, systemRoles: ['ADMIN'] },
+]
 
 const accountNavItems: NavItem[] = [
-  { to: ROUTES.DOCUMENT_SEARCH, label: "Tìm tài liệu", icon: Search },
-  { to: ROUTES.SETTINGS_PROFILE, label: "Hồ sơ", icon: UserCircle2 },
-  { to: ROUTES.SETTINGS_CHANGE_PASSWORD, label: "Đổi mật khẩu", icon: KeyRound },
-];
+  { to: ROUTES.DOCUMENT_SEARCH, label: 'Tìm tài liệu', icon: Search },
+  { to: ROUTES.SETTINGS_PROFILE, label: 'Hồ sơ', icon: UserCircle2 },
+  { to: ROUTES.SETTINGS_CHANGE_PASSWORD, label: 'Đổi mật khẩu', icon: KeyRound },
+]
 
 export function AppLayout() {
-  const { user, clearAuth } = useAuthStore();
-  const { sidebarOpen, toggleSidebar, setSidebarOpen, toast, clearToast } = useUiStore();
-  const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
-  const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const normalizedSystemRole = user?.systemRole?.toUpperCase?.();
+  const { user, clearAuth } = useAuthStore()
+  const { sidebarOpen, toggleSidebar, setSidebarOpen, toast, clearToast } = useUiStore()
+  const fetchNotifications = useNotificationStore((state) => state.fetchNotifications)
+  const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const normalizedSystemRole = user?.systemRole?.toUpperCase?.()
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState<boolean>(() => {
-    if (typeof window === "undefined") {
-      return true;
+    if (typeof window === 'undefined') {
+      return true
     }
-    return window.localStorage.getItem(DESKTOP_SIDEBAR_STORAGE_KEY) !== "false";
-  });
+    return window.localStorage.getItem(DESKTOP_SIDEBAR_STORAGE_KEY) !== 'false'
+  })
 
   // Call hooks in a fixed order on every render to satisfy Rules of Hooks.
-  const projectMatchDeep = useMatch("/projects/:id/*");
-  const projectMatchShallow = useMatch("/projects/:id");
-  const projectMatch = projectMatchDeep ?? projectMatchShallow;
-  const currentProjectId = projectMatch?.params.id ?? "";
-  const isProjectContext = Boolean(currentProjectId);
+  const projectMatchDeep = useMatch('/projects/:id/*')
+  const projectMatchShallow = useMatch('/projects/:id')
+  const projectMatch = projectMatchDeep ?? projectMatchShallow
+  const currentProjectId = projectMatch?.params.id ?? ''
+  const isProjectContext = Boolean(currentProjectId)
 
   const { data: currentProject } = useQuery({
-    queryKey: ["project", currentProjectId],
+    queryKey: ['project', currentProjectId],
     queryFn: () => getProject(currentProjectId),
     enabled: isProjectContext,
     staleTime: 5 * 60 * 1000,
-  });
+  })
 
   const { data: projectPermissions, isLoading: isLoadingProjectPermissions } = useProjectPermissions(
-    isProjectContext ? currentProjectId : ""
-  );
+    isProjectContext ? currentProjectId : '',
+  )
 
   const projectToolNavItems: NavItem[] = isProjectContext
     ? [
         {
           to: ROUTES.PROJECT_DETAIL(currentProjectId),
-          label: "Tổng quan",
+          label: 'Tổng quan',
           icon: FolderKanban,
-          toolId: "PROJECT",
-          minLevel: "READ",
+          toolId: 'PROJECT',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_REPORTS(currentProjectId),
-          label: "Báo cáo ngày",
+          label: 'Báo cáo ngày',
           icon: FileText,
-          toolId: "DAILY_REPORT",
-          minLevel: "READ",
+          toolId: 'DAILY_REPORT',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_TASKS(currentProjectId),
-          label: "Công việc",
+          label: 'Công việc',
           icon: CheckSquare,
-          toolId: "TASK",
-          minLevel: "READ",
+          toolId: 'TASK',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_FILES(currentProjectId),
-          label: "Tệp đính kèm",
+          label: 'Tệp đính kèm',
           icon: Files,
-          toolId: "FILE",
-          minLevel: "READ",
+          toolId: 'FILE',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_DOCUMENTS(currentProjectId),
-          label: "Hồ sơ tài liệu",
+          label: 'Hồ sơ tài liệu',
           icon: FileText,
-          toolId: "DOCUMENT",
-          minLevel: "READ",
+          toolId: 'DOCUMENT',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_SAFETY(currentProjectId),
-          label: "An toàn",
+          label: 'An toàn',
           icon: ShieldAlert,
-          toolId: "SAFETY",
-          minLevel: "READ",
+          toolId: 'SAFETY',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_QUALITY(currentProjectId),
-          label: "Chất lượng",
+          label: 'Chất lượng',
           icon: CheckSquare,
-          toolId: "QUALITY",
-          minLevel: "READ",
+          toolId: 'QUALITY',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_WAREHOUSE(currentProjectId),
-          label: "Kho vật tư",
+          label: 'Kho vật tư',
           icon: Warehouse,
-          toolId: "WAREHOUSE",
-          minLevel: "READ",
+          toolId: 'WAREHOUSE',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_BUDGET(currentProjectId),
-          label: "Ngân sách",
+          label: 'Ngân sách',
           icon: Wallet,
-          toolId: "BUDGET",
-          minLevel: "READ",
+          toolId: 'BUDGET',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_AI_CHAT(currentProjectId),
-          label: "Trợ lý AI",
+          label: 'Trợ lý AI',
           icon: Bot,
-          toolId: "AI_ASSISTANT",
-          minLevel: "READ",
+          toolId: 'AI_ASSISTANT',
+          minLevel: 'READ',
         },
       ]
-    : [];
+    : []
 
   const projectMgmtNavItems: NavItem[] = isProjectContext
     ? [
         {
           to: ROUTES.PROJECT_MEMBERS(currentProjectId),
-          label: "Thành viên",
+          label: 'Thành viên',
           icon: Users,
-          toolId: "PROJECT",
-          minLevel: "READ",
+          toolId: 'PROJECT',
+          minLevel: 'READ',
         },
         {
           to: ROUTES.PROJECT_SETTINGS(currentProjectId),
-          label: "Cài đặt dự án",
+          label: 'Cài đặt dự án',
           icon: Settings,
-          toolId: "PROJECT",
-          minLevel: "ADMIN",
+          toolId: 'PROJECT',
+          minLevel: 'ADMIN',
         },
       ]
-    : [];
+    : []
 
   // Connect WebSocket and fetch initial data
   useEffect(() => {
-    if (!user) return;
-    connectSocket();
-    void fetchNotifications();
-    void fetchUnreadCount();
-    return () => disconnectSocket();
-  }, [fetchNotifications, fetchUnreadCount, user]);
+    if (!user) return
+    connectSocket()
+    void fetchNotifications()
+    void fetchUnreadCount()
+    return () => disconnectSocket()
+  }, [fetchNotifications, fetchUnreadCount, user])
 
   useEffect(() => {
-    window.localStorage.setItem(
-      DESKTOP_SIDEBAR_STORAGE_KEY,
-      desktopSidebarOpen ? "true" : "false"
-    );
-  }, [desktopSidebarOpen]);
+    window.localStorage.setItem(DESKTOP_SIDEBAR_STORAGE_KEY, desktopSidebarOpen ? 'true' : 'false')
+  }, [desktopSidebarOpen])
 
   const handleLogout = async () => {
     try {
-      await logoutApi();
+      await logoutApi()
     } finally {
-      clearAuth();
-      navigate(ROUTES.LOGIN);
+      clearAuth()
+      navigate(ROUTES.LOGIN)
     }
-  };
+  }
 
   const hasSystemAccess = (item: NavItem) => {
     if (!item.systemRoles || item.systemRoles.length === 0) {
-      return true;
+      return true
     }
     if (!normalizedSystemRole) {
-      return false;
+      return false
     }
-    return item.systemRoles.includes(normalizedSystemRole as SystemRole);
-  };
+    return item.systemRoles.includes(normalizedSystemRole as SystemRole)
+  }
 
   const hasToolAccess = (item: NavItem) => {
     if (!item.toolId) {
-      return true;
+      return true
     }
     if (!isProjectContext) {
-      return false;
+      return false
     }
     if (isLoadingProjectPermissions) {
-      return false;
+      return false
     }
 
-    const userLevel = projectPermissions?.toolPermissions?.[item.toolId] ?? "NONE";
-    return hasMinPermission(userLevel, item.minLevel ?? "READ");
-  };
+    const userLevel = projectPermissions?.toolPermissions?.[item.toolId] ?? 'NONE'
+    return hasMinPermission(userLevel, item.minLevel ?? 'READ')
+  }
 
-  const isItemVisible = (item: NavItem) => hasSystemAccess(item) && hasToolAccess(item);
+  const isItemVisible = (item: NavItem) => hasSystemAccess(item) && hasToolAccess(item)
 
-  const visibleGlobalNavItems = globalNavItems.filter(isItemVisible);
-  const visibleSystemNavItems = systemNavItems.filter(isItemVisible);
-  const visibleAccountNavItems = accountNavItems.filter(isItemVisible);
-  const visibleProjectToolNavItems = projectToolNavItems.filter(isItemVisible);
-  const visibleProjectMgmtNavItems = projectMgmtNavItems.filter(isItemVisible);
+  const visibleGlobalNavItems = globalNavItems.filter(isItemVisible)
+  const visibleSystemNavItems = systemNavItems.filter(isItemVisible)
+  const visibleAccountNavItems = accountNavItems.filter(isItemVisible)
+  const visibleProjectToolNavItems = projectToolNavItems.filter(isItemVisible)
+  const visibleProjectMgmtNavItems = projectMgmtNavItems.filter(isItemVisible)
 
   const isActiveLink = (to: string) => {
-    if (isProjectContext && to === ROUTES.PROJECT_DETAIL(currentProjectId)) {
-      return location.pathname === to;
+    if (isProjectContext && to === ROUTES.PROJECTS) {
+      return location.pathname === ROUTES.PROJECTS
     }
-    return location.pathname === to || location.pathname.startsWith(`${to}/`);
-  };
+    if (isProjectContext && to === ROUTES.PROJECT_DETAIL(currentProjectId)) {
+      return location.pathname === to
+    }
+    return location.pathname === to || location.pathname.startsWith(`${to}/`)
+  }
 
   const renderNavItem = (item: NavItem) => {
-    const Icon = item.icon;
-    const isActive = isActiveLink(item.to);
+    const Icon = item.icon
+    const isActive = isActiveLink(item.to)
 
     return (
       <Link
@@ -266,37 +267,34 @@ export function AppLayout() {
         onClick={() => setSidebarOpen(false)}
         className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
           isActive
-            ? "bg-brand-50 text-brand-700 ring-1 ring-brand-100"
-            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-100'
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
         }`}
       >
         <Icon className="h-4 w-4" />
         <span>{item.label}</span>
       </Link>
-    );
-  };
+    )
+  }
 
   return (
     <div
       className={`relative flex min-h-screen overflow-x-hidden bg-slate-50 text-slate-900 ${
-        desktopSidebarOpen ? "lg:pl-72" : ""
+        desktopSidebarOpen ? 'lg:pl-72' : ''
       }`}
     >
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200 bg-white/95 shadow-xl backdrop-blur transition-transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${
-          desktopSidebarOpen ? "lg:translate-x-0" : "lg:-translate-x-full"
-        }`}
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${desktopSidebarOpen ? 'lg:translate-x-0' : 'lg:-translate-x-full'}`}
       >
-        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
+        <div className="flex h-12 items-center justify-between border-b border-slate-200 px-3">
           <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white shadow-sm">
-              <Sparkles className="h-4 w-4" />
+            <div className="grid h-7 w-7 place-items-center rounded-lg bg-brand-600 text-white shadow-sm">
+              <Sparkles className="h-3.5 w-3.5" />
             </div>
-            <div>
-              <p className="text-sm font-semibold tracking-tight text-slate-900">Xay Dung</p>
-              <p className="text-xs text-slate-500">Construction Console</p>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold tracking-tight text-slate-900">Xây Dựng</p>
             </div>
           </div>
           <button
@@ -308,9 +306,8 @@ export function AppLayout() {
           </button>
         </div>
 
-        <nav className="h-[calc(100vh-4rem)] space-y-5 overflow-y-auto p-4 pb-36">
+        <nav className="h-[calc(100vh-3rem)] space-y-4 overflow-y-auto p-4 pb-36">
           <NavSection label="Chung" items={visibleGlobalNavItems} renderNavItem={renderNavItem} />
-          <NavSection label="Hệ thống" items={visibleSystemNavItems} renderNavItem={renderNavItem} />
 
           {isProjectContext && (
             <>
@@ -335,6 +332,7 @@ export function AppLayout() {
             </>
           )}
 
+          <NavSection label="Hệ thống" items={visibleSystemNavItems} renderNavItem={renderNavItem} />
           <NavSection label="Tài khoản" items={visibleAccountNavItems} renderNavItem={renderNavItem} />
         </nav>
 
@@ -354,28 +352,24 @@ export function AppLayout() {
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur lg:px-6">
+        <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-slate-200 bg-white/95 px-3 backdrop-blur lg:px-4">
           <div className="flex items-center gap-2">
             <button
               onClick={toggleSidebar}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden"
               aria-label="Mở sidebar"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </button>
             <button
               onClick={() => setDesktopSidebarOpen((value) => !value)}
-              className="hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:inline-flex"
-              aria-label={desktopSidebarOpen ? "Ẩn sidebar" : "Mở sidebar"}
+              className="hidden h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:grid"
+              aria-label={desktopSidebarOpen ? 'Ẩn sidebar' : 'Mở sidebar'}
             >
-              {desktopSidebarOpen ? (
-                <PanelLeftClose className="h-5 w-5" />
-              ) : (
-                <PanelLeftOpen className="h-5 w-5" />
-              )}
+              {desktopSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
             </button>
-            <div className="hidden text-sm text-slate-500 sm:block">
-              Chào mừng, {user?.name?.split(" ").slice(-1)[0]}
+            <div className="hidden text-xs font-medium text-slate-500 sm:block">
+              Chào mừng, {user?.name?.split(' ').slice(-1)[0]}
             </div>
           </div>
 
@@ -384,7 +378,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-3 lg:p-4">
           <div className="mx-auto w-full min-w-0 max-w-7xl">
             <Outlet />
           </div>
@@ -399,25 +393,29 @@ export function AppLayout() {
             <div>
               <p
                 className={`text-sm font-semibold ${
-                  toast.type === "error"
-                    ? "text-red-700"
-                    : toast.type === "success"
-                      ? "text-emerald-700"
-                      : "text-slate-700"
+                  toast.type === 'error'
+                    ? 'text-red-700'
+                    : toast.type === 'success'
+                      ? 'text-emerald-700'
+                      : 'text-slate-700'
                 }`}
               >
                 {toast.title}
               </p>
               {toast.description && <p className="mt-1 text-xs text-slate-500">{toast.description}</p>}
             </div>
-            <button onClick={clearToast} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Đóng thông báo">
+            <button
+              onClick={clearToast}
+              className="rounded p-1 text-slate-500 hover:bg-slate-100"
+              aria-label="Đóng thông báo"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
 
 function NavSection({
@@ -425,12 +423,12 @@ function NavSection({
   items,
   renderNavItem,
 }: {
-  label: string;
-  items: NavItem[];
-  renderNavItem: (item: NavItem) => React.ReactNode;
+  label: string
+  items: NavItem[]
+  renderNavItem: (item: NavItem) => React.ReactNode
 }) {
   if (items.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -438,8 +436,5 @@ function NavSection({
       <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
       <div className="space-y-1">{items.map((item) => renderNavItem(item))}</div>
     </div>
-  );
+  )
 }
-
-
-

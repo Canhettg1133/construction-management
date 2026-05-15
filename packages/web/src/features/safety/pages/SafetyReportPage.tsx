@@ -23,6 +23,13 @@ function parsePhotoLines(value: string): string[] {
     .filter((item) => item.length > 0)
 }
 
+function statusLabel(status?: string | null) {
+  if (status === 'APPROVED') return 'Đã duyệt'
+  if (status === 'REJECTED') return 'Từ chối'
+  if (status === 'PENDING') return 'Chờ duyệt'
+  return status ?? 'Không xác định'
+}
+
 export function SafetyReportPage() {
   const { id, reportId } = useParams<{ id: string; reportId?: string }>()
   const projectId = id ?? ''
@@ -82,10 +89,10 @@ export function SafetyReportPage() {
   const editBlockedMessage = useMemo(() => {
     if (!canUseSafetyStandard) return 'Bạn chưa có quyền sửa báo cáo an toàn trong dự án này.'
     if (report?.status === 'APPROVED') {
-      return 'Báo cáo đã được duyệt, không thể chỉnh sửa trực tiếp. Admin hoặc PM có thể mở lại báo cáo nếu cần điều chỉnh.'
+      return 'Báo cáo đã được duyệt, không thể chỉnh sửa trực tiếp. Quản trị viên hoặc quản lý dự án có thể mở lại báo cáo nếu cần điều chỉnh.'
     }
     if (report && !isPmOrAdmin && report.inspectorId !== user?.id) {
-      return 'Chỉ người lập báo cáo, PM hoặc Admin được sửa báo cáo này.'
+      return 'Chỉ người lập báo cáo, quản lý dự án hoặc quản trị viên được sửa báo cáo này.'
     }
     return 'Bạn không thể sửa báo cáo này ở trạng thái hiện tại.'
   }, [canUseSafetyStandard, report, isPmOrAdmin, user?.id])
@@ -195,12 +202,12 @@ export function SafetyReportPage() {
             to={`/projects/${projectId}/safety`}
             className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
           >
-            ← Safety dashboard
+            ← Quản lý an toàn
           </Link>
           <h2 className="mt-1">{isEditing ? 'Chi tiết báo cáo an toàn' : 'Tạo báo cáo an toàn'}</h2>
           {report && (
             <p className="page-subtitle">
-              Người lập: {report.inspector?.name ?? report.inspectorId} · Trạng thái: {report.status}
+              Người lập: {report.inspector?.name ?? report.inspectorId} · Trạng thái: {statusLabel(report.status)}
             </p>
           )}
         </div>
@@ -233,7 +240,7 @@ export function SafetyReportPage() {
       <div className="app-card space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="form-label">Ngay báo cáo</label>
+            <label className="form-label">Ngày báo cáo</label>
             <input
               type="date"
               value={reportDate}
@@ -261,7 +268,7 @@ export function SafetyReportPage() {
             value={location}
             onChange={(event) => setLocation(event.target.value)}
             className="form-input"
-            placeholder="Khu vuc cong truong..."
+            placeholder="Khu vực công trường..."
             disabled={!canEditReport}
           />
         </div>
@@ -273,7 +280,7 @@ export function SafetyReportPage() {
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             className="form-input"
-            placeholder="Mô tả tinh trang an toàn..."
+            placeholder="Mô tả tình trạng an toàn..."
             disabled={!canEditReport}
           />
         </div>

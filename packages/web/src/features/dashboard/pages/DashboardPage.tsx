@@ -1,42 +1,42 @@
-import { TrendingUp, Users, ShieldCheck } from "lucide-react";
-import { SYSTEM_ROLE_LABELS, TASK_STATUS_LABELS } from "@construction/shared";
-import type { TaskStatus } from "@construction/shared";
-import { useAuthStore } from "../../../store/authStore";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { ActiveMembersWidget } from "../components/ActiveMembersWidget";
-import { WeeklyProgressChart } from "../components/WeeklyProgressChart";
-import { DashboardSkeleton } from "../components/common/DashboardSkeleton";
-import { PendingBadge } from "../components/common/PendingBadge";
-import { StatsCardGrid } from "../components/common/StatsCardGrid";
-import { OverdueTasksWidget } from "../components/overdue/OverdueTasksWidget";
-import { RecentActivity } from "../components/recent/RecentActivity";
-import { RiskyProjectsWidget } from "../components/risky/RiskyProjectsWidget";
-import { ClientStatsWidget } from "../components/widgets/ClientStatsWidget";
-import { LowStockAlertsWidget } from "../components/widgets/LowStockAlertsWidget";
-import { MyReportsWidget } from "../components/widgets/MyReportsWidget";
-import { MyTasksWidget } from "../components/widgets/MyTasksWidget";
-import { PendingSafetyApprovalsWidget } from "../components/widgets/PendingSafetyApprovalsWidget";
-import { PendingTransactionsWidget } from "../components/widgets/PendingTransactionsWidget";
-import { QualityReportsWidget } from "../components/widgets/QualityReportsWidget";
-import { QualityStatsWidget } from "../components/widgets/QualityStatsWidget";
-import { RecentTransactionsWidget } from "../components/widgets/RecentTransactionsWidget";
-import { SafetyStatsWidget } from "../components/widgets/SafetyStatsWidget";
-import { SafetyViolationsWidget } from "../components/widgets/SafetyViolationsWidget";
-import { WarehouseOverviewWidget } from "../components/widgets/WarehouseOverviewWidget";
-import { WarehouseStatsWidget } from "../components/widgets/WarehouseStatsWidget";
-import { WarehouseTrendChart } from "../components/widgets/WarehouseTrendChart";
-import { useDashboard } from "../hooks/useDashboard";
-import { useDashboardRole } from "../hooks/useDashboardRole";
+import { TrendingUp, Users, ShieldCheck } from 'lucide-react'
+import { SYSTEM_ROLE_LABELS, TASK_STATUS_LABELS } from '@construction/shared'
+import type { TaskStatus } from '@construction/shared'
+import { useAuthStore } from '../../../store/authStore'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { ActiveMembersWidget } from '../components/ActiveMembersWidget'
+import { WeeklyProgressChart } from '../components/WeeklyProgressChart'
+import { DashboardSkeleton } from '../components/common/DashboardSkeleton'
+import { PendingBadge } from '../components/common/PendingBadge'
+import { StatsCardGrid } from '../components/common/StatsCardGrid'
+import { OverdueTasksWidget } from '../components/overdue/OverdueTasksWidget'
+import { RecentActivity } from '../components/recent/RecentActivity'
+import { RiskyProjectsWidget } from '../components/risky/RiskyProjectsWidget'
+import { ClientStatsWidget } from '../components/widgets/ClientStatsWidget'
+import { LowStockAlertsWidget } from '../components/widgets/LowStockAlertsWidget'
+import { MyReportsWidget } from '../components/widgets/MyReportsWidget'
+import { MyTasksWidget } from '../components/widgets/MyTasksWidget'
+import { PendingSafetyApprovalsWidget } from '../components/widgets/PendingSafetyApprovalsWidget'
+import { PendingTransactionsWidget } from '../components/widgets/PendingTransactionsWidget'
+import { QualityReportsWidget } from '../components/widgets/QualityReportsWidget'
+import { QualityStatsWidget } from '../components/widgets/QualityStatsWidget'
+import { RecentTransactionsWidget } from '../components/widgets/RecentTransactionsWidget'
+import { SafetyStatsWidget } from '../components/widgets/SafetyStatsWidget'
+import { SafetyViolationsWidget } from '../components/widgets/SafetyViolationsWidget'
+import { WarehouseOverviewWidget } from '../components/widgets/WarehouseOverviewWidget'
+import { WarehouseStatsWidget } from '../components/widgets/WarehouseStatsWidget'
+import { WarehouseTrendChart } from '../components/widgets/WarehouseTrendChart'
+import { useDashboard } from '../hooks/useDashboard'
+import { useDashboardRole } from '../hooks/useDashboardRole'
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
-  TO_DO: "bg-slate-400",
-  IN_PROGRESS: "bg-brand-500",
-  DONE: "bg-emerald-500",
-  CANCELLED: "bg-red-400",
-};
+  TO_DO: 'bg-slate-400',
+  IN_PROGRESS: 'bg-brand-500',
+  DONE: 'bg-emerald-500',
+  CANCELLED: 'bg-red-400',
+}
 
 function TaskStatusBreakdown({ tasksByStatus }: { tasksByStatus: Record<TaskStatus, number> }) {
-  const total = Object.values(tasksByStatus).reduce((sum, value) => sum + value, 0);
+  const total = Object.values(tasksByStatus).reduce((sum, value) => sum + value, 0)
 
   return (
     <div className="app-card">
@@ -46,7 +46,7 @@ function TaskStatusBreakdown({ tasksByStatus }: { tasksByStatus: Record<TaskStat
       </div>
       <div className="space-y-2.5">
         {(Object.entries(tasksByStatus) as [TaskStatus, number][]).map(([status, count]) => {
-          const pct = total > 0 ? (count / total) * 100 : 0;
+          const pct = total > 0 ? (count / total) * 100 : 0
           return (
             <div key={status}>
               <div className="mb-1 flex justify-between text-xs text-slate-600">
@@ -60,11 +60,11 @@ function TaskStatusBreakdown({ tasksByStatus }: { tasksByStatus: Record<TaskStat
                 />
               </div>
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }
 
 function TeamOverview({
@@ -72,9 +72,9 @@ function TeamOverview({
   activeProjectCount,
   overdueTaskCount,
 }: {
-  memberCount: number;
-  activeProjectCount: number;
-  overdueTaskCount: number;
+  memberCount: number
+  activeProjectCount: number
+  overdueTaskCount: number
 }) {
   return (
     <div className="app-card">
@@ -97,7 +97,7 @@ function TeamOverview({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function GenericSummaryCard({ title, value, description }: { title: string; value: string; description: string }) {
@@ -110,20 +110,20 @@ function GenericSummaryCard({ title, value, description }: { title: string; valu
       <p className="text-3xl font-bold text-slate-900">{value}</p>
       <p className="mt-1 text-sm text-slate-500">{description}</p>
     </div>
-  );
+  )
 }
 
 export function DashboardPage() {
-  const { user } = useAuthStore();
-  const role = useDashboardRole();
-  const { data, isLoading, isError } = useDashboard();
+  const { user } = useAuthStore()
+  const role = useDashboardRole()
+  const { data, isLoading, isError } = useDashboard()
 
   if (isLoading) {
-    return <DashboardSkeleton />;
+    return <DashboardSkeleton />
   }
 
   if (isError || !data) {
-    return <ErrorState message="Không thể tải dữ liệu dashboard. Vui lòng thử lại sau." />;
+    return <ErrorState message="Không thể tải dữ liệu bảng điều khiển. Vui lòng thử lại sau." />
   }
 
   return (
@@ -136,9 +136,9 @@ export function DashboardPage() {
         <div className="flex items-center gap-3">
           <PendingBadge />
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm">
-            Vai trò hệ thống:{" "}
+            Vai trò hệ thống:{' '}
             <span className="font-semibold text-slate-800">
-              {user?.systemRole ? SYSTEM_ROLE_LABELS[user.systemRole] ?? user.systemRole : "-"}
+              {user?.systemRole ? (SYSTEM_ROLE_LABELS[user.systemRole] ?? user.systemRole) : '-'}
             </span>
           </div>
         </div>
@@ -222,5 +222,5 @@ export function DashboardPage() {
 
       <RecentActivity />
     </div>
-  );
+  )
 }

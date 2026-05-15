@@ -1,12 +1,12 @@
-import { Router } from "express";
-import { auditController } from "./audit.controller";
-import { authenticate, authorize, asyncHandler } from "../../shared/middleware";
+import { Router } from 'express'
+import { auditController } from './audit.controller'
+import { authenticate, authorize, asyncHandler } from '../../shared/middleware'
 
-const router: Router = Router();
+const router: Router = Router()
 
-router.use(authenticate);
-router.use(authorize("ADMIN"));
+router.use(authenticate)
+router.use(authorize('ADMIN'))
 
-router.get("/", asyncHandler(auditController.list));
+router.get('/', asyncHandler(auditController.list))
 
-export default router;
+export default router

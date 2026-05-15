@@ -1,7 +1,19 @@
 import type { DashboardStats, ProjectRole, SystemRole, TaskStatus } from '@construction/shared'
 import { dashboardRepository, type DashboardRoleEntry } from './dashboard.repository'
 
-const SAFETY_TAGS = ['safety', 'an toan', 'vi pham']
+function withoutVietnameseMarks(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+}
+
+function withAsciiVariants(values: string[]) {
+  return Array.from(new Set(values.flatMap((value) => [value, withoutVietnameseMarks(value)])))
+}
+
+const SAFETY_TAGS = withAsciiVariants(['safety', 'an toàn', 'vi phạm'])
 
 interface DashboardContext {
   userId: string

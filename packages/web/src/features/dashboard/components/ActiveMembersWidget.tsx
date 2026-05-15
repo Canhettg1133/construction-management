@@ -1,18 +1,18 @@
-import { Trophy } from "lucide-react";
-import type { DashboardActiveMember } from "@construction/shared";
+import { Trophy } from 'lucide-react'
+import type { DashboardActiveMember } from '@construction/shared'
 
 interface ActiveMembersWidgetProps {
-  members: DashboardActiveMember[];
+  members: DashboardActiveMember[]
 }
 
 export function ActiveMembersWidget({ members }: ActiveMembersWidgetProps) {
   const avatarFallback = (name: string) =>
     name
-      .split(" ")
+      .split(' ')
       .map((word) => word[0])
-      .join("")
+      .join('')
       .toUpperCase()
-      .slice(0, 2);
+      .slice(0, 2)
 
   if (members.length === 0) {
     return (
@@ -23,7 +23,7 @@ export function ActiveMembersWidget({ members }: ActiveMembersWidgetProps) {
         </div>
         <p className="py-4 text-center text-sm text-slate-500">Chưa có hoạt động nổi bật trong tuần này.</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -39,11 +39,7 @@ export function ActiveMembersWidget({ members }: ActiveMembersWidgetProps) {
           <div key={member.id} className="flex items-center gap-3">
             <div className="relative">
               {member.avatarUrl ? (
-                <img
-                  src={member.avatarUrl}
-                  alt={member.name}
-                  className="h-9 w-9 rounded-full object-cover"
-                />
+                <img src={member.avatarUrl} alt={member.name} className="h-9 w-9 rounded-full object-cover" />
               ) : (
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
                   {avatarFallback(member.name)}
@@ -70,5 +66,5 @@ export function ActiveMembersWidget({ members }: ActiveMembersWidgetProps) {
         ))}
       </div>
     </div>
-  );
+  )
 }

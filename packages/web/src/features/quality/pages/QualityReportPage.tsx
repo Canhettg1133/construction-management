@@ -16,6 +16,13 @@ function formatDateInput(value?: string | null) {
   return value.slice(0, 10)
 }
 
+function statusLabel(status?: string | null) {
+  if (status === 'APPROVED') return 'Đã nghiệm thu'
+  if (status === 'REJECTED') return 'Từ chối'
+  if (status === 'PENDING') return 'Chờ nghiệm thu'
+  return status ?? 'Không xác định'
+}
+
 export function QualityReportPage() {
   const { id, reportId } = useParams<{ id: string; reportId?: string }>()
   const projectId = id ?? ''
@@ -71,10 +78,10 @@ export function QualityReportPage() {
   const editBlockedMessage = useMemo(() => {
     if (!canUseQualityStandard) return 'Bạn chưa có quyền sửa báo cáo chất lượng trong dự án này.'
     if (report?.status === 'APPROVED') {
-      return 'Báo cáo đã được duyệt, không thể chỉnh sửa trực tiếp. Admin hoặc PM có thể mở lại báo cáo nếu cần điều chỉnh.'
+      return 'Báo cáo đã được duyệt, không thể chỉnh sửa trực tiếp. Quản trị viên hoặc quản lý dự án có thể mở lại báo cáo nếu cần điều chỉnh.'
     }
     if (report && !isPmOrAdmin && report.inspectorId !== user?.id) {
-      return 'Chỉ người lập báo cáo, PM hoặc Admin được sửa báo cáo này.'
+      return 'Chỉ người lập báo cáo, quản lý dự án hoặc quản trị viên được sửa báo cáo này.'
     }
     return 'Bạn không thể sửa báo cáo này ở trạng thái hiện tại.'
   }, [canUseQualityStandard, report, isPmOrAdmin, user?.id])
@@ -98,7 +105,7 @@ export function QualityReportPage() {
       queryClient.invalidateQueries({ queryKey: ['quality-report', projectId, reportId] })
       showToast({
         type: 'success',
-        title: isEditing ? 'Đã cập nhật báo cáo QC' : 'Đã tạo báo cáo QC',
+        title: isEditing ? 'Đã cập nhật báo cáo chất lượng' : 'Đã tạo báo cáo chất lượng',
       })
 
       if (!isEditing) {
@@ -119,7 +126,7 @@ export function QualityReportPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quality-reports', projectId] })
       queryClient.invalidateQueries({ queryKey: ['quality-report', projectId, reportId] })
-      showToast({ type: 'success', title: 'Đã ký nghiệm thu báo cáo QC' })
+      showToast({ type: 'success', title: 'Đã ký nghiệm thu báo cáo chất lượng' })
     },
     onError: (error: unknown) => {
       showToast({
@@ -136,7 +143,7 @@ export function QualityReportPage() {
       queryClient.setQueryData(['quality-report', projectId, reportId], updated)
       queryClient.invalidateQueries({ queryKey: ['quality-reports', projectId] })
       queryClient.invalidateQueries({ queryKey: ['quality-report', projectId, reportId] })
-      showToast({ type: 'success', title: 'Đã mở lại báo cáo QC' })
+      showToast({ type: 'success', title: 'Đã mở lại báo cáo chất lượng' })
     },
     onError: (error: unknown) => {
       showToast({
@@ -167,11 +174,11 @@ export function QualityReportPage() {
   }
 
   if (isEditing && (isError || !report)) {
-    return <ErrorState message="Không tải được chi tiết báo cáo QC." />
+    return <ErrorState message="Không tải được chi tiết báo cáo chất lượng." />
   }
 
   if (!canUseQualityStandard && !isEditing) {
-    return <ErrorState message="Bạn không có quyền tạo báo cáo QC." />
+    return <ErrorState message="Bạn không có quyền tạo báo cáo chất lượng." />
   }
 
   return (
@@ -182,12 +189,12 @@ export function QualityReportPage() {
             to={`/projects/${projectId}/quality`}
             className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
           >
-            ← Quality dashboard
+            ← Quản lý chất lượng
           </Link>
-          <h2 className="mt-1">{isEditing ? 'Chi tiết báo cáo QC' : 'Tạo báo cáo QC'}</h2>
+          <h2 className="mt-1">{isEditing ? 'Chi tiết báo cáo chất lượng' : 'Tạo báo cáo chất lượng'}</h2>
           {report && (
             <p className="page-subtitle">
-              Người lập: {report.inspector?.name ?? report.inspectorId} · Trạng thái: {report.status}
+              Người lập: {report.inspector?.name ?? report.inspectorId} · Trạng thái: {statusLabel(report.status)}
             </p>
           )}
         </div>
@@ -219,7 +226,7 @@ export function QualityReportPage() {
 
       <div className="app-card space-y-4">
         <div>
-          <label className="form-label">Ngay báo cáo</label>
+          <label className="form-label">Ngày báo cáo</label>
           <input
             type="date"
             value={reportDate}
@@ -235,13 +242,13 @@ export function QualityReportPage() {
             value={location}
             onChange={(event) => setLocation(event.target.value)}
             className="form-input"
-            placeholder="Khu vuc kiem tra..."
+            placeholder="Khu vực kiểm tra..."
             disabled={!canEditReport}
           />
         </div>
 
         <div>
-          <label className="form-label">Nội dung QC</label>
+          <label className="form-label">Nội dung kiểm tra chất lượng</label>
           <textarea
             rows={6}
             value={description}

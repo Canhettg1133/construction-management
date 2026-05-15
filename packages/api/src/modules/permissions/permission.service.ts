@@ -5,30 +5,30 @@ import {
   type PermissionLevel,
   type SpecialPrivilege,
   type ToolId,
-} from "@construction/shared";
-import { prisma } from "../../config/database";
-import { BadRequestError, NotFoundError } from "../../shared/errors";
-import { permissionService as sharedPermissionService } from "../../shared/services/permission.service";
+} from '@construction/shared'
+import { prisma } from '../../config/database'
+import { BadRequestError, NotFoundError } from '../../shared/errors'
+import { permissionService as sharedPermissionService } from '../../shared/services/permission.service'
 
 function assertToolId(toolId: string): ToolId {
   if (!TOOL_IDS.includes(toolId as ToolId)) {
-    throw new BadRequestError("ToolId khong hop le");
+    throw new BadRequestError('Mã công cụ không hợp lệ')
   }
-  return toolId as ToolId;
+  return toolId as ToolId
 }
 
 function assertPermissionLevel(level: string): PermissionLevel {
   if (!PERMISSION_LEVELS.includes(level as PermissionLevel)) {
-    throw new BadRequestError("Permission level khong hop le");
+    throw new BadRequestError('Mức quyền không hợp lệ')
   }
-  return level as PermissionLevel;
+  return level as PermissionLevel
 }
 
 function assertSpecialPrivilege(privilege: string): SpecialPrivilege {
   if (!SPECIAL_PRIVILEGES.includes(privilege as SpecialPrivilege)) {
-    throw new BadRequestError("Special privilege khong hop le");
+    throw new BadRequestError('Quyền đặc biệt không hợp lệ')
   }
-  return privilege as SpecialPrivilege;
+  return privilege as SpecialPrivilege
 }
 
 async function ensureProjectExists(projectId: string) {
@@ -50,31 +50,31 @@ async function ensureProjectExists(projectId: string) {
         },
       },
     },
-  });
+  })
 
   if (!project) {
-    throw new NotFoundError("Khong tim thay du an");
+    throw new NotFoundError('Không tìm thấy dự án')
   }
 
-  return project;
+  return project
 }
 
 async function ensureMember(projectId: string, userId: string) {
   const member = await prisma.projectMember.findUnique({
     where: { projectId_userId: { projectId, userId } },
     select: { id: true, userId: true, role: true },
-  });
+  })
 
   if (!member) {
-    throw new NotFoundError("Nguoi dung khong thuoc du an");
+    throw new NotFoundError('Người dùng không thuộc dự án')
   }
 
-  return member;
+  return member
 }
 
 export const projectPermissionService = {
   async getProjectSettings(projectId: string) {
-    const project = await ensureProjectExists(projectId);
+    const project = await ensureProjectExists(projectId)
     return {
       id: project.id,
       code: project.code,
@@ -86,11 +86,11 @@ export const projectPermissionService = {
       memberCount: project._count.members,
       overrideCount: project._count.toolPermissions,
       privilegeAssignmentCount: project._count.specialPrivileges,
-    };
+    }
   },
 
   async getProjectPermissionMatrix(projectId: string) {
-    await ensureProjectExists(projectId);
+    await ensureProjectExists(projectId)
 
     const members = await prisma.projectMember.findMany({
       where: { projectId },
@@ -106,24 +106,20 @@ export const projectPermissionService = {
         },
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: 'asc',
       },
-    });
+    })
 
     const computedPermissions = await Promise.all(
-      members.map((member) =>
-        sharedPermissionService.getUserProjectPermissions(member.userId, projectId)
-      )
-    );
+      members.map((member) => sharedPermissionService.getUserProjectPermissions(member.userId, projectId)),
+    )
 
-    const permissionByUser = new Map(
-      computedPermissions.map((permissions) => [permissions.userId, permissions])
-    );
+    const permissionByUser = new Map(computedPermissions.map((permissions) => [permissions.userId, permissions]))
 
     const overrides = await prisma.projectToolPermission.findMany({
       where: { projectId },
-      orderBy: [{ userId: "asc" }, { toolId: "asc" }],
-    });
+      orderBy: [{ userId: 'asc' }, { toolId: 'asc' }],
+    })
 
     const specialPrivilegeAssignments = await prisma.specialPrivilegeAssignment.findMany({
       where: { projectId },
@@ -135,13 +131,13 @@ export const projectPermissionService = {
           select: { id: true, name: true, email: true },
         },
       },
-      orderBy: [{ userId: "asc" }, { grantedAt: "desc" }],
-    });
+      orderBy: [{ userId: 'asc' }, { grantedAt: 'desc' }],
+    })
 
     return {
       projectId,
       members: members.map((member) => {
-        const permissions = permissionByUser.get(member.userId);
+        const permissions = permissionByUser.get(member.userId)
         return {
           id: member.id,
           userId: member.userId,
@@ -150,24 +146,19 @@ export const projectPermissionService = {
           toolPermissions: permissions?.toolPermissions ?? {},
           specialPrivileges: permissions?.specialPrivileges ?? [],
           effectiveRole: permissions?.effectiveRole ?? null,
-        };
+        }
       }),
       overrides,
       specialPrivilegeAssignments,
-    };
+    }
   },
 
-  async upsertToolPermissionOverride(params: {
-    projectId: string;
-    userId: string;
-    toolId: string;
-    level: string;
-  }) {
-    const toolId = assertToolId(params.toolId);
-    const level = assertPermissionLevel(params.level);
+  async upsertToolPermissionOverride(params: { projectId: string; userId: string; toolId: string; level: string }) {
+    const toolId = assertToolId(params.toolId)
+    const level = assertPermissionLevel(params.level)
 
-    await ensureProjectExists(params.projectId);
-    await ensureMember(params.projectId, params.userId);
+    await ensureProjectExists(params.projectId)
+    await ensureMember(params.projectId, params.userId)
 
     return prisma.projectToolPermission.upsert({
       where: {
@@ -186,17 +177,13 @@ export const projectPermissionService = {
       update: {
         level,
       },
-    });
+    })
   },
 
-  async removeToolPermissionOverride(params: {
-    projectId: string;
-    userId: string;
-    toolId: string;
-  }) {
-    const toolId = assertToolId(params.toolId);
+  async removeToolPermissionOverride(params: { projectId: string; userId: string; toolId: string }) {
+    const toolId = assertToolId(params.toolId)
 
-    await ensureProjectExists(params.projectId);
+    await ensureProjectExists(params.projectId)
 
     const result = await prisma.projectToolPermission.deleteMany({
       where: {
@@ -204,21 +191,16 @@ export const projectPermissionService = {
         userId: params.userId,
         toolId,
       },
-    });
+    })
 
-    return { deletedCount: result.count };
+    return { deletedCount: result.count }
   },
 
-  async assignSpecialPrivilege(params: {
-    projectId: string;
-    userId: string;
-    privilege: string;
-    grantedBy: string;
-  }) {
-    const privilege = assertSpecialPrivilege(params.privilege);
+  async assignSpecialPrivilege(params: { projectId: string; userId: string; privilege: string; grantedBy: string }) {
+    const privilege = assertSpecialPrivilege(params.privilege)
 
-    await ensureProjectExists(params.projectId);
-    await ensureMember(params.projectId, params.userId);
+    await ensureProjectExists(params.projectId)
+    await ensureMember(params.projectId, params.userId)
 
     return prisma.specialPrivilegeAssignment.upsert({
       where: {
@@ -238,26 +220,23 @@ export const projectPermissionService = {
         grantedBy: params.grantedBy,
         grantedAt: new Date(),
       },
-    });
+    })
   },
 
-  async revokeSpecialPrivilege(params: {
-    projectId: string;
-    assignmentId: string;
-  }) {
+  async revokeSpecialPrivilege(params: { projectId: string; assignmentId: string }) {
     const assignment = await prisma.specialPrivilegeAssignment.findUnique({
       where: { id: params.assignmentId },
       select: { id: true, projectId: true },
-    });
+    })
 
     if (!assignment || assignment.projectId !== params.projectId) {
-      throw new NotFoundError("Khong tim thay phan quyen dac biet");
+      throw new NotFoundError('Không tìm thấy phân quyền đặc biệt')
     }
 
     await prisma.specialPrivilegeAssignment.delete({
       where: { id: params.assignmentId },
-    });
+    })
 
-    return { id: params.assignmentId, deleted: true };
+    return { id: params.assignmentId, deleted: true }
   },
-};
+}

@@ -1,9 +1,9 @@
-﻿import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+﻿import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 import {
   AlertCircle,
   CheckSquare,
@@ -15,20 +15,20 @@ import {
   MapPin,
   Users,
   X,
-} from "lucide-react";
-import { listProjectMembers } from "../api/memberApi";
-import { getProject, updateProject } from "../api/projectApi";
-import { PermissionGate } from "../../../shared/components/PermissionGate";
-import { Button } from "../../../shared/components/Button";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { listReports } from "../../reports/api/reportApi";
-import { listTasks } from "../../tasks/api/taskApi";
-import { useUiStore } from "../../../store/uiStore";
-import { PROJECT_STATUS_LABELS } from "@construction/shared";
-import type { ProjectStatus } from "@construction/shared";
+} from 'lucide-react'
+import { listProjectMembers } from '../api/memberApi'
+import { getProject, updateProject } from '../api/projectApi'
+import { PermissionGate } from '../../../shared/components/PermissionGate'
+import { Button } from '../../../shared/components/Button'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { listReports } from '../../reports/api/reportApi'
+import { listTasks } from '../../tasks/api/taskApi'
+import { useUiStore } from '../../../store/uiStore'
+import { PROJECT_STATUS_LABELS } from '@construction/shared'
+import type { ProjectStatus } from '@construction/shared'
 
-const PROJECT_STATUSES: ProjectStatus[] = ["ACTIVE", "ON_HOLD", "COMPLETED"];
+const PROJECT_STATUSES: ProjectStatus[] = ['ACTIVE', 'ON_HOLD', 'COMPLETED']
 
 const updateProjectSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -37,21 +37,21 @@ const updateProjectSchema = z.object({
   clientName: z.string().max(200).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  status: z.enum(["ACTIVE", "ON_HOLD", "COMPLETED"]).optional(),
+  status: z.enum(['ACTIVE', 'ON_HOLD', 'COMPLETED']).optional(),
   progress: z.coerce.number().min(0).max(100).optional(),
-});
+})
 
-type UpdateProjectForm = z.infer<typeof updateProjectSchema>;
+type UpdateProjectForm = z.infer<typeof updateProjectSchema>
 
 interface EditProjectModalProps {
-  project: NonNullable<Awaited<ReturnType<typeof getProject>>>;
-  onClose: () => void;
-  onSuccess: () => void;
+  project: NonNullable<Awaited<ReturnType<typeof getProject>>>
+  onClose: () => void
+  onSuccess: () => void
 }
 
 function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps) {
-  const showToast = useUiStore((state) => state.showToast);
-  const queryClient = useQueryClient();
+  const showToast = useUiStore((state) => state.showToast)
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -61,28 +61,28 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
     resolver: zodResolver(updateProjectSchema),
     defaultValues: {
       name: project.name,
-      description: project.description ?? "",
+      description: project.description ?? '',
       location: project.location,
-      clientName: project.clientName ?? "",
-      startDate: project.startDate ? project.startDate.slice(0, 10) : "",
-      endDate: project.endDate ? project.endDate.slice(0, 10) : "",
+      clientName: project.clientName ?? '',
+      startDate: project.startDate ? project.startDate.slice(0, 10) : '',
+      endDate: project.endDate ? project.endDate.slice(0, 10) : '',
       status: project.status,
       progress: Number(project.progress ?? 0),
     },
-  });
+  })
 
   const mutation = useMutation({
     mutationFn: (payload: UpdateProjectForm) => updateProject(project.id, payload),
     onSuccess: (updatedProject) => {
-      queryClient.setQueryData(["project", project.id], updatedProject);
-      showToast({ type: "success", title: "Cập nhật dự án thành công" });
-      onSuccess();
+      queryClient.setQueryData(['project', project.id], updatedProject)
+      showToast({ type: 'success', title: 'Cập nhật dự án thành công' })
+      onSuccess()
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "Cập nhật that bai";
-      showToast({ type: "error", title: "Loi", description: message });
+      const message = error instanceof Error ? error.message : 'Cập nhật thất bại'
+      showToast({ type: 'error', title: 'Lỗi', description: message })
     },
-  });
+  })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
@@ -97,42 +97,42 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
         <form onSubmit={handleSubmit((payload) => mutation.mutateAsync(payload))} className="space-y-4 p-5">
           <div>
             <label className="form-label">Tên dự án</label>
-            <input {...register("name")} className="form-input" />
+            <input {...register('name')} className="form-input" />
             {errors.name && <p className="form-error">{errors.name.message}</p>}
           </div>
 
           <div>
             <label className="form-label">Mô tả</label>
-            <textarea {...register("description")} rows={3} className="form-input" />
+            <textarea {...register('description')} rows={3} className="form-input" />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label">Địa điểm</label>
-              <input {...register("location")} className="form-input" />
+              <input {...register('location')} className="form-input" />
               {errors.location && <p className="form-error">{errors.location.message}</p>}
             </div>
             <div>
               <label className="form-label">Khách hàng</label>
-              <input {...register("clientName")} className="form-input" />
+              <input {...register('clientName')} className="form-input" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label">Ngày bắt đầu</label>
-              <input {...register("startDate")} type="date" className="form-input" />
+              <input {...register('startDate')} type="date" className="form-input" />
             </div>
             <div>
               <label className="form-label">Ngày kết thúc</label>
-              <input {...register("endDate")} type="date" className="form-input" />
+              <input {...register('endDate')} type="date" className="form-input" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label">Trạng thái</label>
-              <select {...register("status")} className="form-input">
+              <select {...register('status')} className="form-input">
                 {PROJECT_STATUSES.map((status) => (
                   <option key={status} value={status}>
                     {PROJECT_STATUS_LABELS[status]}
@@ -142,7 +142,7 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
             </div>
             <div>
               <label className="form-label">Tiến độ (%)</label>
-              <input {...register("progress")} type="number" min={0} max={100} className="form-input" />
+              <input {...register('progress')} type="number" min={0} max={100} className="form-input" />
             </div>
           </div>
 
@@ -164,46 +164,54 @@ function EditProjectModal({ project, onClose, onSuccess }: EditProjectModalProps
         </form>
       </div>
     </div>
-  );
+  )
 }
 
 export function ProjectOverviewTab() {
-  const { id } = useParams<{ id: string }>();
-  const projectId = id ?? "";
-  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>()
+  const projectId = id ?? ''
+  const navigate = useNavigate()
 
-  const { data: project, isLoading, isError } = useQuery({
-    queryKey: ["project", projectId],
+  const {
+    data: project,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['project', projectId],
     queryFn: () => getProject(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
   const { data: members } = useQuery({
-    queryKey: ["project-members", projectId],
+    queryKey: ['project-members', projectId],
     queryFn: () => listProjectMembers(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
   const { data: reportsData } = useQuery({
-    queryKey: ["reports", projectId],
+    queryKey: ['reports', projectId],
     queryFn: () => listReports(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
   const { data: tasksData } = useQuery({
-    queryKey: ["tasks", projectId],
+    queryKey: ['tasks', projectId],
     queryFn: () => listTasks(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
-  const [showEdit, setShowEdit] = useState(false);
+  const [showEdit, setShowEdit] = useState(false)
 
-  const recentReports = reportsData?.reports?.slice(0, 3) ?? [];
-  const openTasks = (tasksData?.tasks ?? []).filter((task) => task.status !== "DONE" && task.status !== "CANCELLED");
-  const overdueTasks = openTasks.filter((task) => task.dueDate && new Date(task.dueDate) < new Date());
+  const recentReports = reportsData?.reports?.slice(0, 3) ?? []
+  const openTasks = (tasksData?.tasks ?? []).filter((task) => task.status !== 'DONE' && task.status !== 'CANCELLED')
+  const overdueTasks = openTasks.filter((task) => task.dueDate && new Date(task.dueDate) < new Date())
 
   const progressColor =
-    project && Number(project.progress) >= 80 ? "bg-emerald-500" : project && Number(project.progress) >= 40 ? "bg-brand-500" : "bg-amber-500";
+    project && Number(project.progress) >= 80
+      ? 'bg-emerald-500'
+      : project && Number(project.progress) >= 40
+        ? 'bg-brand-500'
+        : 'bg-amber-500'
 
   if (isLoading) {
     return (
@@ -211,11 +219,11 @@ export function ProjectOverviewTab() {
         <SkeletonCard lines={2} />
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (isError || !project) {
-    return <ErrorState message="Không tải được thông tin dự án." />;
+    return <ErrorState message="Không tải được thông tin dự án." />
   }
 
   return (
@@ -238,11 +246,14 @@ export function ProjectOverviewTab() {
           <span className="text-2xl font-bold text-brand-600">{project.progress}%</span>
         </div>
         <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
-          <div className={`h-full rounded-full transition-all ${progressColor}`} style={{ width: `${project.progress}%` }} />
+          <div
+            className={`h-full rounded-full transition-all ${progressColor}`}
+            style={{ width: `${project.progress}%` }}
+          />
         </div>
         <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
           <span className="font-medium">{PROJECT_STATUS_LABELS[project.status]}</span>
-          <span>Cập nhật: {new Date(project.updatedAt).toLocaleDateString("vi-VN")}</span>
+          <span>Cập nhật: {new Date(project.updatedAt).toLocaleDateString('vi-VN')}</span>
         </div>
       </div>
 
@@ -254,21 +265,21 @@ export function ProjectOverviewTab() {
           </div>
           <div className="mt-3 space-y-2">
             <div className="flex items-start gap-2 text-sm">
-              <span className="w-20 shrink-0 text-slate-500">Ma:</span>
+              <span className="w-20 shrink-0 text-slate-500">Mã:</span>
               <span className="font-medium text-slate-800">{project.code}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <span className="w-20 shrink-0 text-slate-500">Khách hàng:</span>
-              <span className="text-slate-800">{project.clientName || "—"}</span>
+              <span className="text-slate-800">{project.clientName || '—'}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
-              <span className="w-20 shrink-0 text-slate-500">Bat đầu:</span>
-              <span className="text-slate-800">{new Date(project.startDate).toLocaleDateString("vi-VN")}</span>
+              <span className="w-20 shrink-0 text-slate-500">Bắt đầu:</span>
+              <span className="text-slate-800">{new Date(project.startDate).toLocaleDateString('vi-VN')}</span>
             </div>
             {project.endDate && (
               <div className="flex items-start gap-2 text-sm">
-                <span className="w-20 shrink-0 text-slate-500">Ket thuc:</span>
-                <span className="text-slate-800">{new Date(project.endDate).toLocaleDateString("vi-VN")}</span>
+                <span className="w-20 shrink-0 text-slate-500">Kết thúc:</span>
+                <span className="text-slate-800">{new Date(project.endDate).toLocaleDateString('vi-VN')}</span>
               </div>
             )}
           </div>
@@ -286,7 +297,10 @@ export function ProjectOverviewTab() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <PermissionGate projectId={projectId} toolId="PROJECT" minLevel="STANDARD">
-          <button onClick={() => navigate(`/projects/${projectId}/members`)} className="app-card flex items-center gap-3 text-left transition hover:-translate-y-0.5">
+          <button
+            onClick={() => navigate(`/projects/${projectId}/members`)}
+            className="app-card flex items-center gap-3 text-left transition hover:-translate-y-0.5"
+          >
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-violet-50">
               <Users className="h-4 w-4 text-violet-600" />
             </div>
@@ -297,7 +311,10 @@ export function ProjectOverviewTab() {
           </button>
         </PermissionGate>
 
-        <button onClick={() => navigate(`/projects/${projectId}/reports`)} className="app-card flex items-center gap-3 text-left transition hover:-translate-y-0.5">
+        <button
+          onClick={() => navigate(`/projects/${projectId}/reports`)}
+          className="app-card flex items-center gap-3 text-left transition hover:-translate-y-0.5"
+        >
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-50">
             <FileText className="h-4 w-4 text-brand-600" />
           </div>
@@ -307,23 +324,29 @@ export function ProjectOverviewTab() {
           </div>
         </button>
 
-        <button onClick={() => navigate(`/projects/${projectId}/tasks`)} className="app-card flex items-center gap-3 text-left transition hover:-translate-y-0.5">
+        <button
+          onClick={() => navigate(`/projects/${projectId}/tasks`)}
+          className="app-card flex items-center gap-3 text-left transition hover:-translate-y-0.5"
+        >
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50">
             <CheckSquare className="h-4 w-4 text-amber-600" />
           </div>
           <div>
-            <p className="text-xs text-slate-500">Task mo</p>
+            <p className="text-xs text-slate-500">Công việc mở</p>
             <p className="text-xl font-bold text-slate-900">{openTasks.length}</p>
           </div>
         </button>
 
         {overdueTasks.length > 0 && (
-          <button onClick={() => navigate(`/projects/${projectId}/tasks`)} className="app-card flex items-center gap-3 text-left transition hover:-translate-y-0.5">
+          <button
+            onClick={() => navigate(`/projects/${projectId}/tasks`)}
+            className="app-card flex items-center gap-3 text-left transition hover:-translate-y-0.5"
+          >
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-red-50">
               <Clock className="h-4 w-4 text-red-600" />
             </div>
             <div>
-              <p className="text-xs text-slate-500">Qua han</p>
+              <p className="text-xs text-slate-500">Quá hạn</p>
               <p className="text-xl font-bold text-red-600">{overdueTasks.length}</p>
             </div>
           </button>
@@ -333,8 +356,11 @@ export function ProjectOverviewTab() {
       {recentReports.length > 0 && (
         <div className="app-card">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700">Báo cáo gan day</h3>
-            <button onClick={() => navigate(`/projects/${projectId}/reports`)} className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700">
+            <h3 className="text-sm font-semibold text-slate-700">Báo cáo gần đây</h3>
+            <button
+              onClick={() => navigate(`/projects/${projectId}/reports`)}
+              className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700"
+            >
               Xem tất cả <ChevronRight className="h-3 w-3" />
             </button>
           </div>
@@ -347,11 +373,17 @@ export function ProjectOverviewTab() {
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium text-slate-800">
-                    {new Date(report.reportDate).toLocaleDateString("vi-VN", { weekday: "short", day: "numeric", month: "short" })}
+                    {new Date(report.reportDate).toLocaleDateString('vi-VN', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                    })}
                   </p>
                   <p className="truncate text-xs text-slate-500">{report.workDescription}</p>
                 </div>
-                <span className="ml-3 shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">{report.progress}%</span>
+                <span className="ml-3 shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+                  {report.progress}%
+                </span>
               </Link>
             ))}
           </div>
@@ -363,12 +395,10 @@ export function ProjectOverviewTab() {
           project={project}
           onClose={() => setShowEdit(false)}
           onSuccess={() => {
-            setShowEdit(false);
+            setShowEdit(false)
           }}
         />
       )}
     </div>
-  );
+  )
 }
-
-

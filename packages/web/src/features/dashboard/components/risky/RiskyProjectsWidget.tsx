@@ -1,20 +1,20 @@
-import { ShieldAlert } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
+import { ShieldAlert } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
 
 function rateColor(rate: number) {
-  if (rate >= 50) return "bg-red-500";
-  if (rate >= 30) return "bg-amber-500";
-  return "bg-yellow-400";
+  if (rate >= 50) return 'bg-red-500'
+  if (rate >= 30) return 'bg-amber-500'
+  return 'bg-yellow-400'
 }
 
 export function RiskyProjectsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
-  const projects = data?.riskyProjects ?? [];
+  const role = useDashboardRole()
+  const { data } = useDashboard()
+  const projects = data?.riskyProjects ?? []
 
   if (!role.showRiskyProjects) {
-    return null;
+    return null
   }
 
   if (projects.length === 0) {
@@ -26,7 +26,7 @@ export function RiskyProjectsWidget() {
         </div>
         <p className="py-4 text-center text-sm text-slate-500">Tất cả dự án hiện đang an toàn.</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -61,5 +61,5 @@ export function RiskyProjectsWidget() {
         ))}
       </div>
     </div>
-  );
+  )
 }

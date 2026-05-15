@@ -1,24 +1,24 @@
-import { forwardRef } from "react";
-import { cn } from "../../utils/cn";
-import { ChevronDown } from "lucide-react";
+import { forwardRef } from 'react'
+import { cn } from '../../utils/cn'
+import { ChevronDown } from 'lucide-react'
 
 interface SelectOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
+  value: string
+  label: string
+  disabled?: boolean
 }
 
-interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "children"> {
-  label?: string;
-  error?: string;
-  hint?: string;
-  options: SelectOption[];
-  placeholder?: string;
+interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'children'> {
+  label?: string
+  error?: string
+  hint?: string
+  options: SelectOption[]
+  placeholder?: string
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, hint, options, placeholder, className, id, ...props }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
 
     return (
       <div className="w-full">
@@ -32,10 +32,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              "form-input appearance-none pr-9",
-              error && "border-red-400 focus:ring-red-400",
-              !props.value && placeholder && "text-slate-400",
-              className
+              'form-input appearance-none pr-9',
+              error && 'border-red-400 focus:ring-red-400',
+              !props.value && placeholder && 'text-slate-400',
+              className,
             )}
             {...props}
           >
@@ -55,8 +55,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {error && <p className="form-error">{error}</p>}
         {hint && !error && <p className="form-help">{hint}</p>}
       </div>
-    );
-  }
-);
+    )
+  },
+)
 
-Select.displayName = "Select";
+Select.displayName = 'Select'

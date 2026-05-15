@@ -1,92 +1,119 @@
-import * as bcrypt from "@node-rs/bcrypt";
-import { userRepository } from "./user.repository";
-import { NotFoundError, ConflictError } from "../../shared/errors";
-import { auditService } from "../audit/audit.service";
-import { AuditEntityType } from "@prisma/client";
+import * as bcrypt from '@node-rs/bcrypt'
+import { userRepository } from './user.repository'
+import { NotFoundError, ConflictError } from '../../shared/errors'
+import { auditService } from '../audit/audit.service'
+import { AuditEntityType } from '@prisma/client'
 
 export const userService = {
   async list(page: number, pageSize: number, systemRole?: string, q?: string) {
     const [users, total] = await Promise.all([
       userRepository.findAll(page, pageSize, systemRole, q),
       userRepository.countAll(systemRole, q),
-    ]);
-    return { users, total };
+    ])
+    return { users, total }
   },
 
   async getById(id: string) {
-    const user = await userRepository.findById(id);
-    if (!user) throw new NotFoundError("Không tìm thấy user");
-    return user;
+    const user = await userRepository.findById(id)
+    if (!user) throw new NotFoundError('Không tìm thấy user')
+    return user
   },
 
-  async create(data: { name: string; email: string; password: string; systemRole: string; phone?: string; createdBy?: string }) {
-    const existing = await userRepository.findByEmail(data.email.toLowerCase());
-    if (existing) throw new ConflictError("Email đã tồn tại");
+  async create(data: {
+    name: string
+    email: string
+    password: string
+    systemRole: string
+    phone?: string
+    createdBy?: string
+  }) {
+    const existing = await userRepository.findByEmail(data.email.toLowerCase())
+    if (existing) throw new ConflictError('Email đã tồn tại')
 
-    const passwordHash = await bcrypt.hash(data.password, 12);
+    const passwordHash = await bcrypt.hash(data.password, 12)
     const created = await userRepository.create({
       name: data.name,
       email: data.email.toLowerCase(),
       passwordHash,
       systemRole: data.systemRole,
       phone: data.phone,
-    });
+    })
 
     if (data.createdBy) {
       await auditService.log({
         userId: data.createdBy,
-        action: "CREATE",
+        action: 'CREATE',
         entityType: AuditEntityType.USER,
         entityId: created.id,
         description: `Đã tạo người dùng: ${created.email}`,
-      });
+      })
     }
 
-    return created;
+    return created
   },
 
   async update(id: string, data: { name?: string; systemRole?: string; phone?: string }, updatedBy?: string) {
-    const user = await userRepository.findById(id);
-    if (!user) throw new NotFoundError("Không tìm thấy user");
+    const user = await userRepository.findById(id)
+    if (!user) throw new NotFoundError('Không tìm thấy user')
 
-    const updated = await userRepository.update(id, data);
+    const updated = await userRepository.update(id, data)
 
     if (updatedBy) {
       await auditService.log({
         userId: updatedBy,
-        action: "UPDATE",
+        action: 'UPDATE',
         entityType: AuditEntityType.USER,
         entityId: id,
         description: `Đã cập nhật người dùng: ${updated.email}`,
-      });
+      })
     }
 
-    return updated;
+    return updated
   },
 
   async toggleStatus(id: string, isActive: boolean, updatedBy?: string) {
-    const user = await userRepository.findById(id);
-    if (!user) throw new NotFoundError("Không tìm thấy user");
+    const user = await userRepository.findById(id)
+    if (!user) throw new NotFoundError('Không tìm thấy user')
 
-    const updated = await userRepository.toggleStatus(id, isActive);
+    const updated = await userRepository.toggleStatus(id, isActive)
 
     if (updatedBy) {
       await auditService.log({
         userId: updatedBy,
-        action: "STATUS_CHANGE",
+        action: 'STATUS_CHANGE',
         entityType: AuditEntityType.USER,
         entityId: id,
-        description: `Đã ${isActive ? "mở khóa" : "khóa"} người dùng: ${updated.email}`,
-      });
+        description: `Đã ${isActive ? 'mở khóa' : 'khóa'} người dùng: ${updated.email}`,
+      })
     }
 
-    return updated;
+    return updated
+  },
+
+  async resetPassword(id: string, newPassword: string, updatedBy?: string) {
+    const user = await userRepository.findById(id)
+    if (!user) throw new NotFoundError('Không tìm thấy user')
+
+    const passwordHash = await bcrypt.hash(newPassword, 12)
+    await userRepository.updatePassword(id, passwordHash)
+
+    if (updatedBy) {
+      await auditService.log({
+        userId: updatedBy,
+        action: 'PASSWORD_RESET',
+        entityType: AuditEntityType.USER,
+        entityId: id,
+        description: `Đã đặt lại mật khẩu cho người dùng: ${user.email}`,
+      })
+    }
+
+    return { email: user.email }
   },
 
   async updateMe(id: string, data: { name?: string; phone?: string }) {
-    const user = await userRepository.findById(id);
-    if (!user) throw new NotFoundError("Không tìm thấy user");
+    const user = await userRepository.findById(id)
+    if (!user) throw new NotFoundError('Không tìm thấy user')
 
-    return userRepository.updateMe(id, data);
+    return userRepository.updateMe(id, data)
   },
-};
+}

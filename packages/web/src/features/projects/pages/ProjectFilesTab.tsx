@@ -1,88 +1,89 @@
-﻿import { useRef } from "react";
-import { useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, File, FileSpreadsheet, FileText, Image, Trash2, Upload } from "lucide-react";
-import { deleteProjectFile, getFileDownloadUrl, listProjectFiles, uploadProjectFile } from "../api/fileApi";
-import { PermissionGate } from "../../../shared/components/PermissionGate";
-import { EmptyState } from "../../../shared/components/feedback/EmptyState";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { usePermission } from "../../../shared/hooks/usePermission";
-import { useUiStore } from "../../../store/uiStore";
+﻿import { useRef } from 'react'
+import { useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Download, File, FileSpreadsheet, FileText, Image, Trash2, Upload } from 'lucide-react'
+import { deleteProjectFile, getFileDownloadUrl, listProjectFiles, uploadProjectFile } from '../api/fileApi'
+import { PermissionGate } from '../../../shared/components/PermissionGate'
+import { EmptyState } from '../../../shared/components/feedback/EmptyState'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { usePermission } from '../../../shared/hooks/usePermission'
+import { useUiStore } from '../../../store/uiStore'
 
 function FileIcon({ mimeType }: { mimeType: string }) {
-  if (mimeType.startsWith("image/")) return <Image className="h-5 w-5 text-violet-500" />;
-  if (mimeType.includes("pdf")) return <FileText className="h-5 w-5 text-red-500" />;
-  if (mimeType.includes("sheet") || mimeType.includes("excel")) return <FileSpreadsheet className="h-5 w-5 text-emerald-500" />;
-  return <File className="h-5 w-5 text-slate-400" />;
+  if (mimeType.startsWith('image/')) return <Image className="h-5 w-5 text-violet-500" />
+  if (mimeType.includes('pdf')) return <FileText className="h-5 w-5 text-red-500" />
+  if (mimeType.includes('sheet') || mimeType.includes('excel'))
+    return <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
+  return <File className="h-5 w-5 text-slate-400" />
 }
 
 function formatFileSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 export function ProjectFilesTab() {
-  const { id: projectId } = useParams<{ id: string }>();
-  const currentProjectId = projectId ?? "";
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((s) => s.showToast);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { id: projectId } = useParams<{ id: string }>()
+  const currentProjectId = projectId ?? ''
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((s) => s.showToast)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { has: canUpload } = usePermission({
     projectId: currentProjectId,
-    toolId: "FILE",
-    minLevel: "STANDARD",
-  });
+    toolId: 'FILE',
+    minLevel: 'STANDARD',
+  })
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["project-files", currentProjectId],
+    queryKey: ['project-files', currentProjectId],
     queryFn: () => listProjectFiles(currentProjectId),
     enabled: Boolean(currentProjectId),
-  });
+  })
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => uploadProjectFile(currentProjectId, file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-files", currentProjectId] });
-      showToast({ type: "success", title: "Tải tệp lên thành công" });
+      queryClient.invalidateQueries({ queryKey: ['project-files', currentProjectId] })
+      showToast({ type: 'success', title: 'Tải tệp lên thành công' })
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Không thể tải tệp",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể tải tệp',
+      })
     },
-  });
+  })
 
   const deleteMutation = useMutation({
     mutationFn: (fileId: string) => deleteProjectFile(currentProjectId, fileId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-files", currentProjectId] });
-      showToast({ type: "success", title: "Đã xóa tệp" });
+      queryClient.invalidateQueries({ queryKey: ['project-files', currentProjectId] })
+      showToast({ type: 'success', title: 'Đã xóa tệp' })
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Không thể xóa tệp",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa tệp',
+      })
     },
-  });
+  })
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(event.target.files || []);
-    if (selectedFiles.length === 0) return;
+    const selectedFiles = Array.from(event.target.files || [])
+    if (selectedFiles.length === 0) return
 
-    selectedFiles.forEach((file) => uploadMutation.mutate(file));
+    selectedFiles.forEach((file) => uploadMutation.mutate(file))
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = ''
     }
-  };
+  }
 
-  const files = data?.files ?? [];
+  const files = data?.files ?? []
 
   if (isLoading) {
     return (
@@ -90,11 +91,11 @@ export function ProjectFilesTab() {
         <SkeletonCard lines={2} />
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (isError) {
-    return <ErrorState message="Không tải được danh sách tệp." />;
+    return <ErrorState message="Không tải được danh sách tệp." />
   }
 
   return (
@@ -121,8 +122,8 @@ export function ProjectFilesTab() {
 
       {files.length === 0 ? (
         <EmptyState
-          title="Chưa có file nào"
-          description={canUpload ? "Tải tệp lên để lưu trữ tài liệu dự án." : "Chưa có tệp nào được tải lên."}
+          title="Chưa có tệp nào"
+          description={canUpload ? 'Tải tệp lên để lưu trữ tài liệu dự án.' : 'Chưa có tệp nào được tải lên.'}
         />
       ) : (
         <div className="space-y-2">
@@ -132,7 +133,7 @@ export function ProjectFilesTab() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-900">{file.originalName}</p>
                 <p className="text-xs text-slate-500">
-                  {formatFileSize(file.fileSize)} · {new Date(file.createdAt).toLocaleDateString("vi-VN")}
+                  {formatFileSize(file.fileSize)} · {new Date(file.createdAt).toLocaleDateString('vi-VN')}
                   {file.uploader && ` · ${file.uploader.name}`}
                 </p>
               </div>
@@ -149,13 +150,13 @@ export function ProjectFilesTab() {
                 <PermissionGate projectId={currentProjectId} toolId="FILE" minLevel="ADMIN">
                   <button
                     onClick={() => {
-                      if (confirm(`Xóa file "${file.originalName}"?`)) {
-                        deleteMutation.mutate(file.id);
+                      if (confirm(`Xóa tệp "${file.originalName}"?`)) {
+                        deleteMutation.mutate(file.id)
                       }
                     }}
                     disabled={deleteMutation.isPending}
                     className="rounded-lg p-1.5 text-red-500 hover:bg-red-50"
-                    title="Xóa file"
+                    title="Xóa tệp"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -166,9 +167,5 @@ export function ProjectFilesTab() {
         </div>
       )}
     </div>
-  );
+  )
 }
-
-
-
-

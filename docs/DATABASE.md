@@ -1,6 +1,7 @@
 # Database
 
 Source of truth:
+
 - `packages/api/prisma/schema.prisma`
 - `packages/api/prisma/migrations/`
 
@@ -35,6 +36,7 @@ Neu can lam sach local DB sau khi doi migration history:
 ## Core Enums
 
 Identity va RBAC:
+
 - `SystemRole`: `ADMIN`, `STAFF`
 - `ProjectRole`: `PROJECT_MANAGER`, `ENGINEER`, `SAFETY_OFFICER`, `DESIGN_ENGINEER`, `QUALITY_MANAGER`, `WAREHOUSE_KEEPER`, `CLIENT`, `VIEWER`
 - `ToolId`: `PROJECT`, `TASK`, `DAILY_REPORT`, `FILE`, `DOCUMENT`, `SAFETY`, `QUALITY`, `WAREHOUSE`, `BUDGET`
@@ -42,6 +44,7 @@ Identity va RBAC:
 - `SpecialPrivilege`: `SAFETY_SIGNER`, `QUALITY_SIGNER`, `BUDGET_APPROVER`
 
 Business state:
+
 - `ProjectStatus`
 - `TaskStatus`
 - `TaskPriority`
@@ -53,6 +56,7 @@ Business state:
 ## Table Groups
 
 Identity va access:
+
 - `users`
 - `password_reset_tokens`
 - `project_members`
@@ -60,6 +64,7 @@ Identity va access:
 - `special_privilege_assignments`
 
 Project core:
+
 - `projects`
 - `daily_reports`
 - `report_images`
@@ -69,10 +74,12 @@ Project core:
 - `document_folders`
 
 Audit va notifications:
+
 - `audit_logs`
 - `notifications`
 
 Safety:
+
 - `safety_reports`
 - `safety_checklist_items`
 - `safety_incidents`
@@ -80,11 +87,13 @@ Safety:
 - `safety_corrective_actions`
 
 Quality:
+
 - `quality_reports`
 - `quality_punch_list_items`
 - `quality_report_photos`
 
 Warehouse va budget:
+
 - `warehouse_inventory`
 - `warehouse_transactions`
 - `budget_items`
@@ -102,8 +111,10 @@ Warehouse va budget:
 ## Seed
 
 Seed file:
+
 - `packages/api/prisma/seed.ts`
 
 Tai khoan mac dinh:
+
 - Email: `admin@construction.local`
 - Password: `Admin@123`

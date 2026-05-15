@@ -1,16 +1,7 @@
-export * from "./roles"
+export * from './roles'
 
-import type {
-  ProjectMember,
-  ProjectToolPermission,
-  SpecialPrivilegeAssignment,
-} from "./entities"
-import type {
-  ProjectRole,
-  SpecialPrivilege,
-  SystemRole,
-  ToolPermissionMap,
-} from "./roles"
+import type { ProjectMember, ProjectToolPermission, SpecialPrivilegeAssignment } from './entities'
+import type { ProjectRole, SpecialPrivilege, SystemRole, ToolPermissionMap } from './roles'
 
 export interface ProjectMembership {
   projectId: string
@@ -40,5 +31,5 @@ export interface UserProjectPermissions {
 export interface ProjectMemberWithPermissions extends ProjectMember {
   toolPermissions?: ProjectToolPermission[]
   specialPrivileges?: SpecialPrivilegeAssignment[]
-  computedPermissions?: UserProjectPermissions["effectiveRole"]
+  computedPermissions?: UserProjectPermissions['effectiveRole']
 }

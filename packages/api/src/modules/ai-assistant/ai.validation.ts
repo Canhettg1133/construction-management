@@ -1,21 +1,77 @@
-import { z } from "zod";
-import { AI_SOURCE_TOOL_IDS } from "./ai.context";
+import { z } from 'zod'
+import { AI_SOURCE_TOOL_IDS } from './ai.context'
+
+const QUICK_PROMPT_PRESETS = [
+  'WEEKLY_SUMMARY',
+  'OVERDUE_TASKS',
+  'SCHEDULE_RISK',
+  'LOW_STOCK_CHECK',
+  'SAFETY_QUALITY_SUMMARY',
+  'DAILY_REPORT_DRAFT',
+] as const
 
 export const createThreadSchema = z.object({
   body: z.object({
     title: z.string().trim().min(1).max(200).optional(),
-    providerProfileId: z.string().trim().min(1).max(191).optional(),
   }),
-});
+})
 
 export const sendMessageSchema = z.object({
+  body: z
+    .object({
+      content: z.string().trim().min(1, 'Nội dung không được để trống').max(4000),
+      intent: z
+        .enum(['CHAT', 'DRAFT_DAILY_REPORT', 'DRAFT_SAFETY_CHECKLIST', 'DRAFT_QUALITY_CHECKLIST'])
+        .default('CHAT'),
+      quickPromptPreset: z.enum(QUICK_PROMPT_PRESETS).optional(),
+      runId: z.string().trim().min(1).max(100).optional(),
+    })
+    .superRefine((value, context) => {
+      if (!value.quickPromptPreset) {
+        return
+      }
+
+      const isDailyReportDraft = value.quickPromptPreset === 'DAILY_REPORT_DRAFT'
+      if (isDailyReportDraft && value.intent !== 'DRAFT_DAILY_REPORT') {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['quickPromptPreset'],
+          message: 'Preset báo cáo ngày phải dùng intent tạo bản nháp báo cáo ngày',
+        })
+      }
+
+      if (!isDailyReportDraft && value.intent !== 'CHAT') {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['quickPromptPreset'],
+          message: 'Preset gợi ý nhanh dạng hỏi đáp phải dùng intent CHAT',
+        })
+      }
+    }),
+})
+
+export const updateThreadSchema = z.object({
   body: z.object({
-    content: z.string().trim().min(1, "Nội dung không được để trống").max(4000),
-    intent: z
-      .enum(["CHAT", "DRAFT_DAILY_REPORT", "DRAFT_SAFETY_CHECKLIST", "DRAFT_QUALITY_CHECKLIST"])
-      .default("CHAT"),
+    title: z.string().trim().min(1, 'Tên cuộc trò chuyện không được để trống').max(200),
   }),
-});
+})
+
+export const updateMessageSchema = z.object({
+  body: z.object({
+    content: z.string().trim().min(1, 'Nội dung không được để trống').max(4000),
+    rerun: z.literal(true),
+    runId: z.string().trim().min(1).max(100).optional(),
+  }),
+})
+
+export const retryMessageSchema = z.object({
+  body: z
+    .object({
+      runId: z.string().trim().min(1).max(100).optional(),
+    })
+    .optional()
+    .default({}),
+})
 
 export const updateAiSettingsSchema = z.object({
   body: z.object({
@@ -23,12 +79,22 @@ export const updateAiSettingsSchema = z.object({
     customSystemPrompt: z.string().trim().max(3000).nullable().optional(),
     defaultProviderProfileId: z.string().trim().min(1).max(191).nullable().optional(),
   }),
-});
+})
+
+export const updateSystemAiSettingsSchema = z.object({
+  body: z.object({
+    enabledSourceTools: z.array(z.enum(AI_SOURCE_TOOL_IDS)).nullable().optional(),
+    globalSystemPrompt: z.string().trim().max(3000).nullable().optional(),
+    defaultProviderProfileId: z.string().trim().min(1).max(191).nullable().optional(),
+    maxContextItems: z.number().int().min(5).max(100).nullable().optional(),
+    allowDrafts: z.boolean().optional(),
+  }),
+})
 
 export const createProviderProfileSchema = z.object({
   body: z.object({
     name: z.string().trim().min(1).max(120),
-    provider: z.enum(["MOCK", "OPENAI_RESPONSES", "OPENAI_COMPATIBLE", "GEMINI_DIRECT", "OLLAMA"]),
+    provider: z.enum(['MOCK', 'OPENAI_RESPONSES', 'OPENAI_COMPATIBLE', 'GEMINI_DIRECT', 'OLLAMA']),
     baseUrl: z.string().trim().url().nullable().optional(),
     model: z.string().trim().min(1).max(120),
     apiKey: z.string().trim().min(1).max(4000).nullable().optional(),
@@ -37,12 +103,12 @@ export const createProviderProfileSchema = z.object({
     isEnabled: z.boolean().optional(),
     isDefault: z.boolean().optional(),
   }),
-});
+})
 
 export const updateProviderProfileSchema = z.object({
   body: z.object({
     name: z.string().trim().min(1).max(120).optional(),
-    provider: z.enum(["MOCK", "OPENAI_RESPONSES", "OPENAI_COMPATIBLE", "GEMINI_DIRECT", "OLLAMA"]).optional(),
+    provider: z.enum(['MOCK', 'OPENAI_RESPONSES', 'OPENAI_COMPATIBLE', 'GEMINI_DIRECT', 'OLLAMA']).optional(),
     baseUrl: z.string().trim().url().nullable().optional(),
     model: z.string().trim().min(1).max(120).optional(),
     apiKey: z.string().trim().min(1).max(4000).nullable().optional(),
@@ -52,38 +118,38 @@ export const updateProviderProfileSchema = z.object({
     isEnabled: z.boolean().optional(),
     isDefault: z.boolean().optional(),
   }),
-});
+})
 
 export const providerTestSchema = z.object({
   body: z.object({
     profileId: z.string().trim().min(1).max(191).optional(),
     name: z.string().trim().min(1).max(120).optional(),
-    provider: z.enum(["MOCK", "OPENAI_RESPONSES", "OPENAI_COMPATIBLE", "GEMINI_DIRECT", "OLLAMA"]).optional(),
+    provider: z.enum(['MOCK', 'OPENAI_RESPONSES', 'OPENAI_COMPATIBLE', 'GEMINI_DIRECT', 'OLLAMA']).optional(),
     baseUrl: z.string().trim().url().nullable().optional(),
     model: z.string().trim().min(1).max(120).optional(),
     apiKey: z.string().trim().min(1).max(4000).nullable().optional(),
     config: z.record(z.unknown()).nullable().optional(),
   }),
-});
+})
 
-export const providerModelsSchema = providerTestSchema;
+export const providerModelsSchema = providerTestSchema
 
 export const createProviderCredentialsSchema = z.object({
   body: z.object({
     keys: z.union([z.string().trim().min(1), z.array(z.string().trim().min(1).max(4000)).max(50)]),
     label: z.string().trim().min(1).max(120).nullable().optional(),
   }),
-});
+})
 
 export const updateProviderCredentialSchema = z.object({
   body: z.object({
     label: z.string().trim().min(1).max(120).optional(),
     isEnabled: z.boolean().optional(),
   }),
-});
+})
 
 export const exportProviderCredentialsSchema = z.object({
   body: z.object({
-    confirmation: z.literal("EXPORT_PLAINTEXT_AI_KEYS"),
+    confirmation: z.literal('EXPORT_PLAINTEXT_AI_KEYS'),
   }),
-});
+})

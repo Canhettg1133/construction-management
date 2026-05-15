@@ -1,4 +1,4 @@
-import { prisma } from "../../config/database";
+import { prisma } from '../../config/database'
 import {
   ROLE_PERMISSION_PRESETS,
   SPECIAL_PRIVILEGES,
@@ -11,37 +11,37 @@ import {
   type ToolId,
   type ToolPermissionMap,
   type UserProjectPermissions,
-} from "@construction/shared";
-import { NotFoundError } from "../errors";
+} from '@construction/shared'
+import { NotFoundError } from '../errors'
 
 interface ProjectMembershipInfo {
-  projectId: string;
-  userId: string;
-  systemRole: SystemRole;
-  projectRole: ProjectRole | null;
-  isMember: boolean;
-  isSystemAdmin: boolean;
+  projectId: string
+  userId: string
+  systemRole: SystemRole
+  projectRole: ProjectRole | null
+  isMember: boolean
+  isSystemAdmin: boolean
 }
 
 function buildPermissionMap(defaultLevel: PermissionLevel): ToolPermissionMap {
-  const map: ToolPermissionMap = {};
+  const map: ToolPermissionMap = {}
   for (const toolId of TOOL_IDS) {
-    map[toolId] = defaultLevel;
+    map[toolId] = defaultLevel
   }
-  return map;
+  return map
 }
 
 async function getProjectMembership(userId: string, projectId: string): Promise<ProjectMembershipInfo | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, systemRole: true },
-  });
+  })
 
   if (!user) {
-    return null;
+    return null
   }
 
-  if (user.systemRole === "ADMIN") {
+  if (user.systemRole === 'ADMIN') {
     return {
       projectId,
       userId,
@@ -49,13 +49,13 @@ async function getProjectMembership(userId: string, projectId: string): Promise<
       isSystemAdmin: true,
       projectRole: null,
       systemRole: user.systemRole as SystemRole,
-    };
+    }
   }
 
   const member = await prisma.projectMember.findUnique({
     where: { projectId_userId: { projectId, userId } },
     select: { role: true },
-  });
+  })
 
   return {
     projectId,
@@ -64,126 +64,122 @@ async function getProjectMembership(userId: string, projectId: string): Promise<
     isSystemAdmin: false,
     projectRole: (member?.role as ProjectRole | undefined) ?? null,
     systemRole: user.systemRole as SystemRole,
-  };
+  }
 }
 
 async function getEffectiveToolPermissionsFromMembership(
   userId: string,
   projectId: string,
-  membership: ProjectMembershipInfo
+  membership: ProjectMembershipInfo,
 ): Promise<ToolPermissionMap> {
   if (membership.isSystemAdmin) {
-    return buildPermissionMap("ADMIN");
+    return buildPermissionMap('ADMIN')
   }
 
   if (!membership.isMember || !membership.projectRole) {
-    return buildPermissionMap("NONE");
+    return buildPermissionMap('NONE')
   }
 
   const overrides = await prisma.projectToolPermission.findMany({
     where: { projectId, userId },
     select: { toolId: true, level: true },
-  });
+  })
 
   const merged: ToolPermissionMap = {
-    ...buildPermissionMap("NONE"),
+    ...buildPermissionMap('NONE'),
     ...ROLE_PERMISSION_PRESETS[membership.projectRole],
-  };
-
-  for (const override of overrides) {
-    merged[override.toolId as ToolId] = override.level as PermissionLevel;
   }
 
-  return merged;
+  for (const override of overrides) {
+    merged[override.toolId as ToolId] = override.level as PermissionLevel
+  }
+
+  return merged
 }
 
 async function getEffectiveToolPermissions(userId: string, projectId: string): Promise<ToolPermissionMap> {
-  const membership = await getProjectMembership(userId, projectId);
+  const membership = await getProjectMembership(userId, projectId)
   if (!membership) {
-    return buildPermissionMap("NONE");
+    return buildPermissionMap('NONE')
   }
 
-  return getEffectiveToolPermissionsFromMembership(userId, projectId, membership);
+  return getEffectiveToolPermissionsFromMembership(userId, projectId, membership)
 }
 
 async function getSpecialPrivilegesFromMembership(
   userId: string,
   projectId: string,
-  membership: ProjectMembershipInfo
+  membership: ProjectMembershipInfo,
 ): Promise<SpecialPrivilege[]> {
   if (membership.isSystemAdmin) {
-    return [...SPECIAL_PRIVILEGES];
+    return [...SPECIAL_PRIVILEGES]
   }
 
   if (!membership.isMember) {
-    return [];
+    return []
   }
 
   const assignments = await prisma.specialPrivilegeAssignment.findMany({
     where: { projectId, userId },
     select: { privilege: true },
-  });
+  })
 
-  return assignments.map((item) => item.privilege);
+  return assignments.map((item) => item.privilege)
 }
 
 async function getSpecialPrivileges(userId: string, projectId: string): Promise<SpecialPrivilege[]> {
-  const membership = await getProjectMembership(userId, projectId);
+  const membership = await getProjectMembership(userId, projectId)
   if (!membership) {
-    return [];
+    return []
   }
 
-  return getSpecialPrivilegesFromMembership(userId, projectId, membership);
+  return getSpecialPrivilegesFromMembership(userId, projectId, membership)
 }
 
 async function getUserProjectPermissions(userId: string, projectId: string): Promise<UserProjectPermissions> {
-  const membership = await getProjectMembership(userId, projectId);
+  const membership = await getProjectMembership(userId, projectId)
   if (!membership) {
-    throw new NotFoundError("Không tìm thấy người dùng");
+    throw new NotFoundError('Không tìm thấy người dùng')
   }
 
   const [toolPermissions, specialPrivileges] = await Promise.all([
     getEffectiveToolPermissionsFromMembership(userId, projectId, membership),
     getSpecialPrivilegesFromMembership(userId, projectId, membership),
-  ]);
+  ])
 
-  const projectLevel = toolPermissions.PROJECT ?? "NONE";
+  const projectLevel = toolPermissions.PROJECT ?? 'NONE'
 
   return {
     projectId,
     userId,
     systemRole: membership.systemRole,
-    projectRole: membership.projectRole as UserProjectPermissions["projectRole"],
+    projectRole: membership.projectRole as UserProjectPermissions['projectRole'],
     toolPermissions,
     specialPrivileges,
     effectiveRole: {
-      isAdmin: membership.isSystemAdmin || projectLevel === "ADMIN",
-      canManageMembers: hasMinPermission(projectLevel, "ADMIN"),
-      canApproveSafety: specialPrivileges.includes("SAFETY_SIGNER"),
-      canApproveQuality: specialPrivileges.includes("QUALITY_SIGNER"),
-      canApproveBudget: specialPrivileges.includes("BUDGET_APPROVER"),
+      isAdmin: membership.isSystemAdmin || projectLevel === 'ADMIN',
+      canManageMembers: hasMinPermission(projectLevel, 'ADMIN'),
+      canApproveSafety: specialPrivileges.includes('SAFETY_SIGNER'),
+      canApproveQuality: specialPrivileges.includes('QUALITY_SIGNER'),
+      canApproveBudget: specialPrivileges.includes('BUDGET_APPROVER'),
     },
-  };
+  }
 }
 
 async function hasPermission(
   userId: string,
   projectId: string,
   toolId: ToolId,
-  minLevel: PermissionLevel
+  minLevel: PermissionLevel,
 ): Promise<boolean> {
-  const toolPermissions = await getEffectiveToolPermissions(userId, projectId);
-  const userLevel = toolPermissions[toolId] ?? "NONE";
-  return hasMinPermission(userLevel, minLevel);
+  const toolPermissions = await getEffectiveToolPermissions(userId, projectId)
+  const userLevel = toolPermissions[toolId] ?? 'NONE'
+  return hasMinPermission(userLevel, minLevel)
 }
 
-async function hasSpecialPrivilege(
-  userId: string,
-  projectId: string,
-  privilege: SpecialPrivilege
-): Promise<boolean> {
-  const privileges = await getSpecialPrivileges(userId, projectId);
-  return privileges.includes(privilege);
+async function hasSpecialPrivilege(userId: string, projectId: string, privilege: SpecialPrivilege): Promise<boolean> {
+  const privileges = await getSpecialPrivileges(userId, projectId)
+  return privileges.includes(privilege)
 }
 
 export const permissionService = {
@@ -193,4 +189,4 @@ export const permissionService = {
   getUserProjectPermissions,
   hasPermission,
   hasSpecialPrivilege,
-};
+}

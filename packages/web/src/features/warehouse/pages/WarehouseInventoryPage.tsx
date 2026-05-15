@@ -1,18 +1,33 @@
-﻿import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { warehouseApi } from "../api/warehouseApi";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
+﻿import { Link, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { warehouseApi } from '../api/warehouseApi'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+
+function transactionTypeLabel(type: string) {
+  if (type === 'IN') return 'Nhập kho'
+  if (type === 'OUT') return 'Xuất kho'
+  if (type === 'REQUEST') return 'Yêu cầu'
+  return type
+}
+
+function statusLabel(status: string) {
+  if (status === 'APPROVED') return 'Đã duyệt'
+  if (status === 'REJECTED') return 'Từ chối'
+  if (status === 'PAID') return 'Đã chi'
+  if (status === 'PENDING') return 'Chờ duyệt'
+  return status
+}
 
 export function WarehouseInventoryPage() {
-  const { id, inventoryId } = useParams<{ id: string; inventoryId: string }>();
-  const projectId = id ?? "";
+  const { id, inventoryId } = useParams<{ id: string; inventoryId: string }>()
+  const projectId = id ?? ''
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["warehouse-inventory-item", projectId, inventoryId],
+    queryKey: ['warehouse-inventory-item', projectId, inventoryId],
     queryFn: () => warehouseApi.getInventoryItem(projectId, String(inventoryId)),
     enabled: Boolean(projectId) && Boolean(inventoryId),
-  });
+  })
 
   if (isLoading) {
     return (
@@ -20,13 +35,11 @@ export function WarehouseInventoryPage() {
         <SkeletonCard lines={2} />
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (isError || !data) {
-    return (
-      <ErrorState message="Không tải được chi tiết vật tư. Có thể bạn không được phép xem tồn kho." />
-    );
+    return <ErrorState message="Không tải được chi tiết vật tư. Có thể bạn không được phép xem tồn kho." />
   }
 
   return (
@@ -36,43 +49,37 @@ export function WarehouseInventoryPage() {
           to={`/projects/${projectId}/warehouse`}
           className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
         >
-          ← Warehouse dashboard
+          ← Kho vật tư
         </Link>
         <h2 className="mt-1">{data.materialName}</h2>
         <p className="page-subtitle">
-          Tồn kho: {Number(data.quantity).toLocaleString("vi-VN")} {data.unit}
+          Tồn kho: {Number(data.quantity).toLocaleString('vi-VN')} {data.unit}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="app-card">
           <p className="text-xs text-slate-500">Tồn hiện tại</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">
-            {Number(data.quantity).toLocaleString("vi-VN")}
-          </p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{Number(data.quantity).toLocaleString('vi-VN')}</p>
         </div>
         <div className="app-card">
           <p className="text-xs text-slate-500">Ngưỡng tối thiểu</p>
-          <p className="mt-1 text-2xl font-bold text-amber-600">
-            {Number(data.minQuantity).toLocaleString("vi-VN")}
-          </p>
+          <p className="mt-1 text-2xl font-bold text-amber-600">{Number(data.minQuantity).toLocaleString('vi-VN')}</p>
         </div>
         <div className="app-card">
           <p className="text-xs text-slate-500">Ngưỡng tối đa</p>
-          <p className="mt-1 text-2xl font-bold text-brand-700">
-            {Number(data.maxQuantity).toLocaleString("vi-VN")}
-          </p>
+          <p className="mt-1 text-2xl font-bold text-brand-700">{Number(data.maxQuantity).toLocaleString('vi-VN')}</p>
         </div>
       </div>
 
       <div className="app-card">
         <div className="mb-2 grid grid-cols-1 gap-2 text-sm text-slate-600 sm:grid-cols-2">
           <div>
-            <span className="font-medium text-slate-700">Vị trí kho:</span> {data.location ?? "Chưa cập nhật"}
+            <span className="font-medium text-slate-700">Vị trí kho:</span> {data.location ?? 'Chưa cập nhật'}
           </div>
           <div>
-            <span className="font-medium text-slate-700">Cập nhật:</span>{" "}
-            {new Date(data.updatedAt).toLocaleString("vi-VN")}
+            <span className="font-medium text-slate-700">Cập nhật:</span>{' '}
+            {new Date(data.updatedAt).toLocaleString('vi-VN')}
           </div>
         </div>
 
@@ -83,15 +90,13 @@ export function WarehouseInventoryPage() {
               <div key={tx.id} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-slate-800">
-                    {tx.type} · {Number(tx.quantity).toLocaleString("vi-VN")} {data.unit}
+                    {transactionTypeLabel(tx.type)} · {Number(tx.quantity).toLocaleString('vi-VN')} {data.unit}
                   </span>
-                  <span className="text-xs text-slate-500">
-                    {new Date(tx.createdAt).toLocaleString("vi-VN")}
-                  </span>
+                  <span className="text-xs text-slate-500">{new Date(tx.createdAt).toLocaleString('vi-VN')}</span>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Trạng thái: {tx.status}
-                  {tx.requester?.name ? ` · ${tx.requester.name}` : ""}
+                  Trạng thái: {statusLabel(tx.status)}
+                  {tx.requester?.name ? ` · ${tx.requester.name}` : ''}
                 </p>
                 {tx.note && <p className="mt-1 text-xs text-slate-600">{tx.note}</p>}
               </div>
@@ -102,8 +107,5 @@ export function WarehouseInventoryPage() {
         )}
       </div>
     </div>
-  );
+  )
 }
-
-
-

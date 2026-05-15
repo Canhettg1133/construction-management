@@ -1,15 +1,15 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
-import { ROUTES } from "../shared/constants/routes";
+import { Navigate, useLocation } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
+import { ROUTES } from '../shared/constants/routes'
 
 interface Props {
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 
 export function ProtectedRoute({ children }: Props) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const initialized = useAuthStore((s) => s.initialized);
-  const location = useLocation();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const initialized = useAuthStore((s) => s.initialized)
+  const location = useLocation()
 
   if (!initialized) {
     return (
@@ -19,12 +19,12 @@ export function ProtectedRoute({ children }: Props) {
           <p className="mt-4 text-sm font-medium text-slate-500">Đang tải...</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
+    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

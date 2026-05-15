@@ -1,27 +1,45 @@
-import { prisma } from "../../config/database";
+import { prisma } from '../../config/database'
+
+function applyDueDateFilter(where: Record<string, unknown>, from?: Date, to?: Date) {
+  if (!from && !to) return
+  where.dueDate = {}
+  if (from) (where.dueDate as Record<string, unknown>).gte = from
+  if (to) (where.dueDate as Record<string, unknown>).lte = to
+}
 
 export const taskRepository = {
-  findAll(projectId: string, page: number, pageSize: number, status?: string, priority?: string, assignedTo?: string) {
-    const where: Record<string, unknown> = { projectId };
-    if (status) where.status = status;
-    if (priority) where.priority = priority;
-    if (assignedTo) where.assignedTo = assignedTo;
+  findAll(
+    projectId: string,
+    page: number,
+    pageSize: number,
+    status?: string,
+    priority?: string,
+    assignedTo?: string,
+    from?: Date,
+    to?: Date,
+  ) {
+    const where: Record<string, unknown> = { projectId }
+    if (status) where.status = status
+    if (priority) where.priority = priority
+    if (assignedTo) where.assignedTo = assignedTo
+    applyDueDateFilter(where, from, to)
 
     return prisma.task.findMany({
       where,
       skip: (page - 1) * pageSize,
       take: pageSize,
-      orderBy: [{ priority: "desc" }, { dueDate: "asc" }],
+      orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }],
       include: { assignee: { select: { id: true, name: true, email: true } } },
-    });
+    })
   },
 
-  count(projectId: string, status?: string, priority?: string, assignedTo?: string) {
-    const where: Record<string, unknown> = { projectId };
-    if (status) where.status = status;
-    if (priority) where.priority = priority;
-    if (assignedTo) where.assignedTo = assignedTo;
-    return prisma.task.count({ where });
+  count(projectId: string, status?: string, priority?: string, assignedTo?: string, from?: Date, to?: Date) {
+    const where: Record<string, unknown> = { projectId }
+    if (status) where.status = status
+    if (priority) where.priority = priority
+    if (assignedTo) where.assignedTo = assignedTo
+    applyDueDateFilter(where, from, to)
+    return prisma.task.count({ where })
   },
 
   findById(id: string) {
@@ -32,29 +50,56 @@ export const taskRepository = {
         creator: { select: { id: true, name: true, email: true } },
         report: { select: { id: true, reportDate: true } },
         comments: {
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: 'asc' },
           include: { author: { select: { id: true, name: true, email: true } } },
         },
       },
-    });
+    })
   },
 
-  create(data: { projectId: string; title: string; createdBy: string; description?: string; assignedTo?: string; reportId?: string; priority?: string; dueDate?: Date; requiresApproval?: boolean }) {
-    return prisma.task.create({ data: data as any });
+  findByProjectId(projectId: string, id: string) {
+    return prisma.task.findFirst({
+      where: { id, projectId },
+      include: {
+        assignee: { select: { id: true, name: true, email: true } },
+        creator: { select: { id: true, name: true, email: true } },
+        report: { select: { id: true, reportDate: true } },
+        comments: {
+          orderBy: { createdAt: 'asc' },
+          include: { author: { select: { id: true, name: true, email: true } } },
+        },
+      },
+    })
+  },
+
+  create(data: {
+    projectId: string
+    title: string
+    createdBy: string
+    description?: string
+    assignedTo?: string
+    reportId?: string
+    priority?: string
+    dueDate?: Date
+    requiresApproval?: boolean
+  }) {
+    return prisma.task.create({ data: data as any })
   },
 
   getProjectPmIds(projectId: string) {
-    return prisma.projectMember.findMany({
-      where: { projectId, role: "PROJECT_MANAGER" },
-      select: { userId: true },
-    }).then((rows) => rows.map((r) => r.userId));
+    return prisma.projectMember
+      .findMany({
+        where: { projectId, role: 'PROJECT_MANAGER' },
+        select: { userId: true },
+      })
+      .then((rows) => rows.map((r) => r.userId))
   },
 
   update(id: string, data: Record<string, unknown>) {
-    return prisma.task.update({ where: { id }, data });
+    return prisma.task.update({ where: { id }, data })
   },
 
   delete(id: string) {
-    return prisma.task.delete({ where: { id } });
+    return prisma.task.delete({ where: { id } })
   },
-};
+}

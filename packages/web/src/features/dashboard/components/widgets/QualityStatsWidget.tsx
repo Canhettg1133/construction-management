@@ -1,13 +1,13 @@
-import { ClipboardCheck, CheckCircle2, Clock3, FileCheck2 } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { calculateTrend, formatNumber } from "./utils";
+import { ClipboardCheck, CheckCircle2, Clock3, FileCheck2 } from 'lucide-react'
+import { useDashboard } from '../../hooks/useDashboard'
+import { calculateTrend, formatNumber } from './utils'
 
 export function QualityStatsWidget() {
-  const { data } = useDashboard();
-  const qualityStats = data?.qualityStats;
-  const pending = data?.pendingQualityApprovals ?? qualityStats?.pendingApprovals ?? 0;
-  const passRate = qualityStats?.passRate ?? 0;
-  const reportCount = data?.qualityReports?.length ?? qualityStats?.recentReports?.length ?? 0;
+  const { data } = useDashboard()
+  const qualityStats = data?.qualityStats
+  const pending = data?.pendingQualityApprovals ?? qualityStats?.pendingApprovals ?? 0
+  const passRate = qualityStats?.passRate ?? 0
+  const reportCount = data?.qualityReports?.length ?? qualityStats?.recentReports?.length ?? 0
 
   return (
     <div className="app-card space-y-4">
@@ -28,7 +28,7 @@ export function QualityStatsWidget() {
         <StatCell icon={ClipboardCheck} title="Báo cáo gần đây" value={formatNumber(reportCount)} />
       </div>
     </div>
-  );
+  )
 }
 
 function StatCell({
@@ -36,22 +36,22 @@ function StatCell({
   title,
   value,
   hint,
-  tone = "default",
+  tone = 'default',
 }: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  value: string;
-  hint?: string;
-  tone?: "default" | "warning" | "danger" | "success";
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  value: string
+  hint?: string
+  tone?: 'default' | 'warning' | 'danger' | 'success'
 }) {
   const toneClass =
-    tone === "warning"
-      ? "text-amber-700 bg-amber-50"
-      : tone === "danger"
-      ? "text-red-700 bg-red-50"
-      : tone === "success"
-      ? "text-emerald-700 bg-emerald-50"
-      : "text-slate-700 bg-slate-50";
+    tone === 'warning'
+      ? 'text-amber-700 bg-amber-50'
+      : tone === 'danger'
+        ? 'text-red-700 bg-red-50'
+        : tone === 'success'
+          ? 'text-emerald-700 bg-emerald-50'
+          : 'text-slate-700 bg-slate-50'
 
   return (
     <div className={`flex min-h-32 flex-col rounded-xl border border-slate-200 p-3 ${toneClass}`}>
@@ -64,5 +64,5 @@ function StatCell({
         {hint ? <p className="mt-1 text-xs opacity-80">{hint}</p> : null}
       </div>
     </div>
-  );
+  )
 }

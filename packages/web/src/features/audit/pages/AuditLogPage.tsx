@@ -1,13 +1,11 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import {
-  Filter, X, LogIn, LogOut, Plus, Pencil, Trash2, RefreshCw,
-} from "lucide-react";
-import { listAuditLogs } from "../api/auditApi";
-import { EmptyState } from "../../../shared/components/feedback/EmptyState";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import type { AuditAction, AuditEntityType, AuditLog } from "@construction/shared";
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Filter, X, LogIn, LogOut, Plus, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { listAuditLogs } from '../api/auditApi'
+import { EmptyState } from '../../../shared/components/feedback/EmptyState'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import type { AuditAction, AuditEntityType, AuditLog } from '@construction/shared'
 
 const ACTION_ICONS: Record<AuditAction, React.ElementType> = {
   LOGIN: LogIn,
@@ -16,59 +14,59 @@ const ACTION_ICONS: Record<AuditAction, React.ElementType> = {
   UPDATE: Pencil,
   DELETE: Trash2,
   STATUS_CHANGE: RefreshCw,
-};
+}
 
 const ACTION_LABELS: Record<AuditAction, string> = {
-  LOGIN: "Đăng nhập",
-  LOGOUT: "Đăng xuất",
-  CREATE: "Tạo mới",
-  UPDATE: "Cập nhật",
-  DELETE: "Xóa",
-  STATUS_CHANGE: "Đổi trạng thái",
-};
+  LOGIN: 'Đăng nhập',
+  LOGOUT: 'Đăng xuất',
+  CREATE: 'Tạo mới',
+  UPDATE: 'Cập nhật',
+  DELETE: 'Xóa',
+  STATUS_CHANGE: 'Đổi trạng thái',
+}
 
 const ACTION_COLORS: Record<AuditAction, string> = {
-  LOGIN: "bg-emerald-50 text-emerald-700",
-  LOGOUT: "bg-slate-100 text-slate-600",
-  CREATE: "bg-brand-50 text-brand-700",
-  UPDATE: "bg-amber-50 text-amber-700",
-  DELETE: "bg-red-50 text-red-600",
-  STATUS_CHANGE: "bg-violet-50 text-violet-700",
-};
+  LOGIN: 'bg-emerald-50 text-emerald-700',
+  LOGOUT: 'bg-slate-100 text-slate-600',
+  CREATE: 'bg-brand-50 text-brand-700',
+  UPDATE: 'bg-amber-50 text-amber-700',
+  DELETE: 'bg-red-50 text-red-600',
+  STATUS_CHANGE: 'bg-violet-50 text-violet-700',
+}
 
 const ENTITY_LABELS: Record<AuditEntityType, string> = {
-  USER: "Người dùng",
-  PROJECT: "Dự án",
-  PROJECT_MEMBER: "Thành viên dự án",
-  PROJECT_TOOL_PERMISSION: "Quyền công cụ",
-  SPECIAL_PRIVILEGE_ASSIGNMENT: "Đặc quyền",
-  DAILY_REPORT: "Báo cáo ngày",
-  TASK: "Công việc",
-  FILE: "Tệp",
-  AI_PROVIDER_PROFILE: "Cấu hình provider AI",
-  AI_PROVIDER_CREDENTIAL: "Khóa API provider AI",
-  PROJECT_AI_SETTING: "Cài đặt AI dự án",
-};
+  USER: 'Người dùng',
+  PROJECT: 'Dự án',
+  PROJECT_MEMBER: 'Thành viên dự án',
+  PROJECT_TOOL_PERMISSION: 'Quyền công cụ',
+  SPECIAL_PRIVILEGE_ASSIGNMENT: 'Đặc quyền',
+  DAILY_REPORT: 'Báo cáo ngày',
+  TASK: 'Công việc',
+  FILE: 'Tệp',
+  AI_PROVIDER_PROFILE: 'Cấu hình nhà cung cấp AI',
+  AI_PROVIDER_CREDENTIAL: 'Khóa API nhà cung cấp AI',
+  PROJECT_AI_SETTING: 'Cài đặt AI dự án',
+}
 
-const ACTIONS: AuditAction[] = ["LOGIN", "LOGOUT", "CREATE", "UPDATE", "DELETE", "STATUS_CHANGE"];
+const ACTIONS: AuditAction[] = ['LOGIN', 'LOGOUT', 'CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE']
 
 const ENTITIES: AuditEntityType[] = [
-  "USER",
-  "PROJECT",
-  "PROJECT_MEMBER",
-  "PROJECT_TOOL_PERMISSION",
-  "SPECIAL_PRIVILEGE_ASSIGNMENT",
-  "DAILY_REPORT",
-  "TASK",
-  "FILE",
-  "AI_PROVIDER_PROFILE",
-  "AI_PROVIDER_CREDENTIAL",
-  "PROJECT_AI_SETTING",
-];
+  'USER',
+  'PROJECT',
+  'PROJECT_MEMBER',
+  'PROJECT_TOOL_PERMISSION',
+  'SPECIAL_PRIVILEGE_ASSIGNMENT',
+  'DAILY_REPORT',
+  'TASK',
+  'FILE',
+  'AI_PROVIDER_PROFILE',
+  'AI_PROVIDER_CREDENTIAL',
+  'PROJECT_AI_SETTING',
+]
 
 function LogRow({ log }: { log: AuditLog }) {
-  const Icon = ACTION_ICONS[log.action] ?? RefreshCw;
-  const actionColor = ACTION_COLORS[log.action] ?? "bg-slate-100 text-slate-600";
+  const Icon = ACTION_ICONS[log.action] ?? RefreshCw
+  const actionColor = ACTION_COLORS[log.action] ?? 'bg-slate-100 text-slate-600'
 
   return (
     <tr className="border-b border-slate-100 last:border-0">
@@ -99,36 +97,36 @@ function LogRow({ log }: { log: AuditLog }) {
       <td className="py-3 text-right">
         <div className="flex flex-col items-end gap-0.5">
           <span className="text-xs text-slate-500">
-            {new Date(log.createdAt).toLocaleDateString("vi-VN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
+            {new Date(log.createdAt).toLocaleDateString('vi-VN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
             })}
           </span>
           <span className="text-xs text-slate-400">
-            {new Date(log.createdAt).toLocaleTimeString("vi-VN", {
-              hour: "2-digit",
-              minute: "2-digit",
+            {new Date(log.createdAt).toLocaleTimeString('vi-VN', {
+              hour: '2-digit',
+              minute: '2-digit',
             })}
           </span>
         </div>
       </td>
     </tr>
-  );
+  )
 }
 
 export function AuditLogPage() {
-  const [showFilters, setShowFilters] = useState(false);
-  const [actionFilter, setActionFilter] = useState<AuditAction | "">("");
-  const [entityFilter, setEntityFilter] = useState<AuditEntityType | "">("");
-  const [userFilter, setUserFilter] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const [showFilters, setShowFilters] = useState(false)
+  const [actionFilter, setActionFilter] = useState<AuditAction | ''>('')
+  const [entityFilter, setEntityFilter] = useState<AuditEntityType | ''>('')
+  const [userFilter, setUserFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 20
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["audit-logs", page, actionFilter, entityFilter, userFilter, fromDate, toDate],
+    queryKey: ['audit-logs', page, actionFilter, entityFilter, userFilter, fromDate, toDate],
     queryFn: () =>
       listAuditLogs({
         page,
@@ -139,22 +137,22 @@ export function AuditLogPage() {
         from: fromDate || undefined,
         to: toDate || undefined,
       }),
-  });
+  })
 
-  const hasFilters = Boolean(actionFilter || entityFilter || userFilter || fromDate || toDate);
+  const hasFilters = Boolean(actionFilter || entityFilter || userFilter || fromDate || toDate)
 
   const clearFilters = () => {
-    setActionFilter("");
-    setEntityFilter("");
-    setUserFilter("");
-    setFromDate("");
-    setToDate("");
-    setPage(1);
-  };
+    setActionFilter('')
+    setEntityFilter('')
+    setUserFilter('')
+    setFromDate('')
+    setToDate('')
+    setPage(1)
+  }
 
-  const logs = data?.logs ?? [];
-  const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
+  const logs = data?.logs ?? []
+  const meta = data?.meta
+  const totalPages = meta?.totalPages ?? 1
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -168,15 +166,19 @@ export function AuditLogPage() {
           onClick={() => setShowFilters((v) => !v)}
           className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
             showFilters || hasFilters
-              ? "border-brand-300 bg-brand-50 text-brand-700"
-              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              ? 'border-brand-300 bg-brand-50 text-brand-700'
+              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
           }`}
         >
           <Filter className="h-4 w-4" />
           Lọc
           {hasFilters && (
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-xs text-white">
-              {(actionFilter ? 1 : 0) + (entityFilter ? 1 : 0) + (userFilter ? 1 : 0) + (fromDate ? 1 : 0) + (toDate ? 1 : 0)}
+              {(actionFilter ? 1 : 0) +
+                (entityFilter ? 1 : 0) +
+                (userFilter ? 1 : 0) +
+                (fromDate ? 1 : 0) +
+                (toDate ? 1 : 0)}
             </span>
           )}
         </button>
@@ -203,12 +205,17 @@ export function AuditLogPage() {
               <label className="form-label text-xs">Thao tác</label>
               <select
                 value={actionFilter}
-                onChange={(e) => { setActionFilter(e.target.value as AuditAction | ""); setPage(1); }}
+                onChange={(e) => {
+                  setActionFilter(e.target.value as AuditAction | '')
+                  setPage(1)
+                }}
                 className="form-input"
               >
                 <option value="">Tất cả thao tác</option>
                 {ACTIONS.map((action) => (
-                  <option key={action} value={action}>{ACTION_LABELS[action]}</option>
+                  <option key={action} value={action}>
+                    {ACTION_LABELS[action]}
+                  </option>
                 ))}
               </select>
             </div>
@@ -217,12 +224,17 @@ export function AuditLogPage() {
               <label className="form-label text-xs">Đối tượng</label>
               <select
                 value={entityFilter}
-                onChange={(e) => { setEntityFilter(e.target.value as AuditEntityType | ""); setPage(1); }}
+                onChange={(e) => {
+                  setEntityFilter(e.target.value as AuditEntityType | '')
+                  setPage(1)
+                }}
                 className="form-input"
               >
                 <option value="">Tất cả đối tượng</option>
                 {ENTITIES.map((entity) => (
-                  <option key={entity} value={entity}>{ENTITY_LABELS[entity]}</option>
+                  <option key={entity} value={entity}>
+                    {ENTITY_LABELS[entity]}
+                  </option>
                 ))}
               </select>
             </div>
@@ -232,7 +244,10 @@ export function AuditLogPage() {
               <input
                 type="date"
                 value={fromDate}
-                onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setFromDate(e.target.value)
+                  setPage(1)
+                }}
                 className="form-input"
               />
             </div>
@@ -242,7 +257,10 @@ export function AuditLogPage() {
               <input
                 type="date"
                 value={toDate}
-                onChange={(e) => { setToDate(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setToDate(e.target.value)
+                  setPage(1)
+                }}
                 className="form-input"
               />
             </div>
@@ -252,7 +270,9 @@ export function AuditLogPage() {
 
       {isLoading && (
         <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} lines={1} />)}
+          {[1, 2, 3, 4, 5].map((i) => (
+            <SkeletonCard key={i} lines={1} />
+          ))}
         </div>
       )}
 
@@ -263,8 +283,8 @@ export function AuditLogPage() {
           title="Không có log nào"
           description={
             hasFilters
-              ? "Thử thay đổi bộ lọc để xem kết quả khác."
-              : "Nhật ký thao tác sẽ hiển thị khi có hoạt động từ người dùng hệ thống."
+              ? 'Thử thay đổi bộ lọc để xem kết quả khác.'
+              : 'Nhật ký thao tác sẽ hiển thị khi có hoạt động từ người dùng hệ thống.'
           }
           action={
             hasFilters ? (
@@ -332,5 +352,5 @@ export function AuditLogPage() {
         </>
       )}
     </div>
-  );
+  )
 }

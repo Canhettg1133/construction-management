@@ -1,26 +1,38 @@
-import { Link } from "react-router-dom";
-import { UserCircle2, KeyRound, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "../../../shared/components/Card";
-import { ROUTES } from "../../../shared/constants/routes";
+import { Link } from 'react-router-dom'
+import { Bot, UserCircle2, KeyRound, ChevronRight } from 'lucide-react'
+import { Card, CardContent } from '../../../shared/components/Card'
+import { ROUTES } from '../../../shared/constants/routes'
+import { useAuthStore } from '../../../store/authStore'
 
 const settingsCards = [
   {
     to: ROUTES.SETTINGS_PROFILE,
     icon: UserCircle2,
-    title: "Hồ sơ cá nhân",
-    description: "Cập nhật thông tin cá nhân và hình đại diện",
-    color: "bg-brand-50 text-brand-600",
+    title: 'Hồ sơ cá nhân',
+    description: 'Cập nhật thông tin cá nhân và hình đại diện',
+    color: 'bg-brand-50 text-brand-600',
   },
   {
     to: ROUTES.SETTINGS_CHANGE_PASSWORD,
     icon: KeyRound,
-    title: "Đổi mật khẩu",
-    description: "Thay đổi mật khẩu để bảo vệ tài khoản",
-    color: "bg-amber-50 text-amber-600",
+    title: 'Đổi mật khẩu',
+    description: 'Thay đổi mật khẩu để bảo vệ tài khoản',
+    color: 'bg-amber-50 text-amber-600',
   },
-];
+  {
+    to: ROUTES.SETTINGS_AI,
+    icon: Bot,
+    title: 'Cài đặt AI',
+    description: 'Quản lý nhà cung cấp, nhóm khóa và nguồn dữ liệu AI toàn hệ thống',
+    color: 'bg-emerald-50 text-emerald-600',
+    systemAdminOnly: true,
+  },
+]
 
 export function SettingsIndexPage() {
+  const user = useAuthStore((state) => state.user)
+  const visibleCards = settingsCards.filter((card) => !card.systemAdminOnly || user?.systemRole === 'ADMIN')
+
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6">
@@ -29,8 +41,8 @@ export function SettingsIndexPage() {
       </div>
 
       <div className="space-y-4">
-        {settingsCards.map((card) => {
-          const Icon = card.icon;
+        {visibleCards.map((card) => {
+          const Icon = card.icon
           return (
             <Link key={card.to} to={card.to} className="block">
               <Card hover>
@@ -46,9 +58,9 @@ export function SettingsIndexPage() {
                 </CardContent>
               </Card>
             </Link>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }

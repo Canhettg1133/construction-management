@@ -1,25 +1,24 @@
-import type { PermissionLevel, ToolId } from "@construction/shared";
-import { usePermission } from "../hooks/usePermission";
+import type { PermissionLevel, ToolId } from '@construction/shared'
+import { usePermission } from '../hooks/usePermission'
 
 interface PermissionGateProps {
-  projectId: string;
-  toolId: ToolId;
-  minLevel?: PermissionLevel;
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  projectId: string
+  toolId: ToolId
+  minLevel?: PermissionLevel
+  children: React.ReactNode
+  fallback?: React.ReactNode
 }
 
 export function PermissionGate({
   projectId,
   toolId,
-  minLevel = "READ",
+  minLevel = 'READ',
   children,
   fallback = null,
 }: PermissionGateProps) {
-  const { has, isLoading } = usePermission({ projectId, toolId, minLevel });
+  const { has, isLoading } = usePermission({ projectId, toolId, minLevel })
   if (isLoading) {
-    return null;
+    return null
   }
-  return has ? <>{children}</> : <>{fallback}</>;
+  return has ? <>{children}</> : <>{fallback}</>
 }
-

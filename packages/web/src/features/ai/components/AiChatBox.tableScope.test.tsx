@@ -155,7 +155,11 @@ describe('AiChatBox table overflow scope', () => {
     expect(table.getAttribute('class')).not.toContain('min-w-')
     expect(table.style.width).toBe('')
     expect(screen.getByRole('columnheader', { name: 'Thông tin chi tiết' }).closest('table')).toBe(table)
-    expect(headers.map((header) => header.textContent)).toEqual(['Hạng mục', 'Thông tin chi tiết', 'Trạng thái / Lưu ý'])
+    expect(headers.map((header) => header.textContent)).toEqual([
+      'Hạng mục',
+      'Thông tin chi tiết',
+      'Trạng thái / Lưu ý',
+    ])
     expect(Number.parseFloat((table.querySelectorAll('col')[1] as HTMLTableColElement).style.width)).toBeGreaterThan(
       Number.parseFloat((table.querySelectorAll('col')[0] as HTMLTableColElement).style.width),
     )

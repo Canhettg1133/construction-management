@@ -20,7 +20,19 @@ import { Prisma } from '@prisma/client'
 const OPEN_TASK_STATUSES: TaskStatus[] = ['TO_DO', 'IN_PROGRESS']
 const CLOSED_TASK_STATUSES: TaskStatus[] = ['DONE', 'CANCELLED']
 const TASK_STATUSES: TaskStatus[] = ['TO_DO', 'IN_PROGRESS', 'DONE', 'CANCELLED']
-const SAFETY_KEYWORDS = ['safety', 'an toan', 'vi pham']
+function withoutVietnameseMarks(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+}
+
+function withAsciiVariants(values: string[]) {
+  return Array.from(new Set(values.flatMap((value) => [value, withoutVietnameseMarks(value)])))
+}
+
+const SAFETY_KEYWORDS = withAsciiVariants(['safety', 'an toàn', 'vi phạm'])
 
 function startOfDay(base = new Date()): Date {
   return new Date(base.getFullYear(), base.getMonth(), base.getDate())
@@ -258,7 +270,7 @@ export const dashboardRepository = {
       select: { id: true, systemRole: true },
     })
     if (!user) {
-      throw new NotFoundError('Khong tim thay nguoi dung')
+      throw new NotFoundError('Không tìm thấy người dùng')
     }
     return user
   },

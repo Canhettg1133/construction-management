@@ -1,6 +1,7 @@
 # Huong dan ve so do Chuong 3
 
 Tai lieu nay gom:
+
 - Vi tri chen tung hinh trong Word.
 - Ten hinh de dung voi `Insert Caption`.
 - Ma Mermaid de dan vao `https://mermaid.live/`.
@@ -17,18 +18,18 @@ Tai lieu nay gom:
 - Tao nhan `Hinh` neu Word chua co
 - Chon `Position`: `Below selected item`
 - Sua caption theo dung mau:
-  + `Hinh 3.2.1: Kien truc tong the he thong`
-  + `Hinh 3.7.6: So do Use Case chuc nang quan ly an toan`
+  - `Hinh 3.2.1: Kien truc tong the he thong`
+  - `Hinh 3.7.6: So do Use Case chuc nang quan ly an toan`
 
 ## Hinh 3.2.1
 
 - Ten hinh:
-  + `Hinh 3.2.1: Kien truc tong the he thong`
+  - `Hinh 3.2.1: Kien truc tong the he thong`
 - Loai hinh:
-  + So do khoi kien truc he thong
+  - So do khoi kien truc he thong
 - Vi tri chen:
-  + Chen ngay sau muc `3.2.1 Kien truc tong the he thong`
-  + Cu the la sau doan mo ta frontend, backend, Prisma, MySQL va cac thanh phan ho tro
+  - Chen ngay sau muc `3.2.1 Kien truc tong the he thong`
+  - Cu the la sau doan mo ta frontend, backend, Prisma, MySQL va cac thanh phan ho tro
 
 ```mermaid
 flowchart LR
@@ -62,11 +63,11 @@ flowchart LR
 ## Hinh 3.2.2
 
 - Ten hinh:
-  + `Hinh 3.2.2: So do Use Case tong quat cua he thong`
+  - `Hinh 3.2.2: So do Use Case tong quat cua he thong`
 - Loai hinh:
-  + So do Use Case tong quat
+  - So do Use Case tong quat
 - Vi tri chen:
-  + Chen ngay sau muc `3.2.4 So do Use Case tong quat`
+  - Chen ngay sau muc `3.2.4 So do Use Case tong quat`
 
 ```mermaid
 flowchart TB
@@ -140,11 +141,11 @@ flowchart TB
 ## Hinh 3.4.1
 
 - Ten hinh:
-  + `Hinh 3.4.1: Mo hinh phan quyen hai cap cua he thong`
+  - `Hinh 3.4.1: Mo hinh phan quyen hai cap cua he thong`
 - Loai hinh:
-  + So do phan cap quyen
+  - So do phan cap quyen
 - Vi tri chen:
-  + Chen ngay sau muc `3.4.1 Mo hinh phan quyen hai cap`
+  - Chen ngay sau muc `3.4.1 Mo hinh phan quyen hai cap`
 
 ```mermaid
 flowchart TD
@@ -183,11 +184,11 @@ flowchart TD
 ## Hinh 3.4.2
 
 - Ten hinh:
-  + `Hinh 3.4.2: Luong xac thuc va quan ly phien dang nhap`
+  - `Hinh 3.4.2: Luong xac thuc va quan ly phien dang nhap`
 - Loai hinh:
-  + So do trinh tu / sequence diagram
+  - So do trinh tu / sequence diagram
 - Vi tri chen:
-  + Chen ngay sau muc `3.4.2 Xac thuc va quan ly phien dang nhap`
+  - Chen ngay sau muc `3.4.2 Xac thuc va quan ly phien dang nhap`
 
 ```mermaid
 sequenceDiagram
@@ -213,11 +214,11 @@ sequenceDiagram
 ## Hinh 3.7.1
 
 - Ten hinh:
-  + `Hinh 3.7.1: So do Use Case chuc nang dang nhap he thong`
+  - `Hinh 3.7.1: So do Use Case chuc nang dang nhap he thong`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.1 Chuc nang dang nhap he thong`
+  - Chen ngay sau muc `3.7.1 Chuc nang dang nhap he thong`
 
 ```mermaid
 flowchart LR
@@ -230,11 +231,11 @@ flowchart LR
 ## Hinh 3.7.2
 
 - Ten hinh:
-  + `Hinh 3.7.2: So do Use Case chuc nang quan ly du an`
+  - `Hinh 3.7.2: So do Use Case chuc nang quan ly du an`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.2 Chuc nang quan ly du an`
+  - Chen ngay sau muc `3.7.2 Chuc nang quan ly du an`
 
 ```mermaid
 flowchart LR
@@ -263,11 +264,11 @@ flowchart LR
 ## Hinh 3.7.3
 
 - Ten hinh:
-  + `Hinh 3.7.3: So do Use Case chuc nang quan ly cong viec`
+  - `Hinh 3.7.3: So do Use Case chuc nang quan ly cong viec`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.3 Chuc nang quan ly cong viec`
+  - Chen ngay sau muc `3.7.3 Chuc nang quan ly cong viec`
 
 ```mermaid
 flowchart LR
@@ -310,11 +311,11 @@ flowchart LR
 ## Hinh 3.7.4
 
 - Ten hinh:
-  + `Hinh 3.7.4: So do Use Case chuc nang bao cao ngay`
+  - `Hinh 3.7.4: So do Use Case chuc nang bao cao ngay`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.4 Chuc nang bao cao ngay`
+  - Chen ngay sau muc `3.7.4 Chuc nang bao cao ngay`
 
 ```mermaid
 flowchart LR
@@ -345,11 +346,11 @@ flowchart LR
 ## Hinh 3.7.5
 
 - Ten hinh:
-  + `Hinh 3.7.5: So do Use Case chuc nang quan ly tai lieu va tep tin`
+  - `Hinh 3.7.5: So do Use Case chuc nang quan ly tai lieu va tep tin`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.5 Chuc nang quan ly tai lieu va tep tin`
+  - Chen ngay sau muc `3.7.5 Chuc nang quan ly tai lieu va tep tin`
 
 ```mermaid
 flowchart LR
@@ -387,11 +388,11 @@ flowchart LR
 ## Hinh 3.7.6
 
 - Ten hinh:
-  + `Hinh 3.7.6: So do Use Case chuc nang quan ly an toan`
+  - `Hinh 3.7.6: So do Use Case chuc nang quan ly an toan`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.6 Chuc nang quan ly an toan`
+  - Chen ngay sau muc `3.7.6 Chuc nang quan ly an toan`
 
 ```mermaid
 flowchart LR
@@ -422,22 +423,20 @@ flowchart LR
 ## Hinh 3.7.7
 
 - Ten hinh:
-  + `Hinh 3.7.7: So do Use Case chuc nang quan ly chat luong`
+  - `Hinh 3.7.7: So do Use Case chuc nang quan ly chat luong`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.7 Chuc nang quan ly chat luong`
-
-
+  - Chen ngay sau muc `3.7.7 Chuc nang quan ly chat luong`
 
 ## Hinh 3.7.8
 
 - Ten hinh:
-  + `Hinh 3.7.8: So do Use Case chuc nang quan ly kho vat tu`
+  - `Hinh 3.7.8: So do Use Case chuc nang quan ly kho vat tu`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.8 Chuc nang quan ly kho vat tu`
+  - Chen ngay sau muc `3.7.8 Chuc nang quan ly kho vat tu`
 
 ```mermaid
 flowchart LR
@@ -468,11 +467,11 @@ flowchart LR
 ## Hinh 3.7.9
 
 - Ten hinh:
-  + `Hinh 3.7.9: So do Use Case chuc nang quan ly ngan sach va phe duyet`
+  - `Hinh 3.7.9: So do Use Case chuc nang quan ly ngan sach va phe duyet`
 - Loai hinh:
-  + So do Use Case
+  - So do Use Case
 - Vi tri chen:
-  + Chen ngay sau muc `3.7.9 Chuc nang quan ly ngan sach va phe duyet`
+  - Chen ngay sau muc `3.7.9 Chuc nang quan ly ngan sach va phe duyet`
 
 ```mermaid
 flowchart LR
@@ -504,11 +503,11 @@ flowchart LR
 ## Hinh 3.8.1
 
 - Ten hinh:
-  + `Hinh 3.8.1: Bieu do co so du lieu quan he`
+  - `Hinh 3.8.1: Bieu do co so du lieu quan he`
 - Loai hinh:
-  + ERD / so do quan he du lieu
+  - ERD / so do quan he du lieu
 - Vi tri chen:
-  + Chen ngay sau muc `3.8 Bieu do co so du lieu quan he`
+  - Chen ngay sau muc `3.8 Bieu do co so du lieu quan he`
 
 ```mermaid
 erDiagram
@@ -561,11 +560,11 @@ erDiagram
 ## Hinh 3.9.1
 
 - Ten hinh:
-  + `Hinh 3.9.1: Bieu do trien khai he thong`
+  - `Hinh 3.9.1: Bieu do trien khai he thong`
 - Loai hinh:
-  + Deployment diagram / so do trien khai
+  - Deployment diagram / so do trien khai
 - Vi tri chen:
-  + Chen ngay sau muc `3.9 Bieu do trien khai he thong`
+  - Chen ngay sau muc `3.9 Bieu do trien khai he thong`
 
 ```mermaid
 flowchart TB

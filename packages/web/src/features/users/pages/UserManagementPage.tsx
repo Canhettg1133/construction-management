@@ -1,51 +1,68 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { X, UserPlus, Edit2, ToggleLeft, ToggleRight, Search } from "lucide-react";
-import { listUsers, createUser, updateUser, toggleUserStatus } from "../api/userApi";
-import { Button } from "../../../shared/components/Button";
-import { EmptyState } from "../../../shared/components/feedback/EmptyState";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { useUiStore } from "../../../store/uiStore";
-import { useAuthStore } from "../../../store/authStore";
-import { SYSTEM_ROLE_LABELS, ROLE_LABELS } from "@construction/shared";
-import type { User, SystemRole } from "@construction/shared";
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { X, UserPlus, Edit2, ToggleLeft, ToggleRight, Search, KeyRound } from 'lucide-react'
+import { listUsers, createUser, updateUser, toggleUserStatus, resetUserPassword } from '../api/userApi'
+import { Button } from '../../../shared/components/Button'
+import { EmptyState } from '../../../shared/components/feedback/EmptyState'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { useUiStore } from '../../../store/uiStore'
+import { useAuthStore } from '../../../store/authStore'
+import { SYSTEM_ROLE_LABELS, ROLE_LABELS } from '@construction/shared'
+import type { User, SystemRole } from '@construction/shared'
 
-const USER_ROLES: SystemRole[] = ["ADMIN", "STAFF"];
+const USER_ROLES: SystemRole[] = ['ADMIN', 'STAFF']
 
 const createUserSchema = z.object({
-  name: z.string().min(1, "Tên không được để trống").max(200),
-  email: z.string().email("Email không hợp lệ"),
-  password: z.string()
-    .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
-    .regex(/[A-Z]/, "Phải có ít nhất 1 chữ hoa")
-    .regex(/[a-z]/, "Phải có ít nhất 1 chữ thường")
-    .regex(/[0-9]/, "Phải có ít nhất 1 số"),
-  systemRole: z.enum(["ADMIN", "STAFF"]),
+  name: z.string().min(1, 'Tên không được để trống').max(200),
+  email: z.string().email('Email không hợp lệ'),
+  password: z
+    .string()
+    .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+    .regex(/[A-Z]/, 'Phải có ít nhất 1 chữ hoa')
+    .regex(/[a-z]/, 'Phải có ít nhất 1 chữ thường')
+    .regex(/[0-9]/, 'Phải có ít nhất 1 số'),
+  systemRole: z.enum(['ADMIN', 'STAFF']),
   phone: z.string().max(20).optional(),
-});
+})
 
 const updateUserSchema = z.object({
   name: z.string().min(1).max(200).optional(),
-  systemRole: z.enum(["ADMIN", "STAFF"]).optional(),
+  systemRole: z.enum(['ADMIN', 'STAFF']).optional(),
   phone: z.string().max(20).optional(),
-});
+})
 
-type CreateUserForm = z.infer<typeof createUserSchema>;
-type UpdateUserForm = z.infer<typeof updateUserSchema>;
+const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+      .regex(/[A-Z]/, 'Phải có ít nhất 1 chữ hoa')
+      .regex(/[a-z]/, 'Phải có ít nhất 1 chữ thường')
+      .regex(/[0-9]/, 'Phải có ít nhất 1 số'),
+    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  })
+
+type CreateUserForm = z.infer<typeof createUserSchema>
+type UpdateUserForm = z.infer<typeof updateUserSchema>
+type ResetPasswordForm = z.infer<typeof resetPasswordSchema>
 
 interface UserFormProps {
-  user?: User;
-  onClose: () => void;
-  onSuccess: () => void;
+  user?: User
+  onClose: () => void
+  onSuccess: () => void
 }
 
 function UserFormModal({ user, onClose, onSuccess }: UserFormProps) {
-  const showToast = useUiStore((s) => s.showToast);
-  const isEdit = !!user;
+  const showToast = useUiStore((s) => s.showToast)
+  const isEdit = !!user
 
   const {
     register,
@@ -54,52 +71,50 @@ function UserFormModal({ user, onClose, onSuccess }: UserFormProps) {
   } = useForm<CreateUserForm | UpdateUserForm>({
     resolver: zodResolver(isEdit ? updateUserSchema : createUserSchema),
     defaultValues: user
-      ? { name: user.name, systemRole: user.systemRole, phone: user.phone ?? "" }
-      : { systemRole: "STAFF" },
-  });
+      ? { name: user.name, systemRole: user.systemRole, phone: user.phone ?? '' }
+      : { systemRole: 'STAFF' },
+  })
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateUserForm) =>
-      createUser({ ...data, phone: data.phone || undefined }),
+    mutationFn: (data: CreateUserForm) => createUser({ ...data, phone: data.phone || undefined }),
     onSuccess: () => {
-      showToast({ type: "success", title: "Tạo người dùng thành công" });
-      onSuccess();
+      showToast({ type: 'success', title: 'Tạo người dùng thành công' })
+      onSuccess()
     },
     onError: (e: unknown) => {
-      const msg = e instanceof Error ? e.message : "Tạo người dùng thất bại";
-      showToast({ type: "error", title: "Lỗi", description: msg });
+      const msg = e instanceof Error ? e.message : 'Tạo người dùng thất bại'
+      showToast({ type: 'error', title: 'Lỗi', description: msg })
     },
-  });
+  })
 
   const updateMutation = useMutation({
-    mutationFn: (data: UpdateUserForm) =>
-      updateUser(user!.id, { ...data, phone: data.phone || undefined }),
+    mutationFn: (data: UpdateUserForm) => updateUser(user!.id, { ...data, phone: data.phone || undefined }),
     onSuccess: () => {
-      showToast({ type: "success", title: "Cập nhật người dùng thành công" });
-      onSuccess();
+      showToast({ type: 'success', title: 'Cập nhật người dùng thành công' })
+      onSuccess()
     },
     onError: (e: unknown) => {
-      const msg = e instanceof Error ? e.message : "Cập nhật thất bại";
-      showToast({ type: "error", title: "Lỗi", description: msg });
+      const msg = e instanceof Error ? e.message : 'Cập nhật thất bại'
+      showToast({ type: 'error', title: 'Lỗi', description: msg })
     },
-  });
+  })
 
   const onSubmit = async (data: CreateUserForm | UpdateUserForm) => {
     if (isEdit) {
-      await updateMutation.mutateAsync(data as UpdateUserForm);
+      await updateMutation.mutateAsync(data as UpdateUserForm)
     } else {
-      await createMutation.mutateAsync(data as CreateUserForm);
+      await createMutation.mutateAsync(data as CreateUserForm)
     }
-  };
+  }
 
-  const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
-            {isEdit ? "Chỉnh sửa người dùng" : "Tạo người dùng mới"}
+            {isEdit ? 'Chỉnh sửa người dùng' : 'Tạo người dùng mới'}
           </h2>
           <button onClick={onClose} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100">
             <X className="h-5 w-5" />
@@ -109,7 +124,7 @@ function UserFormModal({ user, onClose, onSuccess }: UserFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-5">
           <div>
             <label className="form-label">Họ tên</label>
-            <input {...register("name")} className="form-input" placeholder="Nguyễn Văn A" />
+            <input {...register('name')} className="form-input" placeholder="Nguyễn Văn A" />
             {errors.name && <p className="form-error">{errors.name.message as string}</p>}
           </div>
 
@@ -119,8 +134,10 @@ function UserFormModal({ user, onClose, onSuccess }: UserFormProps) {
               <input value={user?.email} readOnly className="form-input bg-slate-50 text-slate-500" />
             ) : (
               <>
-                <input {...register("email")} type="email" className="form-input" placeholder="email@example.com" />
-                {(errors as { email?: { message?: unknown } }).email && <p className="form-error">{(errors as { email?: { message?: unknown } }).email?.message as string}</p>}
+                <input {...register('email')} type="email" className="form-input" placeholder="email@example.com" />
+                {(errors as { email?: { message?: unknown } }).email && (
+                  <p className="form-error">{(errors as { email?: { message?: unknown } }).email?.message as string}</p>
+                )}
               </>
             )}
           </div>
@@ -128,24 +145,34 @@ function UserFormModal({ user, onClose, onSuccess }: UserFormProps) {
           {!isEdit && (
             <div>
               <label className="form-label">Mật khẩu</label>
-              <input {...register("password")} type="password" className="form-input" placeholder="••••••••" />
-              {(errors as { password?: { message?: unknown } }).password && <p className="form-error">{(errors as { password?: { message?: unknown } }).password?.message as string}</p>}
+              <input {...register('password')} type="password" className="form-input" placeholder="••••••••" />
+              {(errors as { password?: { message?: unknown } }).password && (
+                <p className="form-error">
+                  {(errors as { password?: { message?: unknown } }).password?.message as string}
+                </p>
+              )}
             </div>
           )}
 
           <div>
             <label className="form-label">Vai trò</label>
-            <select {...register("systemRole")} className="form-input">
+            <select {...register('systemRole')} className="form-input">
               {USER_ROLES.map((r) => (
-                <option key={r} value={r}>{SYSTEM_ROLE_LABELS[r]}</option>
+                <option key={r} value={r}>
+                  {SYSTEM_ROLE_LABELS[r]}
+                </option>
               ))}
             </select>
-            {(errors as { systemRole?: { message?: unknown } }).systemRole && <p className="form-error">{(errors as { systemRole?: { message?: unknown } }).systemRole?.message as string}</p>}
+            {(errors as { systemRole?: { message?: unknown } }).systemRole && (
+              <p className="form-error">
+                {(errors as { systemRole?: { message?: unknown } }).systemRole?.message as string}
+              </p>
+            )}
           </div>
 
           <div>
             <label className="form-label">Số điện thoại (tùy chọn)</label>
-            <input {...register("phone")} type="tel" className="form-input" placeholder="0912 345 678" />
+            <input {...register('phone')} type="tel" className="form-input" placeholder="0912 345 678" />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -153,29 +180,106 @@ function UserFormModal({ user, onClose, onSuccess }: UserFormProps) {
               Hủy
             </Button>
             <Button type="submit" isLoading={isLoading}>
-              {isEdit ? "Lưu thay đổi" : "Tạo người dùng"}
+              {isEdit ? 'Lưu thay đổi' : 'Tạo người dùng'}
             </Button>
           </div>
         </form>
       </div>
     </div>
-  );
+  )
+}
+
+function ResetPasswordModal({
+  user,
+  onClose,
+  onConfirm,
+  isLoading,
+}: {
+  user: User
+  onClose: () => void
+  onConfirm: (newPassword: string) => void
+  isLoading: boolean
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ResetPasswordForm>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { newPassword: '', confirmPassword: '' },
+  })
+
+  const onSubmit = (data: ResetPasswordForm) => {
+    onConfirm(data.newPassword)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <h2 className="text-base font-semibold text-slate-900">Đặt lại mật khẩu</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100" disabled={isLoading}>
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-5">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            Mật khẩu sẽ được đổi trực tiếp cho tài khoản này. Hãy gửi mật khẩu mới cho người dùng qua kênh nội bộ an
+            toàn.
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-slate-900">{user.name}</p>
+            <p className="mt-1 text-sm text-slate-500">{user.email}</p>
+          </div>
+
+          <div>
+            <label className="form-label">Mật khẩu mới</label>
+            <input {...register('newPassword')} type="password" autoComplete="new-password" className="form-input" />
+            {errors.newPassword && <p className="form-error">{errors.newPassword.message}</p>}
+          </div>
+
+          <div>
+            <label className="form-label">Xác nhận mật khẩu</label>
+            <input
+              {...register('confirmPassword')}
+              type="password"
+              autoComplete="new-password"
+              className="form-input"
+            />
+            {errors.confirmPassword && <p className="form-error">{errors.confirmPassword.message}</p>}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isLoading}>
+              Hủy
+            </Button>
+            <Button type="submit" isLoading={isLoading}>
+              Đặt lại mật khẩu
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }
 
 export function UserManagementPage() {
-  const [showModal, setShowModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<SystemRole | "">("");
-  const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [resettingUser, setResettingUser] = useState<User | null>(null)
+  const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState<SystemRole | ''>('')
+  const [page, setPage] = useState(1)
 
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((s) => s.showToast);
-  const { user: currentUser } = useAuthStore();
-  const canManage = currentUser?.systemRole === "ADMIN";
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((s) => s.showToast)
+  const { user: currentUser } = useAuthStore()
+  const canManage = currentUser?.systemRole === 'ADMIN'
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["users", page, roleFilter, search],
+    queryKey: ['users', page, roleFilter, search],
     queryFn: () =>
       listUsers({
         page,
@@ -183,50 +287,75 @@ export function UserManagementPage() {
         systemRole: roleFilter || undefined,
         q: search || undefined,
       }),
-  });
+  })
 
   const toggleMutation = useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      toggleUserStatus(id, isActive),
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => toggleUserStatus(id, isActive),
     onMutate: async ({ id, isActive }) => {
-      await queryClient.cancelQueries({ queryKey: ["users"] });
-      const prev = queryClient.getQueryData(["users", page, roleFilter, search]);
-      queryClient.setQueryData(["users", page, roleFilter, search], (old: typeof data) =>
-        old ? { ...old, users: old.users.map((u) => (u.id === id ? { ...u, isActive } : u)) } : old
-      );
-      return { prev };
+      await queryClient.cancelQueries({ queryKey: ['users'] })
+      const prev = queryClient.getQueryData(['users', page, roleFilter, search])
+      queryClient.setQueryData(['users', page, roleFilter, search], (old: typeof data) =>
+        old ? { ...old, users: old.users.map((u) => (u.id === id ? { ...u, isActive } : u)) } : old,
+      )
+      return { prev }
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(["users", page, roleFilter, search], ctx.prev);
-      showToast({ type: "error", title: "Không thể thay đổi trạng thái" });
+      if (ctx?.prev) queryClient.setQueryData(['users', page, roleFilter, search], ctx.prev)
+      showToast({ type: 'error', title: 'Không thể thay đổi trạng thái' })
     },
     onSuccess: (_, { isActive }) => {
       showToast({
-        type: "success",
-        title: isActive ? "Đã kích hoạt tài khoản" : "Đã vô hiệu hóa tài khoản",
-      });
+        type: 'success',
+        title: isActive ? 'Đã kích hoạt tài khoản' : 'Đã vô hiệu hóa tài khoản',
+      })
     },
-  });
+  })
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) => resetUserPassword(id, newPassword),
+    onSuccess: ({ email }) => {
+      showToast({
+        type: 'success',
+        title: 'Đã đặt lại mật khẩu',
+        description: `Mật khẩu của ${email} đã được cập nhật.`,
+      })
+      setResettingUser(null)
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : 'Không thể đặt lại mật khẩu'
+      showToast({ type: 'error', title: 'Lỗi', description: msg })
+    },
+  })
 
   const openCreate = () => {
-    setEditingUser(null);
-    setShowModal(true);
-  };
+    setEditingUser(null)
+    setShowModal(true)
+  }
 
   const openEdit = (user: User) => {
-    setEditingUser(user);
-    setShowModal(true);
-  };
+    setEditingUser(user)
+    setShowModal(true)
+  }
+
+  const openResetPassword = (user: User) => {
+    setResettingUser(user)
+  }
+
+  const closeResetPassword = () => {
+    if (!resetPasswordMutation.isPending) {
+      setResettingUser(null)
+    }
+  }
 
   const handleSuccess = () => {
-    setShowModal(false);
-    setEditingUser(null);
-    queryClient.invalidateQueries({ queryKey: ["users"] });
-  };
+    setShowModal(false)
+    setEditingUser(null)
+    queryClient.invalidateQueries({ queryKey: ['users'] })
+  }
 
-  const users = data?.users ?? [];
-  const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
+  const users = data?.users ?? []
+  const meta = data?.meta
+  const totalPages = meta?.totalPages ?? 1
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -251,26 +380,36 @@ export function UserManagementPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
             placeholder="Tìm theo tên hoặc email..."
             className="form-input pl-9"
           />
         </div>
         <select
           value={roleFilter}
-          onChange={(e) => { setRoleFilter(e.target.value as SystemRole | ""); setPage(1); }}
+          onChange={(e) => {
+            setRoleFilter(e.target.value as SystemRole | '')
+            setPage(1)
+          }}
           className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         >
           <option value="">Tất cả vai trò</option>
           {USER_ROLES.map((r) => (
-            <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+            <option key={r} value={r}>
+              {ROLE_LABELS[r]}
+            </option>
           ))}
         </select>
       </div>
 
       {isLoading && (
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => <SkeletonCard key={i} lines={2} />)}
+          {[1, 2, 3].map((i) => (
+            <SkeletonCard key={i} lines={2} />
+          ))}
         </div>
       )}
 
@@ -279,7 +418,7 @@ export function UserManagementPage() {
       {!isLoading && !isError && users.length === 0 && (
         <EmptyState
           title="Không tìm thấy người dùng"
-          description={search || roleFilter ? "Thử thay đổi bộ lọc tìm kiếm." : "Tạo tài khoản mới để bắt đầu."}
+          description={search || roleFilter ? 'Thử thay đổi bộ lọc tìm kiếm.' : 'Tạo tài khoản mới để bắt đầu.'}
           action={
             canManage && !search && !roleFilter ? (
               <button onClick={openCreate} className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white">
@@ -319,28 +458,24 @@ export function UserManagementPage() {
                       </span>
                     </td>
                     <td className="py-3">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        user.isActive
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-red-50 text-red-600"
-                      }`}>
-                        {user.isActive ? "Hoạt động" : "Vô hiệu"}
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          user.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
+                        }`}
+                      >
+                        {user.isActive ? 'Hoạt động' : 'Vô hiệu'}
                       </span>
                     </td>
                     <td className="py-3 text-slate-500">
-                      {user.lastLoginAt
-                        ? new Date(user.lastLoginAt).toLocaleDateString("vi-VN")
-                        : "—"}
+                      {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString('vi-VN') : '—'}
                     </td>
                     {canManage && (
                       <td className="py-3">
                         <div className="flex items-center justify-end gap-1">
                           <button
-                            onClick={() =>
-                              toggleMutation.mutate({ id: user.id, isActive: !user.isActive })
-                            }
+                            onClick={() => toggleMutation.mutate({ id: user.id, isActive: !user.isActive })}
                             disabled={toggleMutation.isPending || user.id === currentUser?.id}
-                            title={user.isActive ? "Vô hiệu hóa" : "Kích hoạt"}
+                            title={user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                             className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:opacity-40"
                           >
                             {user.isActive ? (
@@ -348,6 +483,14 @@ export function UserManagementPage() {
                             ) : (
                               <ToggleLeft className="h-5 w-5 text-slate-400" />
                             )}
+                          </button>
+                          <button
+                            onClick={() => openResetPassword(user)}
+                            disabled={resetPasswordMutation.isPending}
+                            title="Đặt lại mật khẩu"
+                            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:opacity-40"
+                          >
+                            <KeyRound className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => openEdit(user)}
@@ -392,10 +535,22 @@ export function UserManagementPage() {
       {showModal && (
         <UserFormModal
           user={editingUser ?? undefined}
-          onClose={() => { setShowModal(false); setEditingUser(null); }}
+          onClose={() => {
+            setShowModal(false)
+            setEditingUser(null)
+          }}
           onSuccess={handleSuccess}
         />
       )}
+
+      {resettingUser && (
+        <ResetPasswordModal
+          user={resettingUser}
+          onClose={closeResetPassword}
+          onConfirm={(newPassword) => resetPasswordMutation.mutate({ id: resettingUser.id, newPassword })}
+          isLoading={resetPasswordMutation.isPending}
+        />
+      )}
     </div>
-  );
+  )
 }

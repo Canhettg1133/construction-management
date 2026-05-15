@@ -1,39 +1,39 @@
-import { useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowRight } from "lucide-react";
-import { TASK_PRIORITY_LABELS } from "@construction/shared";
-import type { DashboardOverdueTask, Task } from "@construction/shared";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
+import { useNavigate } from 'react-router-dom'
+import { AlertCircle, ArrowRight } from 'lucide-react'
+import { TASK_PRIORITY_LABELS } from '@construction/shared'
+import type { DashboardOverdueTask, Task } from '@construction/shared'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
 
-type TaskWithProject = Task & { project?: { id: string; name: string } };
+type TaskWithProject = Task & { project?: { id: string; name: string } }
 
 interface OverdueItem {
-  id: string;
-  title: string;
-  projectId: string;
-  projectName: string;
-  priority: string;
-  daysOverdue: number;
+  id: string
+  title: string
+  projectId: string
+  projectName: string
+  priority: string
+  daysOverdue: number
 }
 
-const OPEN_STATUSES = new Set(["TO_DO", "IN_PROGRESS"]);
+const OPEN_STATUSES = new Set(['TO_DO', 'IN_PROGRESS'])
 
 function toOverdueItem(task: TaskWithProject): OverdueItem | null {
-  if (!task.dueDate) return null;
-  if (!OPEN_STATUSES.has(task.status)) return null;
-  const dueTime = new Date(task.dueDate).getTime();
-  const now = Date.now();
-  if (!Number.isFinite(dueTime) || dueTime >= now) return null;
+  if (!task.dueDate) return null
+  if (!OPEN_STATUSES.has(task.status)) return null
+  const dueTime = new Date(task.dueDate).getTime()
+  const now = Date.now()
+  if (!Number.isFinite(dueTime) || dueTime >= now) return null
 
-  const daysOverdue = Math.max(0, Math.floor((now - dueTime) / 86400000));
+  const daysOverdue = Math.max(0, Math.floor((now - dueTime) / 86400000))
   return {
     id: task.id,
     title: task.title,
     projectId: task.projectId,
-    projectName: task.project?.name ?? "Dự án",
+    projectName: task.project?.name ?? 'Dự án',
     priority: task.priority,
     daysOverdue,
-  };
+  }
 }
 
 function fromDashboardTask(task: DashboardOverdueTask): OverdueItem {
@@ -44,31 +44,31 @@ function fromDashboardTask(task: DashboardOverdueTask): OverdueItem {
     projectName: task.projectName,
     priority: task.priority,
     daysOverdue: task.daysOverdue,
-  };
+  }
 }
 
 export function OverdueTasksWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
-  const navigate = useNavigate();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
+  const navigate = useNavigate()
 
   if (!role.showOverdueTasks) {
-    return null;
+    return null
   }
 
-  let title = "Công việc quá hạn";
-  let tasks: OverdueItem[] = [];
+  let title = 'Công việc quá hạn'
+  let tasks: OverdueItem[] = []
 
   if (role.isAdmin || role.isPM) {
-    tasks = (data?.overdueTasks ?? []).map(fromDashboardTask);
+    tasks = (data?.overdueTasks ?? []).map(fromDashboardTask)
   } else if (role.isSafety) {
-    title = "Công việc an toàn quá hạn";
+    title = 'Công việc an toàn quá hạn'
     tasks = (data?.safetyTasks ?? [])
       .map((task) => toOverdueItem(task as TaskWithProject))
-      .filter(Boolean) as OverdueItem[];
+      .filter(Boolean) as OverdueItem[]
   } else if (role.isQuality) {
-    title = "Công việc QC quá hạn";
-    tasks = (data?.overdueTasks ?? []).map(fromDashboardTask);
+    title = 'Công việc chất lượng quá hạn'
+    tasks = (data?.overdueTasks ?? []).map(fromDashboardTask)
   }
 
   if (tasks.length === 0) {
@@ -80,7 +80,7 @@ export function OverdueTasksWidget() {
         </div>
         <p className="py-4 text-center text-sm text-slate-500">Không có công việc quá hạn.</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -90,9 +90,7 @@ export function OverdueTasksWidget() {
           <AlertCircle className="h-4 w-4 text-red-500" />
           <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
         </div>
-        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">
-          {tasks.length}
-        </span>
+        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">{tasks.length}</span>
       </div>
 
       <div className="max-h-64 space-y-2 overflow-y-auto">
@@ -121,5 +119,5 @@ export function OverdueTasksWidget() {
         ))}
       </div>
     </div>
-  );
+  )
 }

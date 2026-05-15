@@ -42,8 +42,8 @@ export const reportService = {
     return { reports, total }
   },
 
-  async getById(id: string) {
-    const report = await reportRepository.findById(id)
+  async getById(projectId: string, id: string) {
+    const report = await reportRepository.findByProjectId(projectId, id)
     if (!report) throw new NotFoundError('Không tìm thấy báo cáo')
     return report
   },
@@ -64,19 +64,19 @@ export const reportService = {
     tasks?: Array<{ title: string; description?: string; assignedTo?: string; priority?: string; dueDate?: Date }>
   }) {
     const existing = await reportRepository.findByProjectAndDate(data.projectId, data.reportDate)
-    if (existing) throw new ConflictError('Bao cao cho ngay nay da ton tai')
+    if (existing) throw new ConflictError('Báo cáo cho ngày này đã tồn tại')
 
     const previousReport = await reportRepository.findLatestBeforeDate(data.projectId, data.reportDate)
     if (previousReport && data.progress < Number(previousReport.progress)) {
       throw new BadRequestError(
-        `Tien do bao cao phai >= ${previousReport.progress}% (bao cao ngay ${previousReport.reportDate.toLocaleDateString('vi-VN')})`,
+        `Tiến độ báo cáo phải >= ${previousReport.progress}% (báo cáo ngày ${previousReport.reportDate.toLocaleDateString('vi-VN')})`,
       )
     }
 
     const nextReport = await reportRepository.findEarliestAfterDate(data.projectId, data.reportDate)
     if (nextReport && data.progress > Number(nextReport.progress)) {
       throw new BadRequestError(
-        `Tien do bao cao phai <= ${nextReport.progress}% (bao cao ngay ${nextReport.reportDate.toLocaleDateString('vi-VN')})`,
+        `Tiến độ báo cáo phải <= ${nextReport.progress}% (báo cáo ngày ${nextReport.reportDate.toLocaleDateString('vi-VN')})`,
       )
     }
 
@@ -84,6 +84,7 @@ export const reportService = {
     const report = await reportRepository.create({
       ...reportData,
       status: isDraft ? 'DRAFT' : 'SENT',
+      submittedAt: isDraft ? undefined : new Date(),
     })
 
     if (!isDraft) {
@@ -110,8 +111,8 @@ export const reportService = {
     return report
   },
 
-  async update(id: string, data: Record<string, unknown>, actor: ReportActorContext) {
-    const report = await reportRepository.findById(id)
+  async update(projectId: string, id: string, data: Record<string, unknown>, actor: ReportActorContext) {
+    const report = await reportRepository.findByProjectId(projectId, id)
     if (!report) throw new NotFoundError('Không tìm thấy báo cáo')
 
     if (!canChangeReport(report, actor)) {
@@ -126,20 +127,23 @@ export const reportService = {
       const previousReport = await reportRepository.findLatestBeforeDate(report.projectId, report.reportDate, id)
       if (previousReport && data.progress < Number(previousReport.progress)) {
         throw new BadRequestError(
-          `Tien do bao cao phai >= ${previousReport.progress}% (bao cao ngay ${previousReport.reportDate.toLocaleDateString('vi-VN')})`,
+          `Tiến độ báo cáo phải >= ${previousReport.progress}% (báo cáo ngày ${previousReport.reportDate.toLocaleDateString('vi-VN')})`,
         )
       }
 
       const nextReport = await reportRepository.findEarliestAfterDate(report.projectId, report.reportDate, id)
       if (nextReport && data.progress > Number(nextReport.progress)) {
         throw new BadRequestError(
-          `Tien do bao cao phai <= ${nextReport.progress}% (bao cao ngay ${nextReport.reportDate.toLocaleDateString('vi-VN')})`,
+          `Tiến độ báo cáo phải <= ${nextReport.progress}% (báo cáo ngày ${nextReport.reportDate.toLocaleDateString('vi-VN')})`,
         )
       }
     }
 
     if (report.approvalStatus === 'REJECTED') {
       data.approvalStatus = 'PENDING'
+      data.submittedAt = null
+      data.approvedBy = null
+      data.approvedAt = null
       data.rejectedReason = null
     }
 
@@ -156,8 +160,8 @@ export const reportService = {
     return updated
   },
 
-  async updateStatus(id: string, status: string, actor: ReportActorContext) {
-    const report = await reportRepository.findById(id)
+  async updateStatus(projectId: string, id: string, status: string, actor: ReportActorContext) {
+    const report = await reportRepository.findByProjectId(projectId, id)
     if (!report) throw new NotFoundError('Không tìm thấy báo cáo')
 
     if (!canChangeReport(report, actor)) {
@@ -168,7 +172,14 @@ export const reportService = {
       throw new BadRequestError('Báo cáo đã được duyệt, không thể đổi trạng thái trực tiếp')
     }
 
-    const updated = await reportRepository.update(id, { status })
+    const updateData: Record<string, unknown> = { status }
+    if (status === 'SENT' && !report.submittedAt) {
+      updateData.submittedAt = new Date()
+      updateData.approvalStatus = 'PENDING'
+      updateData.rejectedReason = null
+    }
+
+    const updated = await reportRepository.update(id, updateData)
 
     await auditService.log({
       userId: actor.userId,
@@ -181,13 +192,17 @@ export const reportService = {
     return updated
   },
 
-  async submitForApproval(id: string, actor: ReportActorContext) {
-    const report = await reportRepository.findById(id)
+  async submitForApproval(projectId: string, id: string, actor: ReportActorContext) {
+    const report = await reportRepository.findByProjectId(projectId, id)
     if (!report) throw new NotFoundError('Không tìm thấy báo cáo')
 
     if (!canChangeReport(report, actor)) throw new ForbiddenError('Bạn không có quyền nộp duyệt báo cáo này')
     if (report.approvalStatus === 'APPROVED') {
       throw new ForbiddenError('Báo cáo đã được duyệt, không thể nộp duyệt lại trực tiếp')
+    }
+
+    if (report.submittedAt && report.status === 'SENT') {
+      throw new BadRequestError('Báo cáo đã được gửi duyệt')
     }
 
     const updated = await reportRepository.update(id, {
@@ -219,12 +234,12 @@ export const reportService = {
     return updated
   },
 
-  async reopen(id: string, actor: ReportActorContext, payload: Record<string, unknown>) {
-    const report = await reportRepository.findById(id)
+  async reopen(projectId: string, id: string, actor: ReportActorContext, payload: Record<string, unknown>) {
+    const report = await reportRepository.findByProjectId(projectId, id)
     if (!report) throw new NotFoundError('Không tìm thấy báo cáo')
 
     if (!canManageAnyReport(actor)) {
-      throw new ForbiddenError('Chỉ Admin hoặc PM được mở lại báo cáo đã duyệt')
+      throw new ForbiddenError('Chỉ quản trị viên hoặc quản lý dự án được mở lại báo cáo đã duyệt')
     }
 
     if (report.approvalStatus !== 'APPROVED') {
@@ -250,8 +265,8 @@ export const reportService = {
     return updated
   },
 
-  async delete(id: string, userId: string) {
-    const report = await reportRepository.findById(id)
+  async delete(projectId: string, id: string, userId: string) {
+    const report = await reportRepository.findByProjectId(projectId, id)
     if (!report) throw new NotFoundError('Không tìm thấy báo cáo')
 
     await reportRepository.delete(id)

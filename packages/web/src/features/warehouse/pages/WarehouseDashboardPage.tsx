@@ -1,63 +1,84 @@
-﻿import { Link, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownCircle, ArrowUpCircle, ClipboardList, PackageSearch } from "lucide-react";
-import { warehouseApi } from "../api/warehouseApi";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { PermissionGate } from "../../../shared/components/PermissionGate";
-import { useProjectPermissions } from "../../../shared/hooks/useProjectPermissions";
-import { useAuthStore } from "../../../store/authStore";
-import { useUiStore } from "../../../store/uiStore";
+﻿import { Link, useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ArrowDownCircle, ArrowUpCircle, ClipboardList, PackageSearch } from 'lucide-react'
+import { warehouseApi } from '../api/warehouseApi'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { PermissionGate } from '../../../shared/components/PermissionGate'
+import { useProjectPermissions } from '../../../shared/hooks/useProjectPermissions'
+import { useAuthStore } from '../../../store/authStore'
+import { useUiStore } from '../../../store/uiStore'
 
 function statusClass(status: string) {
-  if (status === "APPROVED") return "bg-emerald-50 text-emerald-700";
-  if (status === "REJECTED") return "bg-red-50 text-red-700";
-  return "bg-amber-50 text-amber-700";
+  if (status === 'APPROVED') return 'bg-emerald-50 text-emerald-700'
+  if (status === 'REJECTED') return 'bg-red-50 text-red-700'
+  return 'bg-amber-50 text-amber-700'
+}
+
+function statusLabel(status: string) {
+  if (status === 'APPROVED') return 'Đã duyệt'
+  if (status === 'REJECTED') return 'Từ chối'
+  if (status === 'PAID') return 'Đã chi'
+  if (status === 'PENDING') return 'Chờ duyệt'
+  return status
+}
+
+function transactionTypeLabel(type: string) {
+  if (type === 'IN') return 'Nhập kho'
+  if (type === 'OUT') return 'Xuất kho'
+  if (type === 'REQUEST') return 'Yêu cầu'
+  return type
 }
 
 export function WarehouseDashboardPage() {
-  const { id } = useParams<{ id: string }>();
-  const projectId = id ?? "";
-  const { user } = useAuthStore();
-  const { data: projectPermissions } = useProjectPermissions(projectId);
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((state) => state.showToast);
+  const { id } = useParams<{ id: string }>()
+  const projectId = id ?? ''
+  const { user } = useAuthStore()
+  const { data: projectPermissions } = useProjectPermissions(projectId)
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((state) => state.showToast)
 
-  const projectRole = projectPermissions?.projectRole;
+  const projectRole = projectPermissions?.projectRole
   const canManageStock =
-    user?.systemRole === "ADMIN" ||
-    projectRole === "PROJECT_MANAGER" ||
-    projectRole === "WAREHOUSE_KEEPER";
-  const canApproveRequest = canManageStock || projectRole === "QUALITY_MANAGER";
+    user?.systemRole === 'ADMIN' || projectRole === 'PROJECT_MANAGER' || projectRole === 'WAREHOUSE_KEEPER'
+  const canApproveRequest = canManageStock || projectRole === 'QUALITY_MANAGER'
 
-  const { data: inventoryData, isLoading: inventoryLoading, isError: inventoryError } = useQuery({
-    queryKey: ["warehouse-inventory", projectId],
+  const {
+    data: inventoryData,
+    isLoading: inventoryLoading,
+    isError: inventoryError,
+  } = useQuery({
+    queryKey: ['warehouse-inventory', projectId],
     queryFn: () => warehouseApi.listInventory(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
-  const { data: transactionData, isLoading: transactionLoading, isError: transactionError } = useQuery({
-    queryKey: ["warehouse-transactions", projectId],
+  const {
+    data: transactionData,
+    isLoading: transactionLoading,
+    isError: transactionError,
+  } = useQuery({
+    queryKey: ['warehouse-transactions', projectId],
     queryFn: () => warehouseApi.listTransactions(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
   const approveMutation = useMutation({
-    mutationFn: (payload: { id: string; status: "APPROVED" | "REJECTED" }) =>
+    mutationFn: (payload: { id: string; status: 'APPROVED' | 'REJECTED' }) =>
       warehouseApi.updateRequest(projectId, payload.id, { status: payload.status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["warehouse-transactions", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["warehouse-inventory", projectId] });
-      showToast({ type: "success", title: "Đã cập nhật yêu cầu vật tư" });
+      queryClient.invalidateQueries({ queryKey: ['warehouse-transactions', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['warehouse-inventory', projectId] })
+      showToast({ type: 'success', title: 'Đã cập nhật yêu cầu vật tư' })
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Không thể cập nhật yêu cầu",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể cập nhật yêu cầu',
+      })
     },
-  });
+  })
 
   if (inventoryLoading || transactionLoading) {
     return (
@@ -65,14 +86,14 @@ export function WarehouseDashboardPage() {
         <SkeletonCard lines={2} />
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (inventoryError || transactionError || !inventoryData || !transactionData) {
-    return <ErrorState message="Không tải được dữ liệu kho vật tư." />;
+    return <ErrorState message="Không tải được dữ liệu kho vật tư." />
   }
 
-  const recentTransactions = transactionData.transactions.slice(0, 10);
+  const recentTransactions = transactionData.transactions.slice(0, 10)
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -155,9 +176,9 @@ export function WarehouseDashboardPage() {
               </thead>
               <tbody>
                 {inventoryData.inventory.map((item) => {
-                  const quantity = Number(item.quantity ?? 0);
-                  const minQuantity = Number(item.minQuantity ?? 0);
-                  const isLowStock = !inventoryData.restricted && quantity <= minQuantity;
+                  const quantity = Number(item.quantity ?? 0)
+                  const minQuantity = Number(item.minQuantity ?? 0)
+                  const isLowStock = !inventoryData.restricted && quantity <= minQuantity
 
                   return (
                     <tr key={item.id} className="border-b border-slate-100 last:border-0">
@@ -175,9 +196,9 @@ export function WarehouseDashboardPage() {
                       </td>
                       <td className="px-2 py-2 text-slate-600">{item.unit}</td>
                       {!inventoryData.restricted && (
-                        <td className="px-2 py-2 text-slate-700">{quantity.toLocaleString("vi-VN")}</td>
+                        <td className="px-2 py-2 text-slate-700">{quantity.toLocaleString('vi-VN')}</td>
                       )}
-                      <td className="px-2 py-2 text-slate-600">{item.location ?? "—"}</td>
+                      <td className="px-2 py-2 text-slate-600">{item.location ?? '—'}</td>
                       {!inventoryData.restricted && (
                         <td className="px-2 py-2 text-right">
                           {isLowStock ? (
@@ -190,7 +211,7 @@ export function WarehouseDashboardPage() {
                         </td>
                       )}
                     </tr>
-                  );
+                  )
                 })}
               </tbody>
             </table>
@@ -209,53 +230,48 @@ export function WarehouseDashboardPage() {
         ) : (
           <div className="space-y-2">
             {recentTransactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"
-              >
+              <div key={tx.id} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        tx.type === "IN"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : tx.type === "OUT"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-brand-50 text-brand-700"
+                        tx.type === 'IN'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : tx.type === 'OUT'
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-brand-50 text-brand-700'
                       }`}
                     >
-                      {tx.type}
+                      {transactionTypeLabel(tx.type)}
                     </span>
-                    <span className="font-medium text-slate-800">
-                      {tx.inventory?.materialName ?? tx.inventoryId}
-                    </span>
+                    <span className="font-medium text-slate-800">{tx.inventory?.materialName ?? tx.inventoryId}</span>
                     <span className="text-slate-500">
-                      {Number(tx.quantity).toLocaleString("vi-VN")} {tx.inventory?.unit ?? ""}
+                      {Number(tx.quantity).toLocaleString('vi-VN')} {tx.inventory?.unit ?? ''}
                     </span>
                   </div>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(tx.status)}`}>
-                    {tx.status}
+                    {statusLabel(tx.status)}
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                   <span>
-                    {new Date(tx.createdAt).toLocaleString("vi-VN")} ·{" "}
-                    {tx.requester?.name ?? tx.requestedBy ?? "Hệ thống"}
+                    {new Date(tx.createdAt).toLocaleString('vi-VN')} ·{' '}
+                    {tx.requester?.name ?? tx.requestedBy ?? 'Hệ thống'}
                   </span>
                   {tx.note && <span className="line-clamp-1 max-w-[60%]">{tx.note}</span>}
                 </div>
 
-                {tx.type === "REQUEST" && tx.status === "PENDING" && canApproveRequest && (
+                {tx.type === 'REQUEST' && tx.status === 'PENDING' && canApproveRequest && (
                   <div className="mt-2 flex justify-end gap-2">
                     <button
-                      onClick={() => approveMutation.mutate({ id: tx.id, status: "REJECTED" })}
+                      onClick={() => approveMutation.mutate({ id: tx.id, status: 'REJECTED' })}
                       disabled={approveMutation.isPending}
                       className="rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
                     >
                       Từ chối
                     </button>
                     <button
-                      onClick={() => approveMutation.mutate({ id: tx.id, status: "APPROVED" })}
+                      onClick={() => approveMutation.mutate({ id: tx.id, status: 'APPROVED' })}
                       disabled={approveMutation.isPending}
                       className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
                     >
@@ -270,7 +286,7 @@ export function WarehouseDashboardPage() {
       </div>
 
       <div className="app-card">
-        <h3 className="mb-2">Quick Actions</h3>
+        <h3 className="mb-2">Tác vụ nhanh</h3>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <Link
             to={`/projects/${projectId}/warehouse/transactions/new?type=REQUEST`}
@@ -308,8 +324,5 @@ export function WarehouseDashboardPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
-
-
-

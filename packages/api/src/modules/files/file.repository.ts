@@ -29,6 +29,15 @@ export const fileRepository = {
     })
   },
 
+  findByProjectId(projectId: string, id: string) {
+    return prisma.projectFile.findFirst({
+      where: { id, projectId, deletedAt: null },
+      include: {
+        folder: true,
+      },
+    })
+  },
+
   findFolderById(id: string) {
     return prisma.documentFolder.findUnique({ where: { id } })
   },

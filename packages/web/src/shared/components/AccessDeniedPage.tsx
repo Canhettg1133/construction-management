@@ -1,5 +1,5 @@
-import { ShieldAlert, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ShieldAlert, ArrowLeft } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import {
   PROJECT_ROLE_LABELS,
   SPECIAL_PRIVILEGE_LABELS,
@@ -7,49 +7,49 @@ import {
   TOOL_LABELS,
   type SpecialPrivilege,
   type ToolId,
-} from "@construction/shared";
-import { ROUTES } from "../constants/routes";
+} from '@construction/shared'
+import { ROUTES } from '../constants/routes'
 
 interface AccessDeniedPageProps {
-  title?: string;
-  description?: string;
-  backTo?: string;
-  requiredRole?: string;
-  requiredTool?: ToolId;
-  requiredPrivilege?: SpecialPrivilege;
+  title?: string
+  description?: string
+  backTo?: string
+  requiredRole?: string
+  requiredTool?: ToolId
+  requiredPrivilege?: SpecialPrivilege
 }
 
 function resolveRoleLabel(requiredRole?: string) {
   if (!requiredRole) {
-    return null;
+    return null
   }
 
-  const systemRoleLabel = SYSTEM_ROLE_LABELS[requiredRole as keyof typeof SYSTEM_ROLE_LABELS];
+  const systemRoleLabel = SYSTEM_ROLE_LABELS[requiredRole as keyof typeof SYSTEM_ROLE_LABELS]
   if (systemRoleLabel) {
-    return systemRoleLabel;
+    return systemRoleLabel
   }
 
-  const projectRoleLabel = PROJECT_ROLE_LABELS[requiredRole as keyof typeof PROJECT_ROLE_LABELS];
+  const projectRoleLabel = PROJECT_ROLE_LABELS[requiredRole as keyof typeof PROJECT_ROLE_LABELS]
   if (projectRoleLabel) {
-    return projectRoleLabel;
+    return projectRoleLabel
   }
 
-  return requiredRole;
+  return requiredRole
 }
 
 export function AccessDeniedPage({
-  title = "Ban khong co quyen truy cap trang nay",
-  description = "Lien he quan tri vien hoac truong ban chi huy de duoc cap quyen.",
+  title = 'Bạn không có quyền truy cập trang này',
+  description = 'Liên hệ quản trị viên hoặc trưởng ban chỉ huy để được cấp quyền.',
   backTo = ROUTES.DASHBOARD,
   requiredRole,
   requiredTool,
   requiredPrivilege,
 }: AccessDeniedPageProps) {
   const requirements = [
-    requiredRole ? `Vai tro: ${resolveRoleLabel(requiredRole)}` : null,
-    requiredTool ? `Cong cu: ${TOOL_LABELS[requiredTool]}` : null,
-    requiredPrivilege ? `Quyen dac biet: ${SPECIAL_PRIVILEGE_LABELS[requiredPrivilege]}` : null,
-  ].filter(Boolean);
+    requiredRole ? `Vai trò: ${resolveRoleLabel(requiredRole)}` : null,
+    requiredTool ? `Công cụ: ${TOOL_LABELS[requiredTool]}` : null,
+    requiredPrivilege ? `Quyền đặc biệt: ${SPECIAL_PRIVILEGE_LABELS[requiredPrivilege]}` : null,
+  ].filter(Boolean)
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-2xl items-center justify-center px-4 py-10">
@@ -65,7 +65,7 @@ export function AccessDeniedPage({
 
         {requirements.length > 0 && (
           <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            <p className="font-medium">Can co:</p>
+            <p className="font-medium">Cần có:</p>
             <ul className="mt-1 list-disc pl-5">
               {requirements.map((item) => (
                 <li key={item}>{item}</li>
@@ -80,10 +80,10 @@ export function AccessDeniedPage({
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             <ArrowLeft className="h-4 w-4" />
-            Quay lai
+            Quay lại
           </Link>
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -239,14 +239,18 @@ export function ReportDetailPage() {
 
   const canEdit =
     canUseReportStandard && report?.approvalStatus !== 'APPROVED' && (report?.createdBy === user?.id || isPmOrAdmin)
+  const canSubmitReport = Boolean(canEdit && report?.approvalStatus === 'PENDING' && !report.submittedAt)
+  const canReviewReport = Boolean(
+    isPmOrAdmin && report?.approvalStatus === 'PENDING' && report.status === 'SENT' && report.submittedAt,
+  )
   const canReopenReport = Boolean(report?.approvalStatus === 'APPROVED' && canUseReportAdmin)
   const editBlockedMessage = (() => {
     if (!canUseReportStandard) return 'Bạn chưa có quyền sửa báo cáo ngày trong dự án này.'
     if (report?.approvalStatus === 'APPROVED') {
-      return 'Báo cáo đã được duyệt, không thể chỉnh sửa trực tiếp. Admin hoặc PM có thể mở lại báo cáo nếu cần điều chỉnh.'
+      return 'Báo cáo đã được duyệt, không thể chỉnh sửa trực tiếp. Quản trị viên hoặc quản lý dự án có thể mở lại báo cáo nếu cần điều chỉnh.'
     }
     if (report && report.createdBy !== user?.id && !isPmOrAdmin) {
-      return 'Chỉ người lập báo cáo, PM hoặc Admin được sửa báo cáo này.'
+      return 'Chỉ người lập báo cáo, quản lý dự án hoặc quản trị viên được sửa báo cáo này.'
     }
     return ''
   })()
@@ -321,7 +325,7 @@ export function ReportDetailPage() {
           )}
           {/* SE/PM actions */}
           <PermissionGate projectId={currentProjectId} toolId="DAILY_REPORT" minLevel="STANDARD">
-            {!isEditing && canEdit && report.approvalStatus === 'PENDING' && (
+            {!isEditing && canSubmitReport && (
               <button
                 onClick={() => submitMutation.mutate()}
                 disabled={submitMutation.isPending}
@@ -366,7 +370,7 @@ export function ReportDetailPage() {
             </button>
           )}
           {/* PM/Admin approval actions */}
-          {isPmOrAdmin && report.approvalStatus === 'PENDING' && (
+          {canReviewReport && (
             <SpecialPrivilegeGate projectId={currentProjectId} privilege="QUALITY_SIGNER">
               <>
                 <button

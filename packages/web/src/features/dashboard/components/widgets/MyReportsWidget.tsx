@@ -1,34 +1,34 @@
-import { Link } from "react-router-dom";
-import { FileText } from "lucide-react";
-import type { DailyReport } from "@construction/shared";
-import { useDashboard } from "../../hooks/useDashboard";
-import { useDashboardRole } from "../../hooks/useDashboardRole";
+import { Link } from 'react-router-dom'
+import { FileText } from 'lucide-react'
+import type { DailyReport } from '@construction/shared'
+import { useDashboard } from '../../hooks/useDashboard'
+import { useDashboardRole } from '../../hooks/useDashboardRole'
 
-type ReportWithProject = DailyReport & { project?: { id: string; name: string } };
+type ReportWithProject = DailyReport & { project?: { id: string; name: string } }
 
 function statusTone(status: string): string {
-  if (status === "APPROVED") return "text-emerald-700 bg-emerald-50";
-  if (status === "REJECTED") return "text-red-700 bg-red-50";
-  if (status === "PENDING") return "text-amber-700 bg-amber-50";
-  return "text-slate-700 bg-slate-100";
+  if (status === 'APPROVED') return 'text-emerald-700 bg-emerald-50'
+  if (status === 'REJECTED') return 'text-red-700 bg-red-50'
+  if (status === 'PENDING') return 'text-amber-700 bg-amber-50'
+  return 'text-slate-700 bg-slate-100'
 }
 
 function statusLabel(status: string): string {
-  if (status === "APPROVED") return "Đã duyệt";
-  if (status === "REJECTED") return "Từ chối";
-  if (status === "PENDING") return "Chờ duyệt";
-  return status;
+  if (status === 'APPROVED') return 'Đã duyệt'
+  if (status === 'REJECTED') return 'Từ chối'
+  if (status === 'PENDING') return 'Chờ duyệt'
+  return status
 }
 
 export function MyReportsWidget() {
-  const role = useDashboardRole();
-  const { data } = useDashboard();
+  const role = useDashboardRole()
+  const { data } = useDashboard()
 
   if (!role.isEngineer) {
-    return null;
+    return null
   }
 
-  const reports = (data?.myReports ?? []) as ReportWithProject[];
+  const reports = (data?.myReports ?? []) as ReportWithProject[]
 
   return (
     <div className="app-card">
@@ -47,13 +47,15 @@ export function MyReportsWidget() {
           {reports.slice(0, 8).map((report) => (
             <div key={report.id} className="rounded-xl border border-slate-200 p-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-medium text-slate-900">{report.project?.name ?? "Dự án"}</p>
-                <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${statusTone(report.approvalStatus)}`}>
+                <p className="truncate text-sm font-medium text-slate-900">{report.project?.name ?? 'Dự án'}</p>
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${statusTone(report.approvalStatus)}`}
+                >
                   {statusLabel(report.approvalStatus)}
                 </span>
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                Ngày báo cáo: {new Date(report.reportDate).toLocaleDateString("vi-VN")}
+                Ngày báo cáo: {new Date(report.reportDate).toLocaleDateString('vi-VN')}
               </div>
             </div>
           ))}
@@ -71,5 +73,5 @@ export function MyReportsWidget() {
         </div>
       ) : null}
     </div>
-  );
+  )
 }

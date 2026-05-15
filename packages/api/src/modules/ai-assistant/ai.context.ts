@@ -1,112 +1,118 @@
-import { hasMinPermission, TOOL_LABELS, type PermissionLevel, type ToolId, type ToolPermissionMap } from "@construction/shared";
-import { prisma } from "../../config/database";
-import { NotFoundError } from "../../shared/errors";
+import {
+  hasMinPermission,
+  TOOL_LABELS,
+  type PermissionLevel,
+  type ToolId,
+  type ToolPermissionMap,
+} from '@construction/shared'
+import { prisma } from '../../config/database'
+import { NotFoundError } from '../../shared/errors'
 
 export const AI_SOURCE_TOOL_IDS = [
-  "PROJECT",
-  "TASK",
-  "DAILY_REPORT",
-  "FILE",
-  "DOCUMENT",
-  "SAFETY",
-  "QUALITY",
-  "WAREHOUSE",
-  "BUDGET",
-] as const satisfies readonly ToolId[];
+  'PROJECT',
+  'TASK',
+  'DAILY_REPORT',
+  'FILE',
+  'DOCUMENT',
+  'SAFETY',
+  'QUALITY',
+  'WAREHOUSE',
+  'BUDGET',
+] as const satisfies readonly ToolId[]
 
-export type AiSourceToolId = (typeof AI_SOURCE_TOOL_IDS)[number];
+export type AiSourceToolId = (typeof AI_SOURCE_TOOL_IDS)[number]
 
 export interface AiContextSource {
-  toolId: AiSourceToolId;
-  recordType: string;
-  recordId: string;
-  title?: string;
+  toolId: AiSourceToolId
+  recordType: string
+  recordId: string
+  title?: string
 }
 
 export interface AiOmittedTool {
-  toolId: AiSourceToolId;
-  reason: "NO_PERMISSION" | "DISABLED";
+  toolId: AiSourceToolId
+  reason: 'NO_PERMISSION' | 'DISABLED'
 }
 
 export interface AiContextPayload {
-  projectId: string;
-  generatedAt: string;
-  includedTools: AiSourceToolId[];
-  omittedTools: AiOmittedTool[];
-  sources: AiContextSource[];
-  data: Record<string, unknown>;
+  projectId: string
+  generatedAt: string
+  includedTools: AiSourceToolId[]
+  omittedTools: AiOmittedTool[]
+  sources: AiContextSource[]
+  data: Record<string, unknown>
 }
 
 export interface BuildAiContextParams {
-  projectId: string;
-  permissions: ToolPermissionMap;
-  enabledSourceTools: AiSourceToolId[] | null;
-  now?: Date;
+  projectId: string
+  permissions: ToolPermissionMap
+  enabledSourceTools: AiSourceToolId[] | null
+  now?: Date
 }
 
 function canReadTool(permissions: ToolPermissionMap, toolId: ToolId) {
-  return hasMinPermission((permissions[toolId] ?? "NONE") as PermissionLevel, "READ");
+  return hasMinPermission((permissions[toolId] ?? 'NONE') as PermissionLevel, 'READ')
 }
 
 function isEnabled(toolId: AiSourceToolId, enabledSourceTools: AiSourceToolId[] | null) {
-  return !enabledSourceTools || enabledSourceTools.includes(toolId);
+  return !enabledSourceTools || enabledSourceTools.includes(toolId)
 }
 
 function toNumber(value: unknown) {
   if (value === null || value === undefined) {
-    return value;
+    return value
   }
-  return Number(value);
+  return Number(value)
 }
 
 function toDateOnly(value: Date | string | null | undefined) {
   if (!value) {
-    return null;
+    return null
   }
-  return new Date(value).toISOString().slice(0, 10);
+  return new Date(value).toISOString().slice(0, 10)
 }
 
 function addSource(sources: AiContextSource[], source: AiContextSource) {
-  sources.push(source);
+  sources.push(source)
 }
 
 function markTool(
   toolId: AiSourceToolId,
   params: BuildAiContextParams,
   includedTools: AiSourceToolId[],
-  omittedTools: AiOmittedTool[]
+  omittedTools: AiOmittedTool[],
 ) {
   if (!isEnabled(toolId, params.enabledSourceTools)) {
-    omittedTools.push({ toolId, reason: "DISABLED" });
-    return false;
+    omittedTools.push({ toolId, reason: 'DISABLED' })
+    return false
   }
 
   if (!canReadTool(params.permissions, toolId)) {
-    omittedTools.push({ toolId, reason: "NO_PERMISSION" });
-    return false;
+    omittedTools.push({ toolId, reason: 'NO_PERMISSION' })
+    return false
   }
 
-  includedTools.push(toolId);
-  return true;
+  includedTools.push(toolId)
+  return true
 }
 
 export function parseEnabledSourceTools(value: unknown): AiSourceToolId[] | null {
   if (!Array.isArray(value)) {
-    return null;
+    return null
   }
 
-  const allowed = new Set<AiSourceToolId>(AI_SOURCE_TOOL_IDS);
-  return value.filter((item): item is AiSourceToolId => allowed.has(item as AiSourceToolId));
+  const allowed = new Set<AiSourceToolId>(AI_SOURCE_TOOL_IDS)
+  return value.filter((item): item is AiSourceToolId => allowed.has(item as AiSourceToolId))
 }
 
 export async function buildAiContext(params: BuildAiContextParams): Promise<AiContextPayload> {
-  const includedTools: AiSourceToolId[] = [];
-  const omittedTools: AiOmittedTool[] = [];
-  const sources: AiContextSource[] = [];
-  const data: Record<string, unknown> = {};
-  const generatedAt = (params.now ?? new Date()).toISOString();
+  const includedTools: AiSourceToolId[] = []
+  const omittedTools: AiOmittedTool[] = []
+  const sources: AiContextSource[] = []
+  const data: Record<string, unknown> = {}
+  const generatedAt = (params.now ?? new Date()).toISOString()
 
-  if (markTool("PROJECT", params, includedTools, omittedTools)) {
+  if (markTool('PROJECT', params, includedTools, omittedTools)) {
     const project = await prisma.project.findUnique({
       where: { id: params.projectId },
       select: {
@@ -121,10 +127,10 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         status: true,
         progress: true,
       },
-    });
+    })
 
     if (!project) {
-      throw new NotFoundError("Không tìm thấy dự án");
+      throw new NotFoundError('Không tìm thấy dự án')
     }
 
     data.project = {
@@ -132,19 +138,19 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
       progress: toNumber(project.progress),
       startDate: toDateOnly(project.startDate),
       endDate: toDateOnly(project.endDate),
-    };
+    }
     addSource(sources, {
-      toolId: "PROJECT",
-      recordType: "Project",
+      toolId: 'PROJECT',
+      recordType: 'Dự án',
       recordId: project.id,
       title: project.name,
-    });
+    })
   }
 
-  if (markTool("TASK", params, includedTools, omittedTools)) {
+  if (markTool('TASK', params, includedTools, omittedTools)) {
     const tasks = await prisma.task.findMany({
       where: { projectId: params.projectId },
-      orderBy: [{ dueDate: "asc" }, { updatedAt: "desc" }],
+      orderBy: [{ dueDate: 'asc' }, { updatedAt: 'desc' }],
       take: 40,
       select: {
         id: true,
@@ -157,21 +163,21 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         approvalStatus: true,
         assignee: { select: { id: true, name: true } },
       },
-    });
+    })
     data.tasks = tasks.map((task) => ({
       ...task,
       dueDate: toDateOnly(task.dueDate),
       completedAt: task.completedAt?.toISOString() ?? null,
-    }));
+    }))
     for (const task of tasks) {
-      addSource(sources, { toolId: "TASK", recordType: "Task", recordId: task.id, title: task.title });
+      addSource(sources, { toolId: 'TASK', recordType: 'Công việc', recordId: task.id, title: task.title })
     }
   }
 
-  if (markTool("DAILY_REPORT", params, includedTools, omittedTools)) {
+  if (markTool('DAILY_REPORT', params, includedTools, omittedTools)) {
     const reports = await prisma.dailyReport.findMany({
       where: { projectId: params.projectId },
-      orderBy: { reportDate: "desc" },
+      orderBy: { reportDate: 'desc' },
       take: 14,
       select: {
         id: true,
@@ -186,26 +192,26 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         approvalStatus: true,
         creator: { select: { id: true, name: true } },
       },
-    });
+    })
     data.dailyReports = reports.map((report) => ({
       ...report,
       reportDate: toDateOnly(report.reportDate),
       progress: toNumber(report.progress),
-    }));
+    }))
     for (const report of reports) {
       addSource(sources, {
-        toolId: "DAILY_REPORT",
-        recordType: "DailyReport",
+        toolId: 'DAILY_REPORT',
+        recordType: 'Báo cáo ngày',
         recordId: report.id,
         title: `Báo cáo ngày ${toDateOnly(report.reportDate)}`,
-      });
+      })
     }
   }
 
-  if (markTool("FILE", params, includedTools, omittedTools)) {
+  if (markTool('FILE', params, includedTools, omittedTools)) {
     const files = await prisma.projectFile.findMany({
       where: { projectId: params.projectId, deletedAt: null },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       take: 30,
       select: {
         id: true,
@@ -218,25 +224,25 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         createdAt: true,
         uploader: { select: { id: true, name: true } },
       },
-    });
+    })
     data.files = files.map((file) => ({
       ...file,
       createdAt: file.createdAt.toISOString(),
-    }));
+    }))
     for (const file of files) {
       addSource(sources, {
-        toolId: "FILE",
-        recordType: "ProjectFile",
+        toolId: 'FILE',
+        recordType: 'Tệp dự án',
         recordId: file.id,
         title: file.originalName,
-      });
+      })
     }
   }
 
-  if (markTool("DOCUMENT", params, includedTools, omittedTools)) {
+  if (markTool('DOCUMENT', params, includedTools, omittedTools)) {
     const folders = await prisma.documentFolder.findMany({
       where: { projectId: params.projectId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       take: 30,
       select: {
         id: true,
@@ -245,25 +251,25 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         createdAt: true,
         creator: { select: { id: true, name: true } },
       },
-    });
+    })
     data.documentFolders = folders.map((folder) => ({
       ...folder,
       createdAt: folder.createdAt.toISOString(),
-    }));
+    }))
     for (const folder of folders) {
       addSource(sources, {
-        toolId: "DOCUMENT",
-        recordType: "DocumentFolder",
+        toolId: 'DOCUMENT',
+        recordType: 'Thư mục tài liệu',
         recordId: folder.id,
         title: folder.name,
-      });
+      })
     }
   }
 
-  if (markTool("SAFETY", params, includedTools, omittedTools)) {
+  if (markTool('SAFETY', params, includedTools, omittedTools)) {
     const safetyReports = await prisma.safetyReport.findMany({
       where: { projectId: params.projectId },
-      orderBy: { reportDate: "desc" },
+      orderBy: { reportDate: 'desc' },
       take: 12,
       select: {
         id: true,
@@ -277,25 +283,25 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         incident: { select: { id: true, severity: true, status: true, immediateAction: true } },
         nearMiss: { select: { id: true, likelihood: true, severity: true, status: true, description: true } },
       },
-    });
+    })
     data.safetyReports = safetyReports.map((report) => ({
       ...report,
       reportDate: toDateOnly(report.reportDate),
-    }));
+    }))
     for (const report of safetyReports) {
       addSource(sources, {
-        toolId: "SAFETY",
-        recordType: "SafetyReport",
+        toolId: 'SAFETY',
+        recordType: 'Báo cáo an toàn',
         recordId: report.id,
         title: `An toàn ${toDateOnly(report.reportDate)} - ${report.location}`,
-      });
+      })
     }
   }
 
-  if (markTool("QUALITY", params, includedTools, omittedTools)) {
+  if (markTool('QUALITY', params, includedTools, omittedTools)) {
     const qualityReports = await prisma.qualityReport.findMany({
       where: { projectId: params.projectId },
-      orderBy: { reportDate: "desc" },
+      orderBy: { reportDate: 'desc' },
       take: 12,
       select: {
         id: true,
@@ -310,25 +316,25 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
           select: { id: true, title: true, description: true, severity: true, status: true, location: true },
         },
       },
-    });
+    })
     data.qualityReports = qualityReports.map((report) => ({
       ...report,
       reportDate: toDateOnly(report.reportDate),
-    }));
+    }))
     for (const report of qualityReports) {
       addSource(sources, {
-        toolId: "QUALITY",
-        recordType: "QualityReport",
+        toolId: 'QUALITY',
+        recordType: 'Báo cáo chất lượng',
         recordId: report.id,
         title: `Chất lượng ${toDateOnly(report.reportDate)} - ${report.location}`,
-      });
+      })
     }
   }
 
-  if (markTool("WAREHOUSE", params, includedTools, omittedTools)) {
+  if (markTool('WAREHOUSE', params, includedTools, omittedTools)) {
     const inventory = await prisma.warehouseInventory.findMany({
       where: { projectId: params.projectId },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
       take: 40,
       select: {
         id: true,
@@ -340,12 +346,12 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         location: true,
         updatedAt: true,
         transactions: {
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           take: 5,
           select: { id: true, type: true, quantity: true, status: true, note: true, createdAt: true },
         },
       },
-    });
+    })
     data.warehouseInventory = inventory.map((item) => ({
       ...item,
       quantity: toNumber(item.quantity),
@@ -357,21 +363,21 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         quantity: toNumber(transaction.quantity),
         createdAt: transaction.createdAt.toISOString(),
       })),
-    }));
+    }))
     for (const item of inventory) {
       addSource(sources, {
-        toolId: "WAREHOUSE",
-        recordType: "WarehouseInventory",
+        toolId: 'WAREHOUSE',
+        recordType: 'Tồn kho',
         recordId: item.id,
         title: item.materialName,
-      });
+      })
     }
   }
 
-  if (markTool("BUDGET", params, includedTools, omittedTools)) {
+  if (markTool('BUDGET', params, includedTools, omittedTools)) {
     const budgetItems = await prisma.budgetItem.findMany({
       where: { projectId: params.projectId },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
       take: 40,
       select: {
         id: true,
@@ -383,12 +389,12 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         status: true,
         updatedAt: true,
         disbursements: {
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           take: 5,
           select: { id: true, amount: true, status: true, note: true, approvedAt: true, createdAt: true },
         },
       },
-    });
+    })
     data.budgetItems = budgetItems.map((item) => ({
       ...item,
       estimatedCost: toNumber(item.estimatedCost),
@@ -401,14 +407,14 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
         approvedAt: disbursement.approvedAt?.toISOString() ?? null,
         createdAt: disbursement.createdAt.toISOString(),
       })),
-    }));
+    }))
     for (const item of budgetItems) {
       addSource(sources, {
-        toolId: "BUDGET",
-        recordType: "BudgetItem",
+        toolId: 'BUDGET',
+        recordType: 'Hạng mục ngân sách',
         recordId: item.id,
         title: `${TOOL_LABELS.BUDGET}: ${item.category}`,
-      });
+      })
     }
   }
 
@@ -419,5 +425,5 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
     omittedTools,
     sources,
     data,
-  };
+  }
 }

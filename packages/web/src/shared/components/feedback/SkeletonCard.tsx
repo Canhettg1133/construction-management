@@ -1,5 +1,5 @@
 interface SkeletonCardProps {
-  lines?: number;
+  lines?: number
 }
 
 export function SkeletonCard({ lines = 2 }: SkeletonCardProps) {
@@ -12,5 +12,5 @@ export function SkeletonCard({ lines = 2 }: SkeletonCardProps) {
         ))}
       </div>
     </div>
-  );
+  )
 }

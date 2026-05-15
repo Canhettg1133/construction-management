@@ -1,17 +1,17 @@
-import { forwardRef } from "react";
-import { cn } from "../../utils/cn";
+import { forwardRef } from 'react'
+import { cn } from '../../utils/cn'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  hint?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+  label?: string
+  error?: string
+  hint?: string
+  leftIcon?: React.ReactNode
+  rightIcon?: React.ReactNode
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, hint, leftIcon, rightIcon, className, id, ...props }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
 
     return (
       <div className="w-full">
@@ -30,11 +30,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              "form-input",
-              leftIcon && "pl-9",
-              rightIcon && "pr-9",
-              error && "border-red-400 focus:ring-red-400",
-              className
+              'form-input',
+              leftIcon && 'pl-9',
+              rightIcon && 'pr-9',
+              error && 'border-red-400 focus:ring-red-400',
+              className,
             )}
             {...props}
           />
@@ -47,8 +47,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {error && <p className="form-error">{error}</p>}
         {hint && !error && <p className="form-help">{hint}</p>}
       </div>
-    );
-  }
-);
+    )
+  },
+)
 
-Input.displayName = "Input";
+Input.displayName = 'Input'

@@ -1,28 +1,28 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "../../../shared/components/Button";
-import { changePassword } from "../api/authApi";
-import { useUiStore } from "../../../store/uiStore";
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Button } from '../../../shared/components/Button'
+import { changePassword } from '../api/authApi'
+import { useUiStore } from '../../../store/uiStore'
 
 const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
-    newPassword: z.string().min(8, "Mật khẩu mới phải có ít nhất 8 ký tự"),
-    confirmPassword: z.string().min(8, "Mật khẩu mới phải có ít nhất 8 ký tự"),
+    currentPassword: z.string().min(1, 'Vui lòng nhập mật khẩu hiện tại'),
+    newPassword: z.string().min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự'),
+    confirmPassword: z.string().min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Xác nhận mật khẩu không khớp",
-    path: ["confirmPassword"],
-  });
+    message: 'Xác nhận mật khẩu không khớp',
+    path: ['confirmPassword'],
+  })
 
-type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
+type ChangePasswordForm = z.infer<typeof changePasswordSchema>
 
 export function ChangePasswordPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const showToast = useUiStore((s) => s.showToast);
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const showToast = useUiStore((s) => s.showToast)
 
   const {
     register,
@@ -31,26 +31,30 @@ export function ChangePasswordPage() {
     formState: { errors },
   } = useForm<ChangePasswordForm>({
     resolver: zodResolver(changePasswordSchema),
-  });
+  })
 
   const onSubmit = async (data: ChangePasswordForm) => {
-    setIsLoading(true);
-    setError("");
+    setIsLoading(true)
+    setError('')
     try {
       await changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
-      });
-      showToast({ type: "success", title: "Đổi mật khẩu thành công", description: "Vui lòng ghi nhớ mật khẩu mới của bạn." });
-      reset();
+      })
+      showToast({
+        type: 'success',
+        title: 'Đổi mật khẩu thành công',
+        description: 'Vui lòng ghi nhớ mật khẩu mới của bạn.',
+      })
+      reset()
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Có lỗi xảy ra";
-      setError(msg);
-      showToast({ type: "error", title: "Không thể đổi mật khẩu", description: msg });
+      const msg = e instanceof Error ? e.message : 'Có lỗi xảy ra'
+      setError(msg)
+      showToast({ type: 'error', title: 'Không thể đổi mật khẩu', description: msg })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="app-card mx-auto max-w-xl">
@@ -64,19 +68,24 @@ export function ChangePasswordPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="form-label">Mật khẩu hiện tại</label>
-          <input {...register("currentPassword")} type="password" autoComplete="current-password" className="form-input" />
+          <input
+            {...register('currentPassword')}
+            type="password"
+            autoComplete="current-password"
+            className="form-input"
+          />
           {errors.currentPassword && <p className="form-error">{errors.currentPassword.message}</p>}
         </div>
 
         <div>
           <label className="form-label">Mật khẩu mới</label>
-          <input {...register("newPassword")} type="password" autoComplete="new-password" className="form-input" />
+          <input {...register('newPassword')} type="password" autoComplete="new-password" className="form-input" />
           {errors.newPassword && <p className="form-error">{errors.newPassword.message}</p>}
         </div>
 
         <div>
           <label className="form-label">Xác nhận mật khẩu mới</label>
-          <input {...register("confirmPassword")} type="password" autoComplete="new-password" className="form-input" />
+          <input {...register('confirmPassword')} type="password" autoComplete="new-password" className="form-input" />
           {errors.confirmPassword && <p className="form-error">{errors.confirmPassword.message}</p>}
         </div>
 
@@ -85,5 +94,5 @@ export function ChangePasswordPage() {
         </Button>
       </form>
     </div>
-  );
+  )
 }

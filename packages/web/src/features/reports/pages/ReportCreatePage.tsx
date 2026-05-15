@@ -1,81 +1,77 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { AxiosError } from "axios";
-import { X, Upload } from "lucide-react";
-import {
-  createReport,
-  uploadReportImages,
-} from "../api/reportApi";
-import { Button } from "../../../shared/components/Button";
-import { useUiStore } from "../../../store/uiStore";
-import { LIMITS } from "@construction/shared";
-import type { DailyReport } from "@construction/shared";
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { AxiosError } from 'axios'
+import { X, Upload } from 'lucide-react'
+import { createReport, uploadReportImages } from '../api/reportApi'
+import { Button } from '../../../shared/components/Button'
+import { useUiStore } from '../../../store/uiStore'
+import { LIMITS } from '@construction/shared'
+import type { DailyReport } from '@construction/shared'
 
 const reportSchema = z.object({
-  reportDate: z.string().min(1, "Vui lòng chọn ngày báo cáo"),
-  weather: z.enum(["SUNNY", "RAINY", "CLOUDY", "OTHER"]),
-  workerCount: z.coerce.number().min(0, "Số công nhân không hợp lệ"),
+  reportDate: z.string().min(1, 'Vui lòng chọn ngày báo cáo'),
+  weather: z.enum(['SUNNY', 'RAINY', 'CLOUDY', 'OTHER']),
+  workerCount: z.coerce.number().min(0, 'Số công nhân không hợp lệ'),
   progress: z.coerce.number().min(0).max(100),
-  workDescription: z.string().min(1, "Vui lòng nhập mô tả công việc").max(5000),
+  workDescription: z.string().min(1, 'Vui lòng nhập mô tả công việc').max(5000),
   issues: z.string().max(5000).optional(),
   notes: z.string().max(5000).optional(),
-});
+})
 
-type ReportForm = z.infer<typeof reportSchema>;
+type ReportForm = z.infer<typeof reportSchema>
 
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (error instanceof AxiosError) {
-    const apiMessage =
-      (error.response?.data as { error?: { message?: string } } | undefined)?.error?.message;
-    if (apiMessage) return apiMessage;
+    const apiMessage = (error.response?.data as { error?: { message?: string } } | undefined)?.error?.message
+    if (apiMessage) return apiMessage
   }
 
   if (error instanceof Error && error.message) {
-    return error.message;
+    return error.message
   }
 
-  return fallback;
+  return fallback
 }
 
 function getCachedReports(cache: unknown): DailyReport[] {
   if (Array.isArray(cache)) {
-    return cache;
+    return cache
   }
 
-  if (cache && typeof cache === "object" && "reports" in cache) {
-    const nestedReports = (cache as { reports?: unknown }).reports;
+  if (cache && typeof cache === 'object' && 'reports' in cache) {
+    const nestedReports = (cache as { reports?: unknown }).reports
     if (Array.isArray(nestedReports)) {
-      return nestedReports;
+      return nestedReports
     }
   }
 
-  return [];
+  return []
 }
 
 function mergeReportsIntoCache(cache: unknown, reports: DailyReport[]) {
-  if (cache && typeof cache === "object" && "reports" in cache) {
+  if (cache && typeof cache === 'object' && 'reports' in cache) {
     return {
       ...(cache as Record<string, unknown>),
       reports,
-    };
+    }
   }
 
-  return reports;
+  return reports
 }
 
 export function ReportCreatePage() {
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [uploadingImages, setUploadingImages] = useState(false);
-  const [imageErrors, setImageErrors] = useState<string[]>([]);
-  const [globalError, setGlobalError] = useState("");
-  const navigate = useNavigate();
-  const { id: projectId } = useParams();
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((s) => s.showToast);
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [imageErrors, setImageErrors] = useState<string[]>([])
+  const [globalError, setGlobalError] = useState('')
+  const navigate = useNavigate()
+  const { id: projectId } = useParams()
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((s) => s.showToast)
 
   const {
     register,
@@ -86,54 +82,54 @@ export function ReportCreatePage() {
     resolver: zodResolver(reportSchema),
     defaultValues: {
       reportDate: new Date().toISOString().slice(0, 10),
-      weather: "SUNNY",
+      weather: 'SUNNY',
       workerCount: 0,
       progress: 0,
-      workDescription: "",
-      issues: "",
-      notes: "",
+      workDescription: '',
+      issues: '',
+      notes: '',
     },
-  });
+  })
 
   const onPickImages = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from((event.target as HTMLInputElement).files || []);
-    const newErrors: string[] = [];
-    const validFiles: File[] = [];
+    const files = Array.from((event.target as HTMLInputElement).files || [])
+    const newErrors: string[] = []
+    const validFiles: File[] = []
 
     files.forEach((file) => {
       if (file.size > LIMITS.MAX_IMAGE_SIZE) {
-        newErrors.push(`"${file.name}" vượt quá 5MB`);
+        newErrors.push(`"${file.name}" vượt quá 5MB`)
       } else {
-        validFiles.push(file);
+        validFiles.push(file)
       }
-    });
+    })
 
-    if (newErrors.length > 0) setImageErrors(newErrors);
-    else setImageErrors([]);
+    if (newErrors.length > 0) setImageErrors(newErrors)
+    else setImageErrors([])
 
-    const next = [...selectedImages, ...validFiles].slice(0, LIMITS.MAX_REPORT_IMAGES);
-    setSelectedImages(next);
-  };
+    const next = [...selectedImages, ...validFiles].slice(0, LIMITS.MAX_REPORT_IMAGES)
+    setSelectedImages(next)
+  }
 
   const removeImage = (index: number) => {
-    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
-  };
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const createMutation = useMutation({
     mutationFn: async (payload: ReportForm) => {
-      const created = await createReport(String(projectId), payload);
-      return created;
+      const created = await createReport(String(projectId), payload)
+      return created
     },
     onMutate: async (payload) => {
-      const queryKey = ["reports", projectId] as const;
-      await queryClient.cancelQueries({ queryKey });
-      const previousCache = queryClient.getQueryData(queryKey);
-      const previousReports = getCachedReports(previousCache);
+      const queryKey = ['reports', projectId] as const
+      await queryClient.cancelQueries({ queryKey })
+      const previousCache = queryClient.getQueryData(queryKey)
+      const previousReports = getCachedReports(previousCache)
 
       const optimisticReport: DailyReport = {
         id: `temp-${crypto.randomUUID()}`,
         projectId: String(projectId),
-        createdBy: "me",
+        createdBy: 'me',
         reportDate: payload.reportDate,
         weather: payload.weather,
         workerCount: payload.workerCount,
@@ -141,72 +137,72 @@ export function ReportCreatePage() {
         issues: payload.issues || null,
         progress: payload.progress,
         notes: payload.notes || null,
-        status: "SENT",
-        approvalStatus: "PENDING",
+        status: 'SENT',
+        approvalStatus: 'PENDING',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
+      }
 
-      queryClient.setQueryData(queryKey, mergeReportsIntoCache(previousCache, [optimisticReport, ...previousReports]));
-      return { previousCache, queryKey };
+      queryClient.setQueryData(queryKey, mergeReportsIntoCache(previousCache, [optimisticReport, ...previousReports]))
+      return { previousCache, queryKey }
     },
     onSuccess: async (createdReport, _payload, context) => {
       if (context) {
         queryClient.setQueryData(context.queryKey, (current: unknown) => {
-          const currentReports = getCachedReports(current);
-          const withoutTemp = currentReports.filter((report) => !report.id.startsWith("temp-"));
-          return mergeReportsIntoCache(current, [createdReport, ...withoutTemp]);
-        });
+          const currentReports = getCachedReports(current)
+          const withoutTemp = currentReports.filter((report) => !report.id.startsWith('temp-'))
+          return mergeReportsIntoCache(current, [createdReport, ...withoutTemp])
+        })
       }
 
       // Upload images after report creation
       if (selectedImages.length > 0) {
-        setUploadingImages(true);
+        setUploadingImages(true)
         try {
-          await uploadReportImages(String(projectId), createdReport.id, selectedImages);
-          showToast({ type: "success", title: "Đã tải ảnh lên thành công" });
+          await uploadReportImages(String(projectId), createdReport.id, selectedImages)
+          showToast({ type: 'success', title: 'Đã tải ảnh lên thành công' })
         } catch (e) {
-          showToast({ type: "error", title: "Lỗi tải ảnh", description: "Báo cáo đã lưu nhưng ảnh chưa tải được." });
+          showToast({ type: 'error', title: 'Lỗi tải ảnh', description: 'Báo cáo đã lưu nhưng ảnh chưa tải được.' })
         } finally {
-          setUploadingImages(false);
+          setUploadingImages(false)
         }
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["reports", projectId] });
-      showToast({ type: "success", title: "Lưu báo cáo thành công" });
-      reset();
-      setSelectedImages([]);
-      navigate(`/projects/${projectId}/reports`);
+      await queryClient.invalidateQueries({ queryKey: ['reports', projectId] })
+      showToast({ type: 'success', title: 'Lưu báo cáo thành công' })
+      reset()
+      setSelectedImages([])
+      navigate(`/projects/${projectId}/reports`)
     },
     onError: (e, payload, context) => {
       if (context) {
-        queryClient.setQueryData(context.queryKey, context.previousCache);
+        queryClient.setQueryData(context.queryKey, context.previousCache)
       }
-      const isConflict = e instanceof AxiosError && e.response?.status === 409;
+      const isConflict = e instanceof AxiosError && e.response?.status === 409
       const fallback = isConflict
-        ? `Báo cáo ngày ${new Date(payload.reportDate).toLocaleDateString("vi-VN")} đã tồn tại. Vui lòng chọn ngày khác.`
-        : "Tạo báo cáo thất bại";
-      const msg = getApiErrorMessage(e, fallback);
-      setGlobalError(msg);
-      showToast({ type: "error", title: "Không thể gửi báo cáo", description: msg });
+        ? `Báo cáo ngày ${new Date(payload.reportDate).toLocaleDateString('vi-VN')} đã tồn tại. Vui lòng chọn ngày khác.`
+        : 'Tạo báo cáo thất bại'
+      const msg = getApiErrorMessage(e, fallback)
+      setGlobalError(msg)
+      showToast({ type: 'error', title: 'Không thể gửi báo cáo', description: msg })
     },
-  });
+  })
 
   const onSubmit = async (data: ReportForm) => {
-    setGlobalError("");
+    setGlobalError('')
     try {
-      await createMutation.mutateAsync(data);
+      await createMutation.mutateAsync(data)
     } catch {
       // Error UI is handled in onError. Prevent unhandled promise logs in console.
     }
-  };
+  }
 
   const WEATHER_OPTIONS = [
-    { value: "SUNNY", label: "Nắng" },
-    { value: "RAINY", label: "Mưa" },
-    { value: "CLOUDY", label: "Nhiều mây" },
-    { value: "OTHER", label: "Khác" },
-  ];
+    { value: 'SUNNY', label: 'Nắng' },
+    { value: 'RAINY', label: 'Mưa' },
+    { value: 'CLOUDY', label: 'Nhiều mây' },
+    { value: 'OTHER', label: 'Khác' },
+  ]
 
   return (
     <div className="app-card mx-auto w-full max-w-3xl">
@@ -216,23 +212,23 @@ export function ReportCreatePage() {
       </div>
 
       {globalError && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {globalError}
-        </div>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{globalError}</div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="form-label">Ngày báo cáo</label>
-            <input {...register("reportDate")} type="date" className="form-input" />
+            <input {...register('reportDate')} type="date" className="form-input" />
             {errors.reportDate && <p className="form-error">{errors.reportDate.message}</p>}
           </div>
           <div>
             <label className="form-label">Thời tiết</label>
-            <select {...register("weather")} className="form-input">
+            <select {...register('weather')} className="form-input">
               {WEATHER_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -241,12 +237,12 @@ export function ReportCreatePage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="form-label">Số công nhân</label>
-            <input {...register("workerCount")} type="number" min={0} className="form-input" />
+            <input {...register('workerCount')} type="number" min={0} className="form-input" />
             {errors.workerCount && <p className="form-error">{errors.workerCount.message}</p>}
           </div>
           <div>
             <label className="form-label">Tiến độ (%)</label>
-            <input {...register("progress")} type="number" min={0} max={100} className="form-input" />
+            <input {...register('progress')} type="number" min={0} max={100} className="form-input" />
             {errors.progress && <p className="form-error">{errors.progress.message}</p>}
             <p className="form-help">Tiến độ lũy kế của dự án đến ngày báo cáo (không giảm so với báo cáo trước).</p>
           </div>
@@ -255,7 +251,7 @@ export function ReportCreatePage() {
         <div>
           <label className="form-label">Công việc đã làm</label>
           <textarea
-            {...register("workDescription")}
+            {...register('workDescription')}
             rows={4}
             className="form-input"
             placeholder="Nhập mô tả công việc hôm nay"
@@ -265,12 +261,12 @@ export function ReportCreatePage() {
 
         <div>
           <label className="form-label">Vấn đề / vướng mắc</label>
-          <textarea {...register("issues")} rows={3} className="form-input" />
+          <textarea {...register('issues')} rows={3} className="form-input" />
         </div>
 
         <div>
           <label className="form-label">Ghi chú</label>
-          <textarea {...register("notes")} rows={3} className="form-input" />
+          <textarea {...register('notes')} rows={3} className="form-input" />
         </div>
 
         <div>
@@ -297,7 +293,9 @@ export function ReportCreatePage() {
           {imageErrors.length > 0 && (
             <div className="mt-2 space-y-1">
               {imageErrors.map((err, i) => (
-                <p key={i} className="text-xs text-red-600">{err}</p>
+                <p key={i} className="text-xs text-red-600">
+                  {err}
+                </p>
               ))}
             </div>
           )}
@@ -305,7 +303,10 @@ export function ReportCreatePage() {
           {selectedImages.length > 0 && (
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {selectedImages.map((file, idx) => (
-                <div key={`${file.name}-${idx}`} className="relative group rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+                <div
+                  key={`${file.name}-${idx}`}
+                  className="relative group rounded-xl border border-slate-200 bg-slate-50 overflow-hidden"
+                >
                   <div className="aspect-square bg-slate-100">
                     <img
                       src={URL.createObjectURL(file)}
@@ -338,18 +339,12 @@ export function ReportCreatePage() {
             >
               Hủy
             </Button>
-            <Button
-              type="submit"
-              isLoading={createMutation.isPending || uploadingImages}
-              className="w-full sm:w-auto"
-            >
-              {uploadingImages ? "Đang tải ảnh..." : "Gửi báo cáo"}
+            <Button type="submit" isLoading={createMutation.isPending || uploadingImages} className="w-full sm:w-auto">
+              {uploadingImages ? 'Đang tải ảnh...' : 'Gửi báo cáo'}
             </Button>
           </div>
         </div>
       </form>
     </div>
-  );
+  )
 }
-
-

@@ -108,7 +108,7 @@ export const documentService = {
 
   async createFolder(data: { projectId: string; name: string; parentId?: string | null; createdBy: string }) {
     const project = await documentRepository.findProjectById(data.projectId)
-    if (!project) throw new NotFoundError('Khong tim thay du an')
+    if (!project) throw new NotFoundError('Không tìm thấy dự án')
 
     const folderName = data.name.trim()
     if (!folderName) {
@@ -149,7 +149,7 @@ export const documentService = {
   async searchDocuments(params: { q?: string; projectId?: string; tags?: string }) {
     if (params.projectId) {
       const project = await documentRepository.findProjectById(params.projectId)
-      if (!project) throw new NotFoundError('Khong tim thay du an')
+      if (!project) throw new NotFoundError('Không tìm thấy dự án')
     }
 
     const tags = parseTagFilters(params.tags)
@@ -163,7 +163,7 @@ export const documentService = {
   async listTrashDocuments(params: { projectId?: string }) {
     if (params.projectId) {
       const project = await documentRepository.findProjectById(params.projectId)
-      if (!project) throw new NotFoundError('Khong tim thay du an')
+      if (!project) throw new NotFoundError('Không tìm thấy dự án')
     }
 
     return documentRepository.findLatestTrashedFiles(params.projectId)
@@ -231,7 +231,7 @@ export const documentService = {
 
     const chain = await resolveDocumentChain(fileId, { includeDeleted: true })
     if (!chain || chain.versions.length === 0) {
-      throw new NotFoundError('Khong tim thay tai lieu')
+      throw new NotFoundError('Không tìm thấy tài liệu')
     }
 
     const deletedAt = new Date()
@@ -252,7 +252,7 @@ export const documentService = {
     })
 
     if (!updatedLatest) {
-      throw new NotFoundError('Khong tim thay tai lieu')
+      throw new NotFoundError('Không tìm thấy tài liệu')
     }
 
     return updatedLatest
@@ -267,7 +267,7 @@ export const documentService = {
 
     const chain = await resolveDocumentChain(fileId, { includeDeleted: true })
     if (!chain || chain.versions.length === 0) {
-      throw new NotFoundError('Khong tim thay tai lieu')
+      throw new NotFoundError('Không tìm thấy tài liệu')
     }
 
     await documentRepository.restoreFiles(chain.versions.map((version) => version.id))
@@ -284,7 +284,7 @@ export const documentService = {
     })
 
     if (!restoredLatest) {
-      throw new NotFoundError('Khong tim thay tai lieu')
+      throw new NotFoundError('Không tìm thấy tài liệu')
     }
 
     return restoredLatest
@@ -299,7 +299,7 @@ export const documentService = {
 
     const chain = await resolveDocumentChain(fileId, { includeDeleted: true })
     if (!chain || chain.versions.length === 0) {
-      throw new NotFoundError('Khong tim thay tai lieu')
+      throw new NotFoundError('Không tìm thấy tài liệu')
     }
 
     const versionIds = chain.versions.map((version) => version.id)

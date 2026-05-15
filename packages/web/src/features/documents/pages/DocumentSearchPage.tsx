@@ -1,61 +1,59 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Download, Search, X } from "lucide-react";
-import { searchDocuments, getDocumentDownloadUrl } from "../api/documentApi";
-import { listProjects } from "../../projects/api/projectApi";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { EmptyState } from "../../../shared/components/feedback/EmptyState";
-import { DOCUMENT_TAG_SUGGESTIONS, hasTag, toggleTag } from "../constants/tagSuggestions";
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { Download, Search, X } from 'lucide-react'
+import { searchDocuments, getDocumentDownloadUrl } from '../api/documentApi'
+import { listProjects } from '../../projects/api/projectApi'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { EmptyState } from '../../../shared/components/feedback/EmptyState'
+import { DOCUMENT_TAG_SUGGESTIONS, hasTag, toggleTag } from '../constants/tagSuggestions'
 
 function sanitizeMangledVietnamese(str: string) {
   try {
     if (/[\u00C0-\u00FF][\u0080-\u00BF]/.test(str)) {
-      return decodeURIComponent(escape(str));
+      return decodeURIComponent(escape(str))
     }
   } catch {
-    return str;
+    return str
   }
-  return str;
+  return str
 }
 
 export function DocumentSearchPage() {
-  const [keyword, setKeyword] = useState("");
-  const [projectId, setProjectId] = useState("");
-  const [tags, setTags] = useState("");
+  const [keyword, setKeyword] = useState('')
+  const [projectId, setProjectId] = useState('')
+  const [tags, setTags] = useState('')
   const [submitted, setSubmitted] = useState({
-    keyword: "",
-    projectId: "",
-    tags: "",
-  });
+    keyword: '',
+    projectId: '',
+    tags: '',
+  })
 
   const projectQuery = useQuery({
-    queryKey: ["projects", "document-search"],
+    queryKey: ['projects', 'document-search'],
     queryFn: () => listProjects({ page: 1, pageSize: 200 }),
-  });
+  })
 
   const searchQuery = useQuery({
-    queryKey: ["document-search", submitted.keyword, submitted.projectId, submitted.tags],
+    queryKey: ['document-search', submitted.keyword, submitted.projectId, submitted.tags],
     queryFn: () =>
       searchDocuments({
         q: submitted.keyword.trim() || undefined,
         projectId: submitted.projectId.trim() || undefined,
         tags: submitted.tags.trim() || undefined,
       }),
-  });
+  })
 
   const projectNameById = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, string>()
     for (const project of projectQuery.data?.projects ?? []) {
-      map.set(project.id, project.name);
+      map.set(project.id, project.name)
     }
-    return map;
-  }, [projectQuery.data?.projects]);
+    return map
+  }, [projectQuery.data?.projects])
 
-  const hasActiveFilters = Boolean(
-    submitted.keyword.trim() || submitted.projectId.trim() || submitted.tags.trim()
-  );
+  const hasActiveFilters = Boolean(submitted.keyword.trim() || submitted.projectId.trim() || submitted.tags.trim())
 
   return (
     <div className="space-y-4">
@@ -72,8 +70,8 @@ export function DocumentSearchPage() {
         <form
           className="grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_auto]"
           onSubmit={(event) => {
-            event.preventDefault();
-            setSubmitted({ keyword, projectId, tags });
+            event.preventDefault()
+            setSubmitted({ keyword, projectId, tags })
           }}
         >
           <div>
@@ -107,7 +105,7 @@ export function DocumentSearchPage() {
             />
             <div className="mt-2 flex flex-wrap gap-1.5">
               {DOCUMENT_TAG_SUGGESTIONS.map((tag) => {
-                const active = hasTag(tags, tag);
+                const active = hasTag(tags, tag)
                 return (
                   <button
                     key={tag}
@@ -115,13 +113,13 @@ export function DocumentSearchPage() {
                     onClick={() => setTags(toggleTag(tags, tag))}
                     className={`rounded-full border px-2 py-1 text-xs ${
                       active
-                        ? "border-brand-300 bg-brand-50 text-brand-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        ? 'border-brand-300 bg-brand-50 text-brand-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >
                     {tag}
                   </button>
-                );
+                )
               })}
             </div>
           </div>
@@ -137,10 +135,10 @@ export function DocumentSearchPage() {
               type="button"
               className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
               onClick={() => {
-                setKeyword("");
-                setProjectId("");
-                setTags("");
-                setSubmitted({ keyword: "", projectId: "", tags: "" });
+                setKeyword('')
+                setProjectId('')
+                setTags('')
+                setSubmitted({ keyword: '', projectId: '', tags: '' })
               }}
               title="Xóa bộ lọc"
             >
@@ -151,9 +149,7 @@ export function DocumentSearchPage() {
       </div>
 
       <div className="flex items-center justify-between text-sm text-slate-500">
-        <span>
-          {hasActiveFilters ? "Kết quả theo bộ lọc hiện tại" : "Tài liệu mới nhất"}
-        </span>
+        <span>{hasActiveFilters ? 'Kết quả theo bộ lọc hiện tại' : 'Tài liệu mới nhất'}</span>
         {!searchQuery.isLoading && !searchQuery.isError ? (
           <span>{(searchQuery.data ?? []).length} tài liệu</span>
         ) : null}
@@ -170,11 +166,11 @@ export function DocumentSearchPage() {
 
       {!searchQuery.isLoading && !searchQuery.isError && (searchQuery.data ?? []).length === 0 && (
         <EmptyState
-          title={hasActiveFilters ? "Không tìm thấy kết quả" : "Chưa có tài liệu nào"}
+          title={hasActiveFilters ? 'Không tìm thấy kết quả' : 'Chưa có tài liệu nào'}
           description={
             hasActiveFilters
-              ? "Thử đổi từ khóa, nhãn hoặc bớt điều kiện lọc."
-              : "Tài liệu vừa tải lên sẽ xuất hiện tại đây."
+              ? 'Thử đổi từ khóa, nhãn hoặc bớt điều kiện lọc.'
+              : 'Tài liệu vừa tải lên sẽ xuất hiện tại đây.'
           }
         />
       )}
@@ -182,18 +178,15 @@ export function DocumentSearchPage() {
       {!searchQuery.isLoading && !searchQuery.isError && (searchQuery.data ?? []).length > 0 && (
         <div className="space-y-2">
           {(searchQuery.data ?? []).map((file) => (
-            <div
-              key={file.id}
-              className="app-card flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-            >
+            <div key={file.id} className="app-card flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">
                   {sanitizeMangledVietnamese(file.originalName)}
                 </p>
                 <p className="text-xs text-slate-500">
                   {projectNameById.get(file.projectId) ?? file.project?.name ?? file.projectId}
-                  {" - "}v{file.version}
-                  {file.tags ? ` - ${file.tags}` : " - Chưa gắn nhãn"}
+                  {' - '}v{file.version}
+                  {file.tags ? ` - ${file.tags}` : ' - Chưa gắn nhãn'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -224,5 +217,5 @@ export function DocumentSearchPage() {
         ))}
       </datalist>
     </div>
-  );
+  )
 }

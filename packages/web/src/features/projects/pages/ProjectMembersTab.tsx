@@ -1,30 +1,30 @@
-﻿import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Trash2, UserPlus, X } from "lucide-react";
-import { PROJECT_ROLES, PROJECT_ROLE_LABELS } from "@construction/shared";
-import type { ProjectRole } from "@construction/shared";
-import { listUsers } from "../../users/api/userApi";
-import { addProjectMember, listProjectMembers, removeProjectMember, updateMemberRole } from "../api/memberApi";
-import { Button } from "../../../shared/components/Button";
-import { PermissionGate } from "../../../shared/components/PermissionGate";
-import { EmptyState } from "../../../shared/components/feedback/EmptyState";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { usePermission } from "../../../shared/hooks/usePermission";
-import { useUiStore } from "../../../store/uiStore";
+﻿import { useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { Trash2, UserPlus, X } from 'lucide-react'
+import { PROJECT_ROLES, PROJECT_ROLE_LABELS } from '@construction/shared'
+import type { ProjectRole } from '@construction/shared'
+import { listUsers } from '../../users/api/userApi'
+import { addProjectMember, listProjectMembers, removeProjectMember, updateMemberRole } from '../api/memberApi'
+import { Button } from '../../../shared/components/Button'
+import { PermissionGate } from '../../../shared/components/PermissionGate'
+import { EmptyState } from '../../../shared/components/feedback/EmptyState'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { usePermission } from '../../../shared/hooks/usePermission'
+import { useUiStore } from '../../../store/uiStore'
 
-const MEMBER_ROLES: ProjectRole[] = PROJECT_ROLES;
+const MEMBER_ROLES: ProjectRole[] = PROJECT_ROLES
 
 const addMemberSchema = z.object({
-  userId: z.string().min(1, "Vui lòng chon nguoi dung"),
+  userId: z.string().min(1, 'Vui lòng chọn người dùng'),
   role: z.enum(PROJECT_ROLES as unknown as [string, ...string[]]),
-});
+})
 
-type AddMemberForm = z.infer<typeof addMemberSchema>;
+type AddMemberForm = z.infer<typeof addMemberSchema>
 
 function AddMemberModal({
   projectId,
@@ -32,48 +32,48 @@ function AddMemberModal({
   onClose,
   onSuccess,
 }: {
-  projectId: string;
-  existingUserIds: string[];
-  onClose: () => void;
-  onSuccess: () => void;
+  projectId: string
+  existingUserIds: string[]
+  onClose: () => void
+  onSuccess: () => void
 }) {
-  const showToast = useUiStore((state) => state.showToast);
+  const showToast = useUiStore((state) => state.showToast)
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<AddMemberForm>({
     resolver: zodResolver(addMemberSchema),
-    defaultValues: { role: "ENGINEER" },
-  });
+    defaultValues: { role: 'ENGINEER' },
+  })
 
   const { data: allUsers, isLoading } = useQuery({
-    queryKey: ["users-all"],
+    queryKey: ['users-all'],
     queryFn: () => listUsers({ pageSize: 100 }),
-  });
+  })
 
   const mutation = useMutation({
     mutationFn: (payload: AddMemberForm) => addProjectMember(projectId, payload.userId, payload.role as ProjectRole),
     onSuccess: () => {
-      showToast({ type: "success", title: "Da thêm thành viên" });
-      onSuccess();
+      showToast({ type: 'success', title: 'Đã thêm thành viên' })
+      onSuccess()
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể thêm thành viên",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể thêm thành viên',
+      })
     },
-  });
+  })
 
-  const availableUsers = allUsers?.users.filter((user) => !existingUserIds.includes(user.id) && user.isActive) ?? [];
+  const availableUsers = allUsers?.users.filter((user) => !existingUserIds.includes(user.id) && user.isActive) ?? []
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Them thanh vien</h2>
+          <h2 className="text-base font-semibold text-slate-900">Thêm thành viên</h2>
           <button onClick={onClose} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100">
             <X className="h-5 w-5" />
           </button>
@@ -82,8 +82,8 @@ function AddMemberModal({
         <form onSubmit={handleSubmit((payload) => mutation.mutateAsync(payload))} className="space-y-4 p-5">
           <div>
             <label className="form-label">Người dùng</label>
-            <select {...register("userId")} className="form-input">
-              <option value="">- Chon nguoi dung -</option>
+            <select {...register('userId')} className="form-input">
+              <option value="">- Chọn người dùng -</option>
               {isLoading ? (
                 <option disabled>Đang tải...</option>
               ) : availableUsers.length === 0 ? (
@@ -101,7 +101,7 @@ function AddMemberModal({
 
           <div>
             <label className="form-label">Vai trò trong dự án</label>
-            <select {...register("role")} className="form-input">
+            <select {...register('role')} className="form-input">
               {MEMBER_ROLES.map((role) => (
                 <option key={role} value={role}>
                   {PROJECT_ROLE_LABELS[role]}
@@ -115,64 +115,68 @@ function AddMemberModal({
               Hủy
             </Button>
             <Button type="submit" isLoading={mutation.isPending}>
-              Them thanh vien
+              Thêm thành viên
             </Button>
           </div>
         </form>
       </div>
     </div>
-  );
+  )
 }
 
 export function ProjectMembersTab() {
-  const { id: projectId } = useParams<{ id: string }>();
-  const currentProjectId = projectId ?? "";
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((state) => state.showToast);
-  const [showAdd, setShowAdd] = useState(false);
+  const { id: projectId } = useParams<{ id: string }>()
+  const currentProjectId = projectId ?? ''
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((state) => state.showToast)
+  const [showAdd, setShowAdd] = useState(false)
 
   const { has: canManageProject } = usePermission({
     projectId: currentProjectId,
-    toolId: "PROJECT",
-    minLevel: "ADMIN",
-  });
+    toolId: 'PROJECT',
+    minLevel: 'ADMIN',
+  })
 
-  const { data: members, isLoading, isError } = useQuery({
-    queryKey: ["project-members", currentProjectId],
+  const {
+    data: members,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['project-members', currentProjectId],
     queryFn: () => listProjectMembers(currentProjectId),
     enabled: Boolean(currentProjectId),
-  });
+  })
 
   const updateRoleMutation = useMutation({
     mutationFn: ({ memberId, role }: { memberId: string; role: ProjectRole }) =>
       updateMemberRole(memberId, currentProjectId, role),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-members", currentProjectId] });
-      showToast({ type: "success", title: "Đã cập nhật vai trò" });
+      queryClient.invalidateQueries({ queryKey: ['project-members', currentProjectId] })
+      showToast({ type: 'success', title: 'Đã cập nhật vai trò' })
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể cập nhật vai trò",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể cập nhật vai trò',
+      })
     },
-  });
+  })
 
   const removeMutation = useMutation({
     mutationFn: (memberId: string) => removeProjectMember(memberId, currentProjectId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-members", currentProjectId] });
-      showToast({ type: "success", title: "Da xóa thanh vien khỏi dự án" });
+      queryClient.invalidateQueries({ queryKey: ['project-members', currentProjectId] })
+      showToast({ type: 'success', title: 'Đã xóa thành viên khỏi dự án' })
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể xóa thanh vien",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa thành viên',
+      })
     },
-  });
+  })
 
   if (isLoading) {
     return (
@@ -180,22 +184,22 @@ export function ProjectMembersTab() {
         <SkeletonCard lines={2} />
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (isError) {
-    return <ErrorState message="Không tải được danh sach thanh vien." />;
+    return <ErrorState message="Không tải được danh sách thành viên." />
   }
 
-  const memberList = members ?? [];
-  const existingUserIds = memberList.map((member) => member.userId);
+  const memberList = members ?? []
+  const existingUserIds = memberList.map((member) => member.userId)
 
   return (
     <div className="space-y-4">
       <div className="page-header">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Thành viên dự án</h2>
-          <p className="page-subtitle">{memberList.length} thanh vien tham gia dự án.</p>
+          <p className="page-subtitle">{memberList.length} thành viên tham gia dự án.</p>
         </div>
         <PermissionGate projectId={currentProjectId} toolId="PROJECT" minLevel="ADMIN">
           <button
@@ -203,7 +207,7 @@ export function ProjectMembersTab() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 sm:w-auto"
           >
             <UserPlus className="h-4 w-4" />
-            Them thanh vien
+            Thêm thành viên
           </button>
         </PermissionGate>
       </div>
@@ -211,18 +215,20 @@ export function ProjectMembersTab() {
       {memberList.length === 0 ? (
         <EmptyState
           title="Chưa có thành viên"
-          description={canManageProject ? "Thêm thành viên để bắt đầu phân công công việc." : "Chưa có thành viên nào trong dự án."}
+          description={
+            canManageProject ? 'Thêm thành viên để bắt đầu phân công công việc.' : 'Chưa có thành viên nào trong dự án.'
+          }
         />
       ) : (
         <div className="space-y-3">
           {memberList.map((member) => (
             <div key={member.id} className="app-card flex items-center gap-4">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-700">
-                {member.user?.name?.charAt(0)?.toUpperCase() ?? "?"}
+                {member.user?.name?.charAt(0)?.toUpperCase() ?? '?'}
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-slate-900">{member.user?.name ?? "Unknown"}</p>
+                <p className="font-medium text-slate-900">{member.user?.name ?? 'Không xác định'}</p>
                 <p className="text-xs text-slate-500">{member.user?.email}</p>
                 {member.user?.phone && <p className="text-xs text-slate-400">{member.user.phone}</p>}
               </div>
@@ -258,7 +264,7 @@ export function ProjectMembersTab() {
                   <button
                     onClick={() => {
                       if (confirm(`Xóa ${member.user?.name} khỏi dự án?`)) {
-                        removeMutation.mutate(member.id);
+                        removeMutation.mutate(member.id)
                       }
                     }}
                     disabled={removeMutation.isPending}
@@ -280,15 +286,11 @@ export function ProjectMembersTab() {
           existingUserIds={existingUserIds}
           onClose={() => setShowAdd(false)}
           onSuccess={() => {
-            setShowAdd(false);
-            queryClient.invalidateQueries({ queryKey: ["project-members", currentProjectId] });
+            setShowAdd(false)
+            queryClient.invalidateQueries({ queryKey: ['project-members', currentProjectId] })
           }}
         />
       )}
     </div>
-  );
+  )
 }
-
-
-
-

@@ -1,48 +1,63 @@
-﻿import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { budgetApi } from "../api/budgetApi";
-import { ErrorState } from "../../../shared/components/feedback/ErrorState";
-import { SkeletonCard } from "../../../shared/components/feedback/SkeletonCard";
-import { PermissionGate } from "../../../shared/components/PermissionGate";
-import { SpecialPrivilegeGate } from "../../../shared/components/SpecialPrivilegeGate";
-import { useUiStore } from "../../../store/uiStore";
+﻿import { useMemo, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { budgetApi } from '../api/budgetApi'
+import { ErrorState } from '../../../shared/components/feedback/ErrorState'
+import { SkeletonCard } from '../../../shared/components/feedback/SkeletonCard'
+import { PermissionGate } from '../../../shared/components/PermissionGate'
+import { SpecialPrivilegeGate } from '../../../shared/components/SpecialPrivilegeGate'
+import { useUiStore } from '../../../store/uiStore'
 
 function money(value: number | string | null | undefined) {
-  return Number(value ?? 0).toLocaleString("vi-VN");
+  return Number(value ?? 0).toLocaleString('vi-VN')
+}
+
+function budgetStatusLabel(status: string) {
+  if (status === 'PAID') return 'Đã chi'
+  if (status === 'APPROVED') return 'Đã duyệt'
+  if (status === 'PENDING') return 'Chờ duyệt'
+  return status
 }
 
 export function BudgetOverviewPage() {
-  const { id } = useParams<{ id: string }>();
-  const projectId = id ?? "";
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((state) => state.showToast);
+  const { id } = useParams<{ id: string }>()
+  const projectId = id ?? ''
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((state) => state.showToast)
 
-  const [showItemForm, setShowItemForm] = useState(false);
-  const [showDisbursementForm, setShowDisbursementForm] = useState(false);
+  const [showItemForm, setShowItemForm] = useState(false)
+  const [showDisbursementForm, setShowDisbursementForm] = useState(false)
   const [itemForm, setItemForm] = useState({
-    category: "",
-    description: "",
-    estimatedCost: "",
-    approvedCost: "",
-  });
+    category: '',
+    description: '',
+    estimatedCost: '',
+    approvedCost: '',
+  })
   const [disbursementForm, setDisbursementForm] = useState({
-    budgetItemId: "",
-    amount: "",
-    note: "",
-  });
+    budgetItemId: '',
+    amount: '',
+    note: '',
+  })
 
-  const { data: overview, isLoading: overviewLoading, isError: overviewError } = useQuery({
-    queryKey: ["budget-overview", projectId],
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    isError: overviewError,
+  } = useQuery({
+    queryKey: ['budget-overview', projectId],
     queryFn: () => budgetApi.getOverview(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
-  const { data: itemsData, isLoading: itemsLoading, isError: itemsError } = useQuery({
-    queryKey: ["budget-items", projectId],
+  const {
+    data: itemsData,
+    isLoading: itemsLoading,
+    isError: itemsError,
+  } = useQuery({
+    queryKey: ['budget-items', projectId],
     queryFn: () => budgetApi.listItems(projectId),
     enabled: Boolean(projectId),
-  });
+  })
 
   const createItemMutation = useMutation({
     mutationFn: () =>
@@ -53,20 +68,20 @@ export function BudgetOverviewPage() {
         approvedCost: itemForm.approvedCost ? Number(itemForm.approvedCost) : null,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budget-overview", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["budget-items", projectId] });
-      showToast({ type: "success", title: "Đã tạo hạng mục ngân sách" });
-      setItemForm({ category: "", description: "", estimatedCost: "", approvedCost: "" });
-      setShowItemForm(false);
+      queryClient.invalidateQueries({ queryKey: ['budget-overview', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['budget-items', projectId] })
+      showToast({ type: 'success', title: 'Đã tạo hạng mục ngân sách' })
+      setItemForm({ category: '', description: '', estimatedCost: '', approvedCost: '' })
+      setShowItemForm(false)
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể tạo hạng mục",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể tạo hạng mục',
+      })
     },
-  });
+  })
 
   const createDisbursementMutation = useMutation({
     mutationFn: () =>
@@ -76,27 +91,28 @@ export function BudgetOverviewPage() {
         note: disbursementForm.note || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budget-overview", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["budget-items", projectId] });
-      showToast({ type: "success", title: "Đã tạo phiếu giải ngân" });
-      setDisbursementForm({ budgetItemId: "", amount: "", note: "" });
-      setShowDisbursementForm(false);
+      queryClient.invalidateQueries({ queryKey: ['budget-overview', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['budget-items', projectId] })
+      showToast({ type: 'success', title: 'Đã tạo phiếu giải ngân' })
+      setDisbursementForm({ budgetItemId: '', amount: '', note: '' })
+      setShowDisbursementForm(false)
     },
     onError: (error: unknown) => {
       showToast({
-        type: "error",
-        title: "Loi",
-        description: error instanceof Error ? error.message : "Không thể tạo giải ngân",
-      });
+        type: 'error',
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể tạo giải ngân',
+      })
     },
-  });
+  })
 
   const pendingDisbursementCount = useMemo(
     () =>
-      (itemsData?.items ?? []).flatMap((item) => item.disbursements ?? []).filter((disbursement) => disbursement.status === "PENDING")
-        .length,
-    [itemsData?.items]
-  );
+      (itemsData?.items ?? [])
+        .flatMap((item) => item.disbursements ?? [])
+        .filter((disbursement) => disbursement.status === 'PENDING').length,
+    [itemsData?.items],
+  )
 
   if (overviewLoading || itemsLoading) {
     return (
@@ -104,11 +120,11 @@ export function BudgetOverviewPage() {
         <SkeletonCard lines={2} />
         <SkeletonCard lines={2} />
       </div>
-    );
+    )
   }
 
   if (overviewError || itemsError || !overview || !itemsData) {
-    return <ErrorState message="Không tải được dữ liệu ngân sách." />;
+    return <ErrorState message="Không tải được dữ liệu ngân sách." />
   }
 
   return (
@@ -116,7 +132,7 @@ export function BudgetOverviewPage() {
       <div className="page-header">
         <div>
           <h2>Ngân sách dự án</h2>
-          <p className="page-subtitle">Tổng quan du toan, chi tieu va quan ly giải ngân.</p>
+          <p className="page-subtitle">Tổng quan dự toán, chi tiêu và quản lý giải ngân.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PermissionGate projectId={projectId} toolId="BUDGET" minLevel="ADMIN">
@@ -124,7 +140,7 @@ export function BudgetOverviewPage() {
               onClick={() => setShowItemForm((value) => !value)}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
             >
-              Them hang muc
+              Thêm hạng mục
             </button>
           </PermissionGate>
 
@@ -150,7 +166,7 @@ export function BudgetOverviewPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div className="app-card">
-          <p className="text-xs text-slate-500">Tổng du toan</p>
+          <p className="text-xs text-slate-500">Tổng dự toán</p>
           <p className="mt-1 text-xl font-bold text-slate-900">{money(overview.summary.estimated)} VND</p>
         </div>
         <div className="app-card">
@@ -158,11 +174,11 @@ export function BudgetOverviewPage() {
           <p className="mt-1 text-xl font-bold text-brand-700">{money(overview.summary.approved)} VND</p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Da chi</p>
+          <p className="text-xs text-slate-500">Đã chi</p>
           <p className="mt-1 text-xl font-bold text-amber-600">{money(overview.summary.spent)} VND</p>
         </div>
         <div className="app-card">
-          <p className="text-xs text-slate-500">Con lai</p>
+          <p className="text-xs text-slate-500">Còn lại</p>
           <p className="mt-1 text-xl font-bold text-emerald-600">{money(overview.summary.remaining)} VND</p>
         </div>
       </div>
@@ -170,29 +186,25 @@ export function BudgetOverviewPage() {
       {showItemForm && (
         <PermissionGate projectId={projectId} toolId="BUDGET" minLevel="ADMIN">
           <div className="app-card space-y-3">
-            <h3>Them hang muc ngân sách</h3>
+            <h3>Thêm hạng mục ngân sách</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="form-label">Danh mục</label>
                 <input
                   className="form-input"
                   value={itemForm.category}
-                  onChange={(event) =>
-                    setItemForm((prev) => ({ ...prev, category: event.target.value }))
-                  }
-                  placeholder="Vật tư / Nhan cong / Thiet bi"
+                  onChange={(event) => setItemForm((prev) => ({ ...prev, category: event.target.value }))}
+                  placeholder="Vật tư / Nhân công / Thiết bị"
                 />
               </div>
               <div>
-                <label className="form-label">Du toan (VND)</label>
+                <label className="form-label">Dự toán (VND)</label>
                 <input
                   type="number"
                   min={0}
                   className="form-input"
                   value={itemForm.estimatedCost}
-                  onChange={(event) =>
-                    setItemForm((prev) => ({ ...prev, estimatedCost: event.target.value }))
-                  }
+                  onChange={(event) => setItemForm((prev) => ({ ...prev, estimatedCost: event.target.value }))}
                 />
               </div>
             </div>
@@ -201,21 +213,17 @@ export function BudgetOverviewPage() {
               <input
                 className="form-input"
                 value={itemForm.description}
-                onChange={(event) =>
-                  setItemForm((prev) => ({ ...prev, description: event.target.value }))
-                }
+                onChange={(event) => setItemForm((prev) => ({ ...prev, description: event.target.value }))}
               />
             </div>
             <div>
-              <label className="form-label">Muc phê duyệt (tu chon)</label>
+              <label className="form-label">Mức phê duyệt (tùy chọn)</label>
               <input
                 type="number"
                 min={0}
                 className="form-input"
                 value={itemForm.approvedCost}
-                onChange={(event) =>
-                  setItemForm((prev) => ({ ...prev, approvedCost: event.target.value }))
-                }
+                onChange={(event) => setItemForm((prev) => ({ ...prev, approvedCost: event.target.value }))}
               />
             </div>
             <div className="flex justify-end gap-2">
@@ -230,7 +238,7 @@ export function BudgetOverviewPage() {
                 disabled={createItemMutation.isPending}
                 className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Lưu hang muc
+                Lưu hạng mục
               </button>
             </div>
           </div>
@@ -242,15 +250,13 @@ export function BudgetOverviewPage() {
           <div className="app-card space-y-3">
             <h3>Tạo phiếu giải ngân</h3>
             <div>
-              <label className="form-label">Hang muc</label>
+              <label className="form-label">Hạng mục</label>
               <select
                 className="form-input"
                 value={disbursementForm.budgetItemId}
-                onChange={(event) =>
-                  setDisbursementForm((prev) => ({ ...prev, budgetItemId: event.target.value }))
-                }
+                onChange={(event) => setDisbursementForm((prev) => ({ ...prev, budgetItemId: event.target.value }))}
               >
-                <option value="">Chon hang muc</option>
+                <option value="">Chọn hạng mục</option>
                 {itemsData.items.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.category} - {item.description}
@@ -259,26 +265,22 @@ export function BudgetOverviewPage() {
               </select>
             </div>
             <div>
-              <label className="form-label">So tien giải ngân (VND)</label>
+              <label className="form-label">Số tiền giải ngân (VND)</label>
               <input
                 type="number"
                 min={0}
                 className="form-input"
                 value={disbursementForm.amount}
-                onChange={(event) =>
-                  setDisbursementForm((prev) => ({ ...prev, amount: event.target.value }))
-                }
+                onChange={(event) => setDisbursementForm((prev) => ({ ...prev, amount: event.target.value }))}
               />
             </div>
             <div>
-              <label className="form-label">Ghi chu</label>
+              <label className="form-label">Ghi chú</label>
               <textarea
                 rows={3}
                 className="form-input"
                 value={disbursementForm.note}
-                onChange={(event) =>
-                  setDisbursementForm((prev) => ({ ...prev, note: event.target.value }))
-                }
+                onChange={(event) => setDisbursementForm((prev) => ({ ...prev, note: event.target.value }))}
               />
             </div>
             <div className="flex justify-end gap-2">
@@ -310,9 +312,9 @@ export function BudgetOverviewPage() {
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-2 py-2">Danh mục</th>
-                  <th className="px-2 py-2">Du toan</th>
-                  <th className="px-2 py-2">Da chi</th>
-                  <th className="px-2 py-2">Con lai</th>
+                  <th className="px-2 py-2">Dự toán</th>
+                  <th className="px-2 py-2">Đã chi</th>
+                  <th className="px-2 py-2">Còn lại</th>
                 </tr>
               </thead>
               <tbody>
@@ -332,9 +334,9 @@ export function BudgetOverviewPage() {
 
       <div className="app-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3>Danh sách hang muc</h3>
+          <h3>Danh sách hạng mục</h3>
           <span className="text-xs text-slate-500">
-            {itemsData.items.length} hang muc · {pendingDisbursementCount} giải ngân chờ duyệt
+            {itemsData.items.length} hạng mục · {pendingDisbursementCount} giải ngân chờ duyệt
           </span>
         </div>
 
@@ -351,21 +353,21 @@ export function BudgetOverviewPage() {
                   </div>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      item.status === "PAID"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : item.status === "APPROVED"
-                          ? "bg-brand-50 text-brand-700"
-                          : "bg-amber-50 text-amber-700"
+                      item.status === 'PAID'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : item.status === 'APPROVED'
+                          ? 'bg-brand-50 text-brand-700'
+                          : 'bg-amber-50 text-amber-700'
                     }`}
                   >
-                    {item.status}
+                    {budgetStatusLabel(item.status)}
                   </span>
                 </div>
 
                 <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-slate-500 sm:grid-cols-3">
-                  <span>Du toan: {money(item.estimatedCost)} VND</span>
+                  <span>Dự toán: {money(item.estimatedCost)} VND</span>
                   <span>Phê duyệt: {money(item.approvedCost ?? item.estimatedCost)} VND</span>
-                  <span>Da chi: {money(item.spentCost)} VND</span>
+                  <span>Đã chi: {money(item.spentCost)} VND</span>
                 </div>
               </div>
             ))}
@@ -373,8 +375,5 @@ export function BudgetOverviewPage() {
         )}
       </div>
     </div>
-  );
+  )
 }
-
-
-

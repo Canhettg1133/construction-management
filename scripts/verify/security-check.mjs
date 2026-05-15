@@ -10,7 +10,7 @@ const filesToCheck = [
 ];
 
 const requiredSnippets = [
-  { file: "app.ts", pattern: "helmet()" },
+  { file: "app.ts", pattern: /\bhelmet\s*\(/ },
   { file: "app.ts", pattern: "cors(" },
   { file: "auth.middleware.ts", pattern: "throw new UnauthorizedError" },
   { file: "validate.middleware.ts", pattern: "schema.parse" },
@@ -27,7 +27,9 @@ for (const check of requiredSnippets) {
   }
 
   const content = fs.readFileSync(target, "utf8");
-  if (!content.includes(check.pattern)) {
+  const found =
+    check.pattern instanceof RegExp ? check.pattern.test(content) : content.includes(check.pattern);
+  if (!found) {
     missing.push(`${check.file}: missing pattern ${check.pattern}`);
   }
 }

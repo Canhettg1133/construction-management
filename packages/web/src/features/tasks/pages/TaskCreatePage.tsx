@@ -1,64 +1,64 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Task } from "@construction/shared";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "../../../shared/components/Button";
-import { createTask } from "../api/taskApi";
-import { listProjectMembers } from "../../projects/api/memberApi";
-import { useUiStore } from "../../../store/uiStore";
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { Task } from '@construction/shared'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Button } from '../../../shared/components/Button'
+import { createTask } from '../api/taskApi'
+import { listProjectMembers } from '../../projects/api/memberApi'
+import { useUiStore } from '../../../store/uiStore'
 
 const taskSchema = z.object({
-  title: z.string().min(1, "Vui lòng nhập tiêu đề task").max(200),
+  title: z.string().min(1, 'Vui lòng nhập tiêu đề công việc').max(200),
   description: z.string().max(2000).optional(),
-  assignee: z.string().min(1, "Vui lòng chọn người phụ trách"),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
-  dueDate: z.string().min(1, "Vui lòng chọn deadline"),
+  assignee: z.string().min(1, 'Vui lòng chọn người phụ trách'),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']),
+  dueDate: z.string().min(1, 'Vui lòng chọn hạn chót'),
   requiresApproval: z.boolean(),
-});
+})
 
-type TaskForm = z.infer<typeof taskSchema>;
+type TaskForm = z.infer<typeof taskSchema>
 
 function getCachedTasks(cache: unknown): Task[] {
   if (Array.isArray(cache)) {
-    return cache;
+    return cache
   }
 
-  if (cache && typeof cache === "object" && "tasks" in cache) {
-    const nestedTasks = (cache as { tasks?: unknown }).tasks;
+  if (cache && typeof cache === 'object' && 'tasks' in cache) {
+    const nestedTasks = (cache as { tasks?: unknown }).tasks
     if (Array.isArray(nestedTasks)) {
-      return nestedTasks;
+      return nestedTasks
     }
   }
 
-  return [];
+  return []
 }
 
 function mergeTasksIntoCache(cache: unknown, tasks: Task[]) {
-  if (cache && typeof cache === "object" && "tasks" in cache) {
+  if (cache && typeof cache === 'object' && 'tasks' in cache) {
     return {
       ...(cache as Record<string, unknown>),
       tasks,
-    };
+    }
   }
 
-  return tasks;
+  return tasks
 }
 
 export function TaskCreatePage() {
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
-  const { id: projectId } = useParams();
-  const queryClient = useQueryClient();
-  const showToast = useUiStore((s) => s.showToast);
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
+  const { id: projectId } = useParams()
+  const queryClient = useQueryClient()
+  const showToast = useUiStore((s) => s.showToast)
 
   const { data: members = [] } = useQuery({
-    queryKey: ["project-members", projectId],
+    queryKey: ['project-members', projectId],
     queryFn: () => listProjectMembers(String(projectId)),
     enabled: !!projectId,
-  });
+  })
 
   const {
     register,
@@ -68,14 +68,14 @@ export function TaskCreatePage() {
   } = useForm<TaskForm>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      assignee: "",
-      priority: "MEDIUM",
-      dueDate: "",
+      title: '',
+      description: '',
+      assignee: '',
+      priority: 'MEDIUM',
+      dueDate: '',
       requiresApproval: false,
     },
-  });
+  })
 
   const createMutation = useMutation({
     mutationFn: (payload: TaskForm) =>
@@ -88,10 +88,10 @@ export function TaskCreatePage() {
         requiresApproval: payload.requiresApproval,
       }),
     onMutate: async (payload) => {
-      const queryKey = ["tasks", projectId] as const;
-      await queryClient.cancelQueries({ queryKey });
-      const previousCache = queryClient.getQueryData(queryKey);
-      const previousTasks = getCachedTasks(previousCache);
+      const queryKey = ['tasks', projectId] as const
+      await queryClient.cancelQueries({ queryKey })
+      const previousCache = queryClient.getQueryData(queryKey)
+      const previousTasks = getCachedTasks(previousCache)
 
       const optimisticTask: Task = {
         id: `temp-${crypto.randomUUID()}`,
@@ -99,58 +99,58 @@ export function TaskCreatePage() {
         title: payload.title,
         description: payload.description || null,
         assignedTo: payload.assignee || null,
-        createdBy: "me",
+        createdBy: 'me',
         reportId: null,
-        status: "TO_DO",
+        status: 'TO_DO',
         priority: payload.priority,
         dueDate: payload.dueDate || null,
         completedAt: null,
         requiresApproval: payload.requiresApproval,
-        approvalStatus: "PENDING",
+        approvalStatus: 'PENDING',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
+      }
 
-      queryClient.setQueryData(queryKey, mergeTasksIntoCache(previousCache, [optimisticTask, ...previousTasks]));
-      return { previousCache, queryKey };
+      queryClient.setQueryData(queryKey, mergeTasksIntoCache(previousCache, [optimisticTask, ...previousTasks]))
+      return { previousCache, queryKey }
     },
     onSuccess: async (createdTask, _payload, context) => {
       if (context) {
         queryClient.setQueryData(context.queryKey, (current: unknown) => {
-          const currentTasks = getCachedTasks(current);
-          const withoutTemp = currentTasks.filter((task) => !task.id.startsWith("temp-"));
-          return mergeTasksIntoCache(current, [createdTask, ...withoutTemp]);
-        });
+          const currentTasks = getCachedTasks(current)
+          const withoutTemp = currentTasks.filter((task) => !task.id.startsWith('temp-'))
+          return mergeTasksIntoCache(current, [createdTask, ...withoutTemp])
+        })
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
       showToast({
-        type: "success",
-        title: "Tạo task thành công",
-        description: "Task mới đã xuất hiện trong danh sách công việc.",
-      });
-      reset();
-      navigate(`/projects/${projectId}/tasks`);
+        type: 'success',
+        title: 'Tạo công việc thành công',
+        description: 'Công việc mới đã xuất hiện trong danh sách công việc.',
+      })
+      reset()
+      navigate(`/projects/${projectId}/tasks`)
     },
     onError: (e, _payload, context) => {
       if (context) {
-        queryClient.setQueryData(context.queryKey, context.previousCache);
+        queryClient.setQueryData(context.queryKey, context.previousCache)
       }
-      const message = e instanceof Error ? e.message : "Tạo task thất bại";
-      setError(message);
-      showToast({ type: "error", title: "Không thể tạo task", description: message });
+      const message = e instanceof Error ? e.message : 'Tạo công việc thất bại'
+      setError(message)
+      showToast({ type: 'error', title: 'Không thể tạo công việc', description: message })
     },
-  });
+  })
 
   const onSubmit = async (data: TaskForm) => {
-    setError("");
-    await createMutation.mutateAsync(data);
-  };
+    setError('')
+    await createMutation.mutateAsync(data)
+  }
 
   return (
     <div className="app-card mx-auto w-full max-w-2xl">
       <div className="mb-5 sm:mb-6">
-        <h1>Tạo task mới</h1>
+        <h1>Tạo công việc mới</h1>
         <p className="page-subtitle">Form rút gọn để giao việc nhanh tại công trường.</p>
       </div>
 
@@ -159,26 +159,31 @@ export function TaskCreatePage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
           <label className="form-label">Tiêu đề</label>
-          <input {...register("title")} className="form-input" placeholder="Ví dụ: Lắp cốt pha tầng 2" />
+          <input {...register('title')} className="form-input" placeholder="Ví dụ: Lắp cốt pha tầng 2" />
           {errors.title && <p className="form-error">{errors.title.message}</p>}
         </div>
 
         <div>
           <label className="form-label">Mô tả ngắn</label>
-          <textarea {...register("description")} rows={3} className="form-input" placeholder="Mô tả ngắn gọn kết quả cần đạt" />
+          <textarea
+            {...register('description')}
+            rows={3}
+            className="form-input"
+            placeholder="Mô tả ngắn gọn kết quả cần đạt"
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="form-label">Người phụ trách</label>
-            <select {...register("assignee")} className="form-input">
+            <select {...register('assignee')} className="form-input">
               <option value="">Chọn người phụ trách</option>
               {members.map((m) =>
                 m.user ? (
                   <option key={m.id} value={m.userId}>
                     {m.user.name} ({m.user.email})
                   </option>
-                ) : null
+                ) : null,
               )}
             </select>
             {errors.assignee && <p className="form-error">{errors.assignee.message}</p>}
@@ -186,7 +191,7 @@ export function TaskCreatePage() {
 
           <div>
             <label className="form-label">Ưu tiên</label>
-            <select {...register("priority")} className="form-input">
+            <select {...register('priority')} className="form-input">
               <option value="LOW">Thấp</option>
               <option value="MEDIUM">Trung bình</option>
               <option value="HIGH">Cao</option>
@@ -195,8 +200,8 @@ export function TaskCreatePage() {
         </div>
 
         <div>
-          <label className="form-label">Deadline</label>
-          <input {...register("dueDate")} type="date" className="form-input" />
+          <label className="form-label">Hạn chót</label>
+          <input {...register('dueDate')} type="date" className="form-input" />
           {errors.dueDate && <p className="form-error">{errors.dueDate.message}</p>}
         </div>
 
@@ -204,12 +209,14 @@ export function TaskCreatePage() {
           <label className="flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
-              {...register("requiresApproval")}
+              {...register('requiresApproval')}
               className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
             <span className="text-sm text-slate-700">Yêu cầu duyệt trước khi hoàn thành</span>
           </label>
-          <p className="mt-1 text-xs text-slate-500">Khi bật, task sẽ cần được PM duyệt trước khi đánh dấu hoàn thành.</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Khi bật, công việc sẽ cần được quản lý dự án duyệt trước khi đánh dấu hoàn thành.
+          </p>
         </div>
 
         <div className="sticky bottom-0 -mx-4 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
@@ -218,11 +225,11 @@ export function TaskCreatePage() {
               Quay lại
             </Button>
             <Button type="submit" isLoading={createMutation.isPending} className="w-full sm:w-auto">
-              Tạo task
+              Tạo công việc
             </Button>
           </div>
         </div>
       </form>
     </div>
-  );
+  )
 }

@@ -30,7 +30,7 @@ export const reportController = {
   },
 
   async getById(req: Request, res: Response) {
-    const report = await reportService.getById(String(req.params.reportId))
+    const report = await reportService.getById(String(req.params.projectId), String(req.params.reportId))
     return sendSuccess(res, report)
   },
 
@@ -46,27 +46,46 @@ export const reportController = {
   },
 
   async update(req: Request, res: Response) {
-    const report = await reportService.update(String(req.params.reportId), req.body, readActor(req))
+    const report = await reportService.update(
+      String(req.params.projectId),
+      String(req.params.reportId),
+      req.body,
+      readActor(req),
+    )
     return sendSuccess(res, report)
   },
 
   async updateStatus(req: Request, res: Response) {
-    const report = await reportService.updateStatus(String(req.params.reportId), req.body.status, readActor(req))
+    const report = await reportService.updateStatus(
+      String(req.params.projectId),
+      String(req.params.reportId),
+      req.body.status,
+      readActor(req),
+    )
     return sendSuccess(res, report)
   },
 
   async delete(req: Request, res: Response) {
-    await reportService.delete(String(req.params.reportId), req.user!.id)
+    await reportService.delete(String(req.params.projectId), String(req.params.reportId), req.user!.id)
     return sendNoContent(res)
   },
 
   async submitForApproval(req: Request, res: Response) {
-    const report = await reportService.submitForApproval(String(req.params.reportId), readActor(req))
+    const report = await reportService.submitForApproval(
+      String(req.params.projectId),
+      String(req.params.reportId),
+      readActor(req),
+    )
     return sendSuccess(res, report)
   },
 
   async reopen(req: Request, res: Response) {
-    const report = await reportService.reopen(String(req.params.reportId), readActor(req), req.body ?? {})
+    const report = await reportService.reopen(
+      String(req.params.projectId),
+      String(req.params.reportId),
+      readActor(req),
+      req.body ?? {},
+    )
     return sendSuccess(res, report)
   },
 }

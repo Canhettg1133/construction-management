@@ -12,16 +12,16 @@ export const LIMITS = {
   LOGIN_RATE_WINDOW_MS: 60 * 1000,
   API_RATE_LIMIT: 100,
   API_RATE_WINDOW_MS: 60 * 1000,
-} as const;
+} as const
 
-export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png"];
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png']
 
 export const ALLOWED_FILE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-excel",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
