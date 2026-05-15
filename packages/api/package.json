@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "db:generate": "node ./scripts/run-with-project-env.mjs prisma generate",
     "db:migrate": "node ./scripts/run-with-project-env.mjs prisma migrate deploy",
     "db:migrate:dev": "node ./scripts/run-with-project-env.mjs prisma migrate dev",
     "db:seed": "node ./scripts/run-with-project-env.mjs tsx prisma/seed.ts",
